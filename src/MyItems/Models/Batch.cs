@@ -9,6 +9,7 @@ public class Batch
     public DateTime? ExpiryDate { get; set; }
     public string? Location { get; set; }
     public int Quantity { get; set; } = 1;
+    public bool TrackDailyCost { get; set; } = true;
     public string? Notes { get; set; }
     public string? ImagePath { get; set; }
     public string BatchLabel { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");

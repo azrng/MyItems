@@ -5,142 +5,188 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
-    xmlns:models="clr-namespace:MyItems.Models"
+    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.ItemLibraryPage"
     x:DataType="viewmodels:ItemLibraryViewModel"
     Title="物品库"
     Style="{StaticResource PageStyle}">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*">
-        <!-- Search -->
-        <SearchBar
-            Grid.Row="0"
-            Placeholder="搜索物品..."
-            Text="{Binding SearchText}"
-            Margin="{StaticResource PagePadding}" />
+    <toolkit:SfNavigationDrawer x:Name="Drawer"
+                                 DrawerPosition="Right"
+                                 DrawerWidth="280">
+        <toolkit:SfNavigationDrawer.DrawerSettings>
+            <toolkit:DrawerSettings>
+                <toolkit:DrawerSettings.DrawerHeaderView>
+                    <Grid BackgroundColor="{StaticResource AppPrimaryColor}"
+                          HeightRequest="120"
+                          Padding="20,0,0,0"
+                          VerticalOptions="End">
+                        <Label Text="设置"
+                               TextColor="White"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               VerticalOptions="End"
+                               Margin="0,0,0,16" />
+                    </Grid>
+                </toolkit:DrawerSettings.DrawerHeaderView>
+                <toolkit:DrawerSettings.DrawerContentView>
+                    <VerticalStackLayout Padding="20,24" Spacing="20">
+                        <Label Text="📂 分类管理"
+                               FontSize="18"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type Shell}}, Path=BindingContext.CategoryCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                        <Label Text="ℹ 关于"
+                               FontSize="18"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type Shell}}, Path=BindingContext.AboutCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+                </toolkit:DrawerSettings.DrawerContentView>
+            </toolkit:DrawerSettings>
+        </toolkit:SfNavigationDrawer.DrawerSettings>
 
-        <!-- Statistics summary -->
-        <Frame
-            Grid.Row="1"
-            Style="{StaticResource CardStyle}"
-            Margin="16,0"
-            Padding="16,12">
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
-                <Label Grid.Row="0" Grid.Column="0"
-                       Text="有效商品花费"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="0"
-                       Text="{Binding TotalSpentText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppPrimaryColor}"
-                       HorizontalOptions="Center" />
+        <toolkit:SfNavigationDrawer.ContentView>
+            <Grid RowDefinitions="Auto,Auto,Auto,*">
 
-                <Label Grid.Row="0" Grid.Column="1"
-                       Text="有效商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="1"
-                       Text="{Binding ValidCountText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppSafeColor}"
-                       HorizontalOptions="Center" />
+                <!-- Title bar + hamburger -->
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="*,Auto"
+                      Padding="{StaticResource PagePadding}">
+                    <Label Grid.Column="0"
+                           Text="物品库"
+                           Style="{StaticResource HeadlineLabel}"
+                           VerticalOptions="Center" />
+                    <Button Grid.Column="1"
+                            Text="☰"
+                            FontSize="22"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource AppTextColor}"
+                            Clicked="OnSettingsClicked"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            Padding="0" />
+                </Grid>
 
-                <Label Grid.Row="0" Grid.Column="2"
-                       Text="全部商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="2"
-                       Text="{Binding TotalBatchesText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppTextSecondaryColor}"
-                       HorizontalOptions="Center" />
+                <!-- Statistics summary -->
+                <Frame
+                    Grid.Row="1"
+                    Style="{StaticResource CardStyle}"
+                    Margin="16,0"
+                    Padding="16,12">
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+                        <Label Grid.Row="0" Grid.Column="0"
+                               Text="个人资产"
+                               Style="{StaticResource CaptionLabel}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Row="1" Grid.Column="0"
+                               Text="{Binding TotalSpentText}"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource AppPrimaryColor}"
+                               HorizontalOptions="Center" />
+
+                        <Label Grid.Row="0" Grid.Column="1"
+                               Text="有效商品"
+                               Style="{StaticResource CaptionLabel}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Row="1" Grid.Column="1"
+                               Text="{Binding ValidCountText}"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource AppSafeColor}"
+                               HorizontalOptions="Center" />
+
+                        <Label Grid.Row="0" Grid.Column="2"
+                               Text="全部商品"
+                               Style="{StaticResource CaptionLabel}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Row="1" Grid.Column="2"
+                               Text="{Binding TotalBatchesText}"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource AppTextSecondaryColor}"
+                               HorizontalOptions="Center" />
+                    </Grid>
+                </Frame>
+
+                <!-- Category filter chips -->
+                <toolkit:SfChipGroup
+                    Grid.Row="2"
+                    Margin="{StaticResource PagePadding}"
+                    ItemsSource="{Binding Categories}"
+                    SelectedItem="{Binding SelectedCategory}"
+                    DisplayMemberPath="Name"
+                    SelectionType="Single" />
+
+                <!-- Item list -->
+                <CollectionView
+                    Grid.Row="3"
+                    ItemsSource="{Binding Items}"
+                    Margin="{StaticResource PagePadding}"
+                    ItemSizingStrategy="MeasureFirstItem">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dtos:ItemDisplayDto">
+                            <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
+
+                                    <!-- Row 0: Icon + Name -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Icon}"
+                                               FontSize="18"
+                                               VerticalOptions="Center"
+                                               Margin="0,0,8,0" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               Style="{StaticResource TitleLabel}"
+                                               LineBreakMode="TailTruncation" />
+                                    </Grid>
+
+                                    <!-- Row 1: batch info -->
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <Label Grid.Column="0" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0} 个批次 · {1} · ¥{2:F0}">
+                                                    <Binding Path="BatchCount" />
+                                                    <Binding Path="WorstExpiryStatusText" />
+                                                    <Binding Path="TotalSpent" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding DailyCostText}"
+                                               Style="{StaticResource CaptionLabel}"
+                                               TextColor="{StaticResource AppPrimaryColor}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                </Grid>
+
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
+                                        CommandParameter="{Binding ItemId}" />
+                                </Frame.GestureRecognizers>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Loading -->
+                <ActivityIndicator
+                    Grid.Row="3"
+                    IsRunning="{Binding IsLoading}"
+                    IsVisible="{Binding IsLoading}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Color="{StaticResource AppPrimaryColor}" />
             </Grid>
-        </Frame>
-
-        <!-- Category filter chips -->
-        <ScrollView
-            Grid.Row="2"
-            Orientation="Horizontal"
-            Margin="{StaticResource PagePadding}">
-            <HorizontalStackLayout Spacing="{StaticResource SpacingSm}" BindableLayout.ItemsSource="{Binding Categories}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate>
-                        <Button
-                            Text="{Binding Name, FallbackValue='全部'}"
-                            HeightRequest="36"
-                            CornerRadius="18"
-                            Padding="12,0"
-                            FontSize="12"
-                            Clicked="OnCategoryClicked" />
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </HorizontalStackLayout>
-        </ScrollView>
-
-        <!-- Item list -->
-        <CollectionView
-            Grid.Row="3"
-            ItemsSource="{Binding Items}"
-            Margin="{StaticResource PagePadding}"
-            ItemSizingStrategy="MeasureFirstItem">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-
-                            <!-- Row 0: Icon + Name -->
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
-                                <Label Grid.Column="0"
-                                       Text="{Binding Icon}"
-                                       FontSize="18"
-                                       VerticalOptions="Center"
-                                       Margin="0,0,8,0" />
-                                <Label Grid.Column="1"
-                                       Text="{Binding Name}"
-                                       Style="{StaticResource TitleLabel}"
-                                       LineBreakMode="TailTruncation" />
-                            </Grid>
-
-                            <!-- Row 1: batch info -->
-                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-                                <Label Grid.Column="0" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
-                                    <Label.Text>
-                                        <MultiBinding StringFormat="{}{0} 个批次 · {1} · ¥{2:F0}">
-                                            <Binding Path="BatchCount" />
-                                            <Binding Path="WorstExpiryStatusText" />
-                                            <Binding Path="TotalSpent" />
-                                        </MultiBinding>
-                                    </Label.Text>
-                                </Label>
-                                <Label Grid.Column="1"
-                                       Text="{Binding DailyCostText}"
-                                       Style="{StaticResource CaptionLabel}"
-                                       TextColor="{StaticResource AppPrimaryColor}"
-                                       VerticalOptions="Center" />
-                            </Grid>
-                        </Grid>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
-                                CommandParameter="{Binding ItemId}" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-        <!-- Loading -->
-        <ActivityIndicator
-            Grid.Row="3"
-            IsRunning="{Binding IsLoading}"
-            IsVisible="{Binding IsLoading}"
-            HorizontalOptions="Center"
-            VerticalOptions="Center"
-            Color="{StaticResource AppPrimaryColor}" />
-    </Grid>
+        </toolkit:SfNavigationDrawer.ContentView>
+    </toolkit:SfNavigationDrawer>
 </ContentPage>

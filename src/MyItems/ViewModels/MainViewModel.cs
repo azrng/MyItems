@@ -42,6 +42,12 @@ public partial class MainViewModel : ObservableObject
         LoadData();
     }
 
+    [RelayCommand]
+    private async Task GoToAddAsync()
+    {
+        await Shell.Current.GoToAsync("//add");
+    }
+
     partial void OnSearchTextChanged(string value)
     {
         LoadData();

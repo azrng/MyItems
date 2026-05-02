@@ -39,6 +39,9 @@ public partial class AddItemViewModel : ObservableObject
     private bool noExpiry;
 
     [ObservableProperty]
+    private bool trackDailyCost = true;
+
+    [ObservableProperty]
     private int quantity = 1;
 
     [ObservableProperty]
@@ -87,6 +90,7 @@ public partial class AddItemViewModel : ObservableObject
             PurchasePrice = PurchasePrice,
             ExpiryDate = NoExpiry ? null : ExpiryDate,
             NoExpiry = NoExpiry,
+            TrackDailyCost = TrackDailyCost,
             Location = Location,
             Quantity = Quantity,
             Notes = Notes,

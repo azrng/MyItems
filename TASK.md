@@ -24,6 +24,7 @@
 | T003 | 详情页 Shell 路由崩溃修复 | 修复物品库进入详情页时 Android 因 Shell 相对路由跳转崩溃的问题 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-02 |
 | T004 | 移除保修功能 | 从项目中移除所有保修相关代码、字段、文档引用 | 阶段 1 | Claude Code | DONE | P1 | 2026-05-02 |
 | T005 | 导航重构与统计迁移 | 底部 TabBar 导航、统计卡片从主页移到物品库、主页仅展示过期/临期 | 阶段 1 | Claude Code | DONE | P1 | 2026-05-02 |
+| T006 | UI 优化与 Syncfusion 组件替换 | 日均成本批次开关、物品库 SfNavigationDrawer + SfChipGroup、统计改名、搜索栏添加按钮、卡片显示批次标签 | 阶段 1 | Claude Code | DONE | P1 | 2026-05-02 |
 
 ---
 

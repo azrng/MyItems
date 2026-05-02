@@ -5,6 +5,7 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:models="clr-namespace:MyItems.Models"
+    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
     Title="添加物品"
@@ -100,6 +101,13 @@
                         <Label Text="无保质期" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
+
+                <!-- Track daily cost -->
+                <HorizontalStackLayout Spacing="{StaticResource SpacingSm}"
+                                       VerticalOptions="Center">
+                    <toolkit:SfSwitch IsOn="{Binding TrackDailyCost}" />
+                    <Label Text="记录日均成本" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                </HorizontalStackLayout>
 
                 <!-- Quantity -->
                 <VerticalStackLayout Spacing="{StaticResource SpacingXs}">

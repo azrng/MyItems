@@ -18,13 +18,23 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- Search bar -->
-        <SearchBar
-            Grid.Row="0"
-            Placeholder="搜索物品..."
-            Text="{Binding SearchText}"
-            SearchCommand="{Binding SearchCommand}"
-            Margin="{StaticResource PagePadding}" />
+        <!-- Search bar + Add button -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto"
+              Margin="{StaticResource PagePadding}"
+              ColumnSpacing="8">
+            <SearchBar
+                Grid.Column="0"
+                Placeholder="搜索物品..."
+                Text="{Binding SearchText}"
+                SearchCommand="{Binding SearchCommand}" />
+            <Button
+                Grid.Column="1"
+                Text="＋ 添加"
+                Style="{StaticResource PrimaryButton}"
+                Command="{Binding GoToAddCommand}"
+                WidthRequest="80"
+                VerticalOptions="Center" />
+        </Grid>
 
         <!-- Grouped content (expired + expiring only) -->
         <ScrollView Grid.Row="1">
@@ -107,12 +117,13 @@
                                                     </Frame>
                                                 </Grid>
 
-                                                <!-- Row 1: Brand · Category · Location · Price -->
+                                                <!-- Row 1: BatchLabel · Brand · Category · Location · Price -->
                                                 <Label Grid.Row="1"
                                                        LineBreakMode="TailTruncation"
                                                        Style="{StaticResource BodyLabel}">
                                                     <Label.Text>
-                                                        <MultiBinding StringFormat="{}{0} · {1} · {2} · ¥{3:F1}">
+                                                        <MultiBinding StringFormat="{}{0} · {1} · {2} · {3} · ¥{4:F1}">
+                                                            <Binding Path="BatchLabel" />
                                                             <Binding Path="Brand" TargetNullValue="" />
                                                             <Binding Path="CategoryName" />
                                                             <Binding Path="Location" />
@@ -137,7 +148,8 @@
                                                     <Label Grid.Column="1"
                                                            Text="{Binding DailyCostText}"
                                                            Style="{StaticResource CaptionLabel}"
-                                                           TextColor="{StaticResource AppPrimaryColor}" />
+                                                           TextColor="{StaticResource AppPrimaryColor}"
+                                                           IsVisible="{Binding TrackDailyCost}" />
                                                 </Grid>
                                             </Grid>
                                         </Frame>

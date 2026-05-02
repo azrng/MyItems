@@ -6,6 +6,7 @@ namespace MyItems;
 public partial class AppShell : Shell
 {
     public ICommand AboutCommand { get; }
+    public ICommand CategoryCommand { get; }
 
     public AppShell()
     {
@@ -16,7 +17,13 @@ public partial class AppShell : Shell
             await GoToAsync(nameof(AboutPage));
         });
 
+        CategoryCommand = new Command(async () =>
+        {
+            await GoToAsync("category");
+        });
+
         Routing.RegisterRoute("itemdetail", typeof(ItemDetailPage));
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
+        Routing.RegisterRoute("category", typeof(CategoryPage));
     }
 }

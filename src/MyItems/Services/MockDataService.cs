@@ -50,7 +50,7 @@ public static class MockDataService
         new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000007"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000001"), PurchaseDate = DateTime.Today.AddDays(-1), PurchasePrice = 16.0m, ExpiryDate = DateTime.Today.AddDays(30), Location = "冰箱上层", Quantity = 1, BatchLabel = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm") },
 
         // 无保质期
-        new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000008"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000005"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 2999.0m, Location = "书桌", Quantity = 1, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
+        new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000008"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000005"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 2999.0m, Location = "书桌", Quantity = 1, TrackDailyCost = false, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
     ];
 
     #endregion
@@ -85,11 +85,12 @@ public static class MockDataService
                 Quantity = b.Quantity,
                 Notes = b.Notes,
                 BatchLabel = b.BatchLabel,
+                TrackDailyCost = b.TrackDailyCost,
                 ExpiryStatus = expiryStatus,
                 ExpiryStatusText = StatusHelper.GetExpiryStatusText(expiryStatus, b.ExpiryDate),
                 HoldingDays = StatusHelper.GetHoldingDays(b.PurchaseDate),
                 DailyCost = StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate),
-                DailyCostText = StatusHelper.GetDailyCostText(b.PurchasePrice, b.Quantity, b.PurchaseDate),
+                DailyCostText = b.TrackDailyCost ? StatusHelper.GetDailyCostText(b.PurchasePrice, b.Quantity, b.PurchaseDate) : string.Empty,
                 HoldingText = StatusHelper.GetHoldingText(b.PurchaseDate),
             };
         }).ToList();

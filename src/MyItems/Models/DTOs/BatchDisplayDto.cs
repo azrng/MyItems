@@ -18,6 +18,7 @@ public class BatchDisplayDto
     public int Quantity { get; set; }
     public string? Notes { get; set; }
     public string BatchLabel { get; set; } = string.Empty;
+    public bool TrackDailyCost { get; set; }
     public ExpiryStatus ExpiryStatus { get; set; }
     public string ExpiryStatusText { get; set; } = string.Empty;
     public int HoldingDays { get; set; }

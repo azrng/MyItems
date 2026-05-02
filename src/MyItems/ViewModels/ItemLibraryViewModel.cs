@@ -13,7 +13,7 @@ public partial class ItemLibraryViewModel : ObservableObject
     public ObservableCollection<Category> Categories { get; } = [];
 
     [ObservableProperty]
-    private Category? selectedCategory;
+    private Category selectedCategory = null!;
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -50,7 +50,7 @@ public partial class ItemLibraryViewModel : ObservableObject
         IsLoading = false;
     }
 
-    partial void OnSelectedCategoryChanged(Category? value)
+    partial void OnSelectedCategoryChanged(Category value)
     {
         LoadData();
     }
@@ -63,10 +63,10 @@ public partial class ItemLibraryViewModel : ObservableObject
     private void LoadCategories()
     {
         Categories.Clear();
-        Categories.Add(null!);
+        Categories.Add(new Category { Id = Guid.Empty, Name = "全部" });
         foreach (var cat in MockDataService.GetPresetCategories().OrderBy(c => c.SortOrder))
             Categories.Add(cat);
-        SelectedCategory = null;
+        SelectedCategory = Categories[0];
     }
 
     private void LoadData()
@@ -78,7 +78,7 @@ public partial class ItemLibraryViewModel : ObservableObject
 
         var items = MockDataService.GetItemDisplayDtos().AsEnumerable();
 
-        if (SelectedCategory is not null)
+        if (SelectedCategory?.Id != Guid.Empty)
             items = items.Where(i => i.CategoryId == SelectedCategory.Id);
 
         if (!string.IsNullOrWhiteSpace(SearchText))

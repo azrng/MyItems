@@ -4,22 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:MyItems.Views"
     x:Class="MyItems.AppShell"
-    Title="我的物品">
-
-    <Shell.FlyoutHeader>
-        <VerticalStackLayout
-            Padding="20,40,20,20"
-            BackgroundColor="{StaticResource AppPrimaryColor}">
-            <Label Text="📦 我的物品"
-                   FontSize="20"
-                   FontAttributes="Bold"
-                   TextColor="White" />
-            <Label Text="物品管理助手"
-                   FontSize="14"
-                   TextColor="White"
-                   Opacity="0.8" />
-        </VerticalStackLayout>
-    </Shell.FlyoutHeader>
+    Title="我的物品"
+    FlyoutBehavior="Disabled">
 
     <TabBar>
         <Tab Title="主页">
@@ -28,18 +14,6 @@
         <Tab Title="物品库">
             <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />
         </Tab>
-        <Tab Title="分类">
-            <ShellContent ContentTemplate="{DataTemplate views:CategoryPage}" />
-        </Tab>
     </TabBar>
-
-    <FlyoutItem Title="添加">
-        <Tab Title="添加">
-            <ShellContent ContentTemplate="{DataTemplate views:AddItemPage}" />
-        </Tab>
-    </FlyoutItem>
-
-    <MenuItem Text="关于"
-              Command="{Binding AboutCommand}" />
 
 </Shell>

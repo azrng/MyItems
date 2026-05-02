@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui;
 using MyItems.ViewModels;
 using MyItems.Views;
+using Syncfusion.Maui.Toolkit.Hosting;
 
 namespace MyItems;
 
@@ -12,6 +13,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .ConfigureSyncfusionToolkit()
             .ConfigureFonts(fonts =>
             {
             });
