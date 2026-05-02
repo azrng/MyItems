@@ -77,6 +77,7 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task GoToCategoryAsync()
     {
         IsSettingsOpen = false;
+        await Task.Delay(100);
         await Shell.Current.GoToAsync("category");
     }
 
@@ -84,6 +85,7 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task GoToStorageAsync()
     {
         IsSettingsOpen = false;
+        await Task.Delay(100);
         await Shell.Current.GoToAsync("storage");
     }
 
@@ -91,6 +93,7 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task GoToAboutAsync()
     {
         IsSettingsOpen = false;
+        await Task.Delay(100);
         await Shell.Current.GoToAsync("AboutPage");
     }
 
