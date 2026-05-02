@@ -9,10 +9,8 @@ namespace MyItems.ViewModels;
 public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
-    private Guid _editingBatchId;
     private Guid _editingItemId;
-    private DateTime _originalItemCreatedAt;
-    private DateTime _originalBatchCreatedAt;
+    private DateTime _originalCreatedAt;
 
     public ObservableCollection<Category> Categories { get; } = [];
 
@@ -72,10 +70,10 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.TryGetValue("batchId", out var batchIdObj) && Guid.TryParse(batchIdObj?.ToString(), out var batchId))
+        if (query.TryGetValue("itemId", out var itemIdObj) && Guid.TryParse(itemIdObj?.ToString(), out var itemId))
         {
-            _editingBatchId = batchId;
-            _ = LoadExistingDataAsync(batchId);
+            _editingItemId = itemId;
+            _ = LoadExistingDataAsync(itemId);
         }
     }
 
@@ -84,36 +82,27 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         await LoadCategoriesAsync();
     }
 
-    private async Task LoadExistingDataAsync(Guid batchId)
+    private async Task LoadExistingDataAsync(Guid itemId)
     {
-        var batches = await _dataService.GetBatchDisplayDtosAsync();
-        var batchDto = batches.FirstOrDefault(b => b.BatchId == batchId);
-        if (batchDto is null) return;
-
         var items = await _dataService.GetItemsAsync();
-        var item = items.FirstOrDefault(i => i.Id == batchDto.ItemId);
+        var item = items.FirstOrDefault(i => i.Id == itemId);
         if (item is null) return;
 
-        var batch = (await _dataService.GetBatchesAsync()).FirstOrDefault(b => b.Id == batchId);
-        if (batch is null) return;
-
         _editingItemId = item.Id;
-        _editingBatchId = batchId;
-        _originalItemCreatedAt = item.CreatedAt;
-        _originalBatchCreatedAt = batch.CreatedAt;
+        _originalCreatedAt = item.CreatedAt;
 
         IsEditMode = true;
         ItemName = item.Name;
         Brand = item.Brand;
         Location = item.DefaultLocation;
         Barcode = item.Barcode;
-        PurchaseDate = batch.PurchaseDate;
-        PurchasePrice = batch.PurchasePrice;
-        ExpiryDate = batch.ExpiryDate;
-        NoExpiry = batch.ExpiryDate is null;
-        TrackDailyCost = batch.TrackDailyCost;
-        Quantity = batch.Quantity;
-        Notes = batch.Notes;
+        PurchaseDate = item.PurchaseDate;
+        PurchasePrice = item.PurchasePrice;
+        ExpiryDate = item.ExpiryDate;
+        NoExpiry = item.ExpiryDate is null;
+        TrackDailyCost = item.TrackDailyCost;
+        Quantity = item.Quantity;
+        Notes = item.Notes;
 
         await LoadCategoriesAsync();
         SelectedCategory = Categories.FirstOrDefault(c => c.Id == item.CategoryId);
@@ -143,70 +132,26 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         var category = await _dataService.GetCategoriesAsync()
             .ContinueWith(t => t.Result.FirstOrDefault(c => c.Id == SelectedCategory.Id));
 
-        if (IsEditMode)
+        var item = new Item
         {
-            var item = new Item
-            {
-                Id = _editingItemId,
-                Name = ItemName.Trim(),
-                CategoryId = SelectedCategory.Id,
-                Barcode = Barcode,
-                Brand = Brand,
-                Icon = category?.Icon ?? "\U0001F4E6",
-                DefaultLocation = Location,
-                CreatedAt = _originalItemCreatedAt,
-                UpdatedAt = DateTime.Now,
-            };
-            await _dataService.SaveItemAsync(item);
+            Id = IsEditMode ? _editingItemId : Guid.NewGuid(),
+            Name = ItemName.Trim(),
+            CategoryId = SelectedCategory.Id,
+            Barcode = Barcode,
+            Brand = Brand,
+            Icon = category?.Icon ?? "\U0001F4E6",
+            DefaultLocation = Location,
+            PurchaseDate = PurchaseDate,
+            PurchasePrice = PurchasePrice,
+            ExpiryDate = NoExpiry ? null : ExpiryDate,
+            Quantity = Math.Max(1, Quantity),
+            TrackDailyCost = TrackDailyCost,
+            Notes = Notes,
+            CreatedAt = IsEditMode ? _originalCreatedAt : DateTime.Now,
+            UpdatedAt = DateTime.Now,
+        };
 
-            var batch = new Batch
-            {
-                Id = _editingBatchId,
-                ItemId = _editingItemId,
-                PurchaseDate = PurchaseDate,
-                PurchasePrice = PurchasePrice,
-                ExpiryDate = NoExpiry ? null : ExpiryDate,
-                Location = Location,
-                Quantity = Math.Max(1, Quantity),
-                TrackDailyCost = TrackDailyCost,
-                Notes = Notes,
-                BatchLabel = DateTime.Now.ToString("yyyyMMddHHmmss"),
-                CreatedAt = _originalBatchCreatedAt,
-            };
-            await _dataService.SaveBatchAsync(batch);
-        }
-        else
-        {
-            var item = new Item
-            {
-                Id = Guid.NewGuid(),
-                Name = ItemName.Trim(),
-                CategoryId = SelectedCategory.Id,
-                Barcode = Barcode,
-                Brand = Brand,
-                Icon = category?.Icon ?? "\U0001F4E6",
-                DefaultLocation = Location,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
-            };
-            await _dataService.SaveItemAsync(item);
-
-            var batch = new Batch
-            {
-                Id = Guid.NewGuid(),
-                ItemId = item.Id,
-                PurchaseDate = PurchaseDate,
-                PurchasePrice = PurchasePrice,
-                ExpiryDate = NoExpiry ? null : ExpiryDate,
-                Location = Location,
-                Quantity = Math.Max(1, Quantity),
-                TrackDailyCost = TrackDailyCost,
-                Notes = Notes,
-                BatchLabel = DateTime.Now.ToString("yyyyMMddHHmmss"),
-                CreatedAt = DateTime.Now,
-            };
-            await _dataService.SaveBatchAsync(batch);
-        }
+        await _dataService.SaveItemAsync(item);
 
         IsSaving = false;
         await Shell.Current.GoToAsync("..");

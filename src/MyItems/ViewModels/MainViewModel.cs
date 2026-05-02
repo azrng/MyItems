@@ -9,12 +9,12 @@ namespace MyItems.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
-    private const int PageSize = 10;
+    private const int PageSize = 20;
 
-    private List<BatchDisplayDto> _allItems = [];
+    private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
 
-    public ObservableCollection<BatchDisplayDto> RecentItems { get; } = [];
+    public ObservableCollection<ItemDisplayDto> RecentItems { get; } = [];
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -54,12 +54,12 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteBatchAsync(BatchDisplayDto batch)
+    private async Task DeleteItemAsync(ItemDisplayDto item)
     {
-        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{batch.ItemName}」吗？", "删除", "取消");
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{item.ItemName}」吗？", "删除", "取消");
         if (!confirm) return;
 
-        await _dataService.DeleteBatchAsync(batch.BatchId);
+        await _dataService.DeleteItemAsync(item.ItemId);
         await LoadDataAsync();
     }
 
@@ -69,9 +69,9 @@ public partial class MainViewModel : ObservableObject
         await Shell.Current.GoToAsync($"itemdetail?itemId={itemId}");
     }
 
-    public async Task DeleteBatchByIdAsync(Guid batchId)
+    public async Task DeleteItemByIdAsync(Guid itemId)
     {
-        await _dataService.DeleteBatchAsync(batchId);
+        await _dataService.DeleteItemAsync(itemId);
         await LoadDataAsync();
     }
 
@@ -101,18 +101,16 @@ public partial class MainViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var cutoff = DateTime.Now.AddDays(-7);
-        var batches = await _dataService.GetBatchDisplayDtosAsync();
+        var items = await _dataService.GetItemDisplayDtosAsync();
 
-        var filtered = batches
-            .Where(b => (b.PurchaseDate ?? DateTime.MinValue) >= cutoff)
-            .OrderByDescending(b => b.PurchaseDate)
+        var filtered = items
+            .OrderByDescending(i => i.CreatedAt)
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             filtered = filtered
-                .Where(b => b.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                .Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
@@ -127,7 +125,7 @@ public partial class MainViewModel : ObservableObject
     private async Task LoadMoreAsync()
     {
         IsLoadingMore = true;
-        await Task.Delay(100); // brief delay for smoother UX
+        await Task.Delay(100);
         AppendPage();
         IsLoadingMore = false;
     }

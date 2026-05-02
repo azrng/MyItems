@@ -11,11 +11,14 @@ public partial class ExpiringViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
 
-    public ObservableCollection<BatchDisplayDto> ExpiringItems { get; private set; } = [];
-    public ObservableCollection<BatchDisplayDto> ExpiredItems { get; private set; } = [];
+    public ObservableCollection<ItemDisplayDto> ExpiringItems { get; private set; } = [];
+    public ObservableCollection<ItemDisplayDto> ExpiredItems { get; private set; } = [];
 
     [ObservableProperty]
     private bool isLoading = true;
+
+    [ObservableProperty]
+    private bool isRefreshing;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -29,10 +32,11 @@ public partial class ExpiringViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Refresh()
+    private async Task RefreshAsync()
     {
-        IsLoading = true;
-        _ = LoadDataAsync();
+        IsRefreshing = true;
+        await LoadDataAsync();
+        IsRefreshing = false;
     }
 
     [RelayCommand]
@@ -60,23 +64,22 @@ public partial class ExpiringViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var batches = await _dataService.GetBatchDisplayDtosAsync();
+        var items = await _dataService.GetItemDisplayDtosAsync();
 
-        // Filter out no-expiry, apply search
-        var filtered = batches.Where(b => b.ExpiryStatus != ExpiryStatus.NoExpiry);
+        var filtered = items.Where(i => i.ExpiryStatus != ExpiryStatus.NoExpiry);
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            filtered = filtered.Where(b =>
-                b.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(i =>
+                i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        var list = filtered.OrderBy(b => b.ExpiryDate).ToList();
+        var list = filtered.OrderBy(i => i.ExpiryDate).ToList();
 
-        ExpiringItems = new ObservableCollection<BatchDisplayDto>(
-            list.Where(b => b.ExpiryStatus == ExpiryStatus.Expiring));
-        ExpiredItems = new ObservableCollection<BatchDisplayDto>(
-            list.Where(b => b.ExpiryStatus == ExpiryStatus.Expired));
+        ExpiringItems = new ObservableCollection<ItemDisplayDto>(
+            list.Where(i => i.ExpiryStatus == ExpiryStatus.Expiring));
+        ExpiredItems = new ObservableCollection<ItemDisplayDto>(
+            list.Where(i => i.ExpiryStatus == ExpiryStatus.Expired));
 
         OnPropertyChanged(nameof(ExpiringItems));
         OnPropertyChanged(nameof(ExpiredItems));

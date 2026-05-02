@@ -16,6 +16,14 @@ public partial class CategoryPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.InitializeAsync();
+        try
+        {
+            await Task.Yield();
+            await _viewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CategoryPage.OnAppearing error: {ex}");
+        }
     }
 }

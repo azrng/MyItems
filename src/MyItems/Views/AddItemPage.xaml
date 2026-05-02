@@ -54,8 +54,8 @@
                         Style="{StaticResource EntryStyle}" />
                 </VerticalStackLayout>
 
-                <!-- Section: Batch info -->
-                <Label Text="── 批次信息 ──" Style="{StaticResource CaptionLabel}"
+                <!-- Section: Purchase info -->
+                <Label Text="── 购买信息 ──" Style="{StaticResource CaptionLabel}"
                        HorizontalOptions="Center"
                        Margin="0,8,0,8" />
 

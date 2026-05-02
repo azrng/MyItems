@@ -15,19 +15,13 @@ public interface IDataService
     // Item
     Task<List<Item>> GetItemsAsync();
     Task<Guid> SaveItemAsync(Item item);
-    Task<int> ArchiveItemAsync(Guid itemId);
-
-    // Batch
-    Task<List<Batch>> GetBatchesAsync();
-    Task<int> SaveBatchAsync(Batch batch);
-    Task<int> DeleteBatchAsync(Guid batchId);
+    Task<int> DeleteItemAsync(Guid itemId);
 
     // DTO queries
-    Task<List<BatchDisplayDto>> GetBatchDisplayDtosAsync();
-    Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync();
     Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync();
+    Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync();
     Task<List<CategoryDto>> GetCategoryDtosAsync();
-    Task<(decimal TotalSpent, int TotalBatches, int ValidBatches)> GetStatisticsAsync();
+    Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync();
 
     // Excel export
     Task<string> ExportToExcelAsync();

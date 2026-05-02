@@ -24,8 +24,13 @@
             Text="{Binding SearchText}"
             SearchCommand="{Binding SearchCommand}" />
 
-        <!-- Two sections: Expiring + Expired -->
-        <ScrollView Grid.Row="1">
+        <!-- Two sections: Expiring + Expired with pull-to-refresh -->
+        <RefreshView
+            Grid.Row="1"
+            IsRefreshing="{Binding IsRefreshing}"
+            Command="{Binding RefreshCommand}"
+            RefreshColor="{StaticResource AppPrimaryColor}">
+        <ScrollView>
             <VerticalStackLayout Padding="{StaticResource PagePadding}" Spacing="16">
 
                 <!-- Expiring section -->
@@ -38,7 +43,7 @@
                         ItemsSource="{Binding ExpiringItems}"
                         ItemSizingStrategy="MeasureFirstItem">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                            <DataTemplate x:DataType="dtos:ItemDisplayDto">
                                 <Frame Style="{StaticResource ListCardStyle}">
                                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
                                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -59,7 +64,7 @@
                                                Style="{StaticResource BodyLabel}">
                                             <Label.Text>
                                                 <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
-                                                    <Binding Path="BatchLabel" />
+                                                    <Binding Path="CreatedAtLabel" />
                                                     <Binding Path="Brand" TargetNullValue="" />
                                                     <Binding Path="CategoryName" />
                                                     <Binding Path="Location" />
@@ -93,7 +98,7 @@
                         ItemsSource="{Binding ExpiredItems}"
                         ItemSizingStrategy="MeasureFirstItem">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                            <DataTemplate x:DataType="dtos:ItemDisplayDto">
                                 <Frame Style="{StaticResource ListCardStyle}">
                                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
                                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -114,7 +119,7 @@
                                                Style="{StaticResource BodyLabel}">
                                             <Label.Text>
                                                 <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
-                                                    <Binding Path="BatchLabel" />
+                                                    <Binding Path="CreatedAtLabel" />
                                                     <Binding Path="Brand" TargetNullValue="" />
                                                     <Binding Path="CategoryName" />
                                                     <Binding Path="Location" />
@@ -155,6 +160,7 @@
 
             </VerticalStackLayout>
         </ScrollView>
+        </RefreshView>
 
         <!-- Loading indicator -->
         <ActivityIndicator

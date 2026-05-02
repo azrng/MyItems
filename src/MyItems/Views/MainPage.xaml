@@ -13,6 +13,7 @@
     <ContentPage.Resources>
         <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
         <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
+        <converters:HasValueConverter x:Key="HasValue" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -42,18 +43,18 @@
             <CollectionView
                 ItemsSource="{Binding RecentItems}"
                 Margin="16,0"
-                ItemSizingStrategy="MeasureFirstItem"
+                ItemSizingStrategy="MeasureAllItems"
                 RemainingItemsThreshold="3"
                 RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                    <DataTemplate x:DataType="dtos:ItemDisplayDto">
                         <SwipeView>
                             <SwipeView.RightItems>
                                 <SwipeItem
                                     Text="删除"
                                     BackgroundColor="#EF4444"
-                                    Invoked="OnDeleteBatchSwipe"
-                                    CommandParameter="{Binding BatchId}" />
+                                    Invoked="OnDeleteItemSwipe"
+                                    CommandParameter="{Binding ItemId}" />
                             </SwipeView.RightItems>
                             <Frame Style="{StaticResource ListCardStyle}">
                                 <Frame.GestureRecognizers>
@@ -63,50 +64,61 @@
                                 </Frame.GestureRecognizers>
                                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
-                                    <!-- Row 0: Name + status badge -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                    <!-- Row 0: Name + CreatedAt + status badge -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
                                         <Label Grid.Column="0"
-                                               Text="{Binding ItemName}"
                                                Style="{StaticResource TitleLabel}"
-                                               LineBreakMode="TailTruncation" />
-                                        <Frame Grid.Column="1"
+                                               LineBreakMode="TailTruncation">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0} · {1}">
+                                                    <Binding Path="ItemName" />
+                                                    <Binding Path="CategoryName" TargetNullValue="" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding CreatedAtLabel, StringFormat='  {0}'}"
+                                               FontSize="10"
+                                               TextColor="{StaticResource AppTextSecondaryColor}"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalOptions="Center" />
+                                        <Frame Grid.Column="2"
                                                Style="{StaticResource StatusBadgeFrame}"
                                                BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
                                             <Frame.Triggers>
+                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Expired">
+                                                    <Setter Property="IsVisible" Value="False" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Safe">
+                                                    <Setter Property="IsVisible" Value="False" />
+                                                </DataTrigger>
                                                 <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="NoExpiry">
                                                     <Setter Property="IsVisible" Value="False" />
                                                 </DataTrigger>
                                             </Frame.Triggers>
-                                            <Label Text="{Binding ExpiryStatusText}"
+                                            <Label Text="临期"
                                                    Style="{StaticResource StatusBadgeLabel}"
                                                    TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
                                         </Frame>
                                     </Grid>
 
-                                <!-- Row 1: BatchLabel · Brand · Category · Location -->
+                                <!-- Row 1: Brand · Location -->
                                 <Label Grid.Row="1"
                                        LineBreakMode="TailTruncation"
                                        Style="{StaticResource BodyLabel}">
                                     <Label.Text>
-                                        <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
-                                            <Binding Path="BatchLabel" />
+                                        <MultiBinding StringFormat="{}{0} · {1}">
                                             <Binding Path="Brand" TargetNullValue="" />
-                                            <Binding Path="CategoryName" />
                                             <Binding Path="Location" />
                                         </MultiBinding>
                                     </Label.Text>
                                 </Label>
 
-                                <!-- Row 2: Expiry date only -->
+                                <!-- Row 2: Expiry date only (hidden when no expiry) -->
                                 <Label Grid.Row="2"
                                        Style="{StaticResource CaptionLabel}"
-                                       Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding ExpiryDate}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
+                                       Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}"
+                                       IsVisible="{Binding ExpiryDate, Converter={StaticResource HasValue}}" />
                             </Grid>
                         </Frame>
                         </SwipeView>
@@ -135,7 +147,7 @@
             <Label Text="📦"
                    FontSize="40"
                    HorizontalOptions="Center" />
-            <Label Text="最近 7 天没有新增物品"
+            <Label Text="还没有物品"
                    Style="{StaticResource BodyLabel}"
                    HorizontalOptions="Center" />
         </StackLayout>

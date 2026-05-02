@@ -25,7 +25,7 @@
                 Grid.Column="0"
                 Text="☰"
                 Style="{StaticResource TitleIconButton}"
-                Clicked="OnSettingsClicked"
+                Command="{Binding ToggleSettingsCommand}"
                 Padding="0" />
             <Label
                 Grid.Column="1"
@@ -37,229 +37,220 @@
         </Grid>
     </Shell.TitleView>
 
-    <toolkit:SfNavigationDrawer x:Name="Drawer"
-                                 DrawerPosition="Right"
-                                 DrawerWidth="280">
-        <toolkit:SfNavigationDrawer.DrawerSettings>
-            <toolkit:DrawerSettings>
-                <toolkit:DrawerSettings.DrawerContentView>
-                    <VerticalStackLayout Padding="20,32,20,24" Spacing="20">
-                        <Label Text="📂 分类管理"
-                               FontSize="18"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Tapped="OnCategoryClicked" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                        <Label Text="💾 存储管理"
-                               FontSize="18"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding GoToStorageCommand}" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                        <Label Text="ℹ 关于"
-                               FontSize="18"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding GoToAboutCommand}" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                    </VerticalStackLayout>
-                </toolkit:DrawerSettings.DrawerContentView>
-            </toolkit:DrawerSettings>
-        </toolkit:SfNavigationDrawer.DrawerSettings>
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
 
-        <toolkit:SfNavigationDrawer.ContentView>
-            <Grid RowDefinitions="Auto,Auto,Auto,*"
-                  RowSpacing="8">
+        <SearchBar
+            Grid.Row="0"
+            Margin="16,8"
+            Placeholder="搜索物品..."
+            Text="{Binding SearchText}"
+            SearchCommand="{Binding RefreshCommand}" />
 
-                <SearchBar
-                    Grid.Row="0"
-                    Margin="16,8"
-                    Placeholder="搜索物品..."
-                    Text="{Binding SearchText}"
-                    SearchCommand="{Binding RefreshCommand}" />
+        <!-- Statistics summary -->
+        <Frame
+            Grid.Row="1"
+            Style="{StaticResource CardStyle}"
+            Margin="16,0"
+            Padding="12,10">
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="2">
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="个人资产"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="0"
+                       Text="{Binding TotalSpentText}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppPrimaryColor}"
+                       HorizontalOptions="Center" />
 
-                <!-- Statistics summary -->
-                <Frame
-                    Grid.Row="1"
-                    Style="{StaticResource CardStyle}"
-                    Margin="16,0"
-                    Padding="12,10">
-                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="2">
-                        <Label Grid.Row="0" Grid.Column="0"
-                               Text="个人资产"
-                               Style="{StaticResource CaptionLabel}"
-                               HorizontalOptions="Center" />
-                        <Label Grid.Row="1" Grid.Column="0"
-                               Text="{Binding TotalSpentText}"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource AppPrimaryColor}"
-                               HorizontalOptions="Center" />
+                <Label Grid.Row="0" Grid.Column="1"
+                       Text="有效商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="1"
+                       Text="{Binding ValidCountText}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppSafeColor}"
+                       HorizontalOptions="Center" />
 
-                        <Label Grid.Row="0" Grid.Column="1"
-                               Text="有效商品"
-                               Style="{StaticResource CaptionLabel}"
-                               HorizontalOptions="Center" />
-                        <Label Grid.Row="1" Grid.Column="1"
-                               Text="{Binding ValidCountText}"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource AppSafeColor}"
-                               HorizontalOptions="Center" />
-
-                        <Label Grid.Row="0" Grid.Column="2"
-                               Text="全部商品"
-                               Style="{StaticResource CaptionLabel}"
-                               HorizontalOptions="Center" />
-                        <Label Grid.Row="1" Grid.Column="2"
-                               Text="{Binding TotalBatchesText}"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource AppTextSecondaryColor}"
-                               HorizontalOptions="Center" />
-                    </Grid>
-                </Frame>
-
-                <!-- Category filter chips -->
-                <ScrollView
-                    Grid.Row="2"
-                    Margin="16,0"
-                    Orientation="Horizontal"
-                    HorizontalScrollBarVisibility="Never">
-                    <toolkit:SfChipGroup
-                        ItemsSource="{Binding Categories}"
-                        SelectedItem="{Binding SelectedCategory}"
-                        DisplayMemberPath="Name"
-                        ChipType="Choice"
-                        ChoiceMode="Single"
-                        ShowIcon="False"
-                        ItemHeight="32"
-                        ChipCornerRadius="16"
-                        ChipPadding="4,4"
-                        ChipBackground="{StaticResource AppCardBackgroundColor}"
-                        ChipTextColor="{StaticResource AppTextSecondaryColor}"
-                        ChipStroke="{StaticResource AppBorderColor}"
-                        ChipStrokeThickness="1"
-                        SelectedChipBackground="{StaticResource AppActiveBackgroundColor}"
-                        SelectedChipTextColor="{StaticResource AppPrimaryColor}"
-                        SelectionIndicatorColor="{StaticResource AppPrimaryColor}" />
-                </ScrollView>
-
-                <!-- Item list -->
-                <CollectionView
-                    Grid.Row="3"
-                    ItemsSource="{Binding Items}"
-                    Margin="16,0"
-                    ItemSizingStrategy="MeasureFirstItem"
-                    RemainingItemsThreshold="3"
-                    RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                            <Frame Style="{StaticResource ListCardStyle}">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-
-                                    <!-- Row 0: Icon + Name + brand -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
-                                        <Label Grid.Column="0"
-                                               Text="{Binding Icon}"
-                                               FontSize="16"
-                                               VerticalOptions="Center"
-                                               Margin="0,0,6,0" />
-                                        <Label Grid.Column="1"
-                                               Text="{Binding Name}"
-                                               Style="{StaticResource TitleLabel}"
-                                               FontSize="16"
-                                               LineBreakMode="TailTruncation" />
-                                        <Label Grid.Column="2"
-                                               Text="{Binding CategoryName}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="11"
-                                               VerticalOptions="Center"
-                                               Margin="8,0,0,0" />
-                                    </Grid>
-
-                                    <!-- Row 1: batch info + daily cost -->
-                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-                                        <Label Grid.Column="0" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding WorstExpiryStatus}" Value="NoExpiry">
-                                                    <Setter Property="Text">
-                                                        <Setter.Value>
-                                                            <Binding Path="BatchCount" StringFormat="{}{0} 个批次" />
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                            <Label.Text>
-                                                <MultiBinding StringFormat="{}{0} 个批次 · {1}">
-                                                    <Binding Path="BatchCount" />
-                                                    <Binding Path="WorstExpiryStatusText" />
-                                                </MultiBinding>
-                                            </Label.Text>
-                                        </Label>
-                                        <Label Grid.Column="1"
-                                               Text="{Binding DailyCostText}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="11"
-                                               TextColor="{StaticResource AppPrimaryColor}"
-                                               VerticalOptions="Center"
-                                               IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
-                                    </Grid>
-                                </Grid>
-
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
-                                        CommandParameter="{Binding ItemId}" />
-                                </Frame.GestureRecognizers>
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-                <!-- Load more indicator -->
-                <ActivityIndicator
-                    Grid.Row="3"
-                    IsRunning="{Binding IsLoadingMore}"
-                    IsVisible="{Binding IsLoadingMore}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="End"
-                    Margin="0,0,0,16"
-                    Color="{StaticResource AppPrimaryColor}" />
-
-                <!-- Empty state -->
-                <StackLayout
-                    Grid.Row="3"
-                    IsVisible="{Binding IsEmpty}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    Spacing="8">
-                    <Label Text="📦"
-                           FontSize="40"
-                           HorizontalOptions="Center" />
-                    <Label Text="还没有物品"
-                           Style="{StaticResource BodyLabel}"
-                           HorizontalOptions="Center" />
-                    <Label Text="点击右上角 + 添加你的第一个物品"
-                           Style="{StaticResource CaptionLabel}"
-                           HorizontalOptions="Center" />
-                </StackLayout>
-
-                <!-- Loading -->
-                <ActivityIndicator
-                    Grid.Row="3"
-                    IsRunning="{Binding IsLoading}"
-                    IsVisible="{Binding IsLoading}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    Color="{StaticResource AppPrimaryColor}" />
+                <Label Grid.Row="0" Grid.Column="2"
+                       Text="全部商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="2"
+                       Text="{Binding TotalItemsText}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextSecondaryColor}"
+                       HorizontalOptions="Center" />
             </Grid>
-        </toolkit:SfNavigationDrawer.ContentView>
-    </toolkit:SfNavigationDrawer>
+        </Frame>
+
+        <!-- Category filter chips -->
+        <ScrollView
+            Grid.Row="2"
+            Margin="16,0"
+            Orientation="Horizontal"
+            HorizontalScrollBarVisibility="Never">
+            <toolkit:SfChipGroup
+                ItemsSource="{Binding Categories}"
+                SelectedItem="{Binding SelectedCategory}"
+                DisplayMemberPath="Name"
+                ChipType="Choice"
+                ChoiceMode="Single"
+                ShowIcon="False"
+                ItemHeight="32"
+                ChipCornerRadius="16"
+                ChipPadding="4,4"
+                ChipBackground="{StaticResource AppCardBackgroundColor}"
+                ChipTextColor="{StaticResource AppTextSecondaryColor}"
+                ChipStroke="{StaticResource AppBorderColor}"
+                ChipStrokeThickness="1"
+                SelectedChipBackground="{StaticResource AppActiveBackgroundColor}"
+                SelectedChipTextColor="{StaticResource AppPrimaryColor}"
+                SelectionIndicatorColor="{StaticResource AppPrimaryColor}" />
+        </ScrollView>
+
+        <!-- Item list -->
+        <CollectionView
+            Grid.Row="3"
+            ItemsSource="{Binding Items}"
+            Margin="16,0"
+            ItemSizingStrategy="MeasureFirstItem"
+            RemainingItemsThreshold="3"
+            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dtos:ItemDisplayDto">
+                    <Frame Style="{StaticResource ListCardStyle}">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
+
+                            <!-- Row 0: Icon + Name + Category -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="{Binding ItemIcon}"
+                                       FontSize="16"
+                                       VerticalOptions="Center"
+                                       Margin="0,0,6,0" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding ItemName}"
+                                       Style="{StaticResource TitleLabel}"
+                                       FontSize="16"
+                                       LineBreakMode="TailTruncation" />
+                                <Label Grid.Column="2"
+                                       Text="{Binding CategoryName}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       FontSize="11"
+                                       VerticalOptions="Center"
+                                       Margin="8,0,0,0" />
+                            </Grid>
+
+                            <!-- Row 1: Expiry status + daily cost -->
+                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Style="{StaticResource BodyLabel}"
+                                       Text="{Binding ExpiryStatusText}"
+                                       LineBreakMode="TailTruncation" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding DailyCostText}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource AppPrimaryColor}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
+                            </Grid>
+                        </Grid>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
+                                CommandParameter="{Binding ItemId}" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Load more indicator -->
+        <ActivityIndicator
+            Grid.Row="3"
+            IsRunning="{Binding IsLoadingMore}"
+            IsVisible="{Binding IsLoadingMore}"
+            HorizontalOptions="Center"
+            VerticalOptions="End"
+            Margin="0,0,0,16"
+            Color="{StaticResource AppPrimaryColor}" />
+
+        <!-- Empty state -->
+        <StackLayout
+            Grid.Row="3"
+            IsVisible="{Binding IsEmpty}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Spacing="8">
+            <Label Text="📦"
+                   FontSize="40"
+                   HorizontalOptions="Center" />
+            <Label Text="还没有物品"
+                   Style="{StaticResource BodyLabel}"
+                   HorizontalOptions="Center" />
+            <Label Text="点击右上角 + 添加你的第一个物品"
+                   Style="{StaticResource CaptionLabel}"
+                   HorizontalOptions="Center" />
+        </StackLayout>
+
+        <!-- Loading -->
+        <ActivityIndicator
+            Grid.Row="3"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+
+        <!-- Settings overlay (dimmed background) -->
+        <BoxView
+            Grid.RowSpan="4"
+            BackgroundColor="Black"
+            Opacity="0.4"
+            IsVisible="{Binding IsSettingsOpen}"
+            InputTransparent="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseSettingsCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- Settings panel (slides from right) -->
+        <Frame
+            Grid.RowSpan="4"
+            BackgroundColor="{StaticResource AppCardBackgroundColor}"
+            CornerRadius="0"
+            Padding="20,32,20,24"
+            HasShadow="True"
+            WidthRequest="280"
+            HorizontalOptions="End"
+            IsVisible="{Binding IsSettingsOpen}">
+            <VerticalStackLayout Spacing="16">
+                <Button Text="📂 分类管理"
+                        FontSize="18"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource AppTextColor}"
+                        HorizontalOptions="Fill"
+                        Command="{Binding GoToCategoryCommand}" />
+                <Button Text="💾 存储管理"
+                        FontSize="18"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource AppTextColor}"
+                        HorizontalOptions="Fill"
+                        Command="{Binding GoToStorageCommand}" />
+                <Button Text="ℹ 关于"
+                        FontSize="18"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource AppTextColor}"
+                        HorizontalOptions="Fill"
+                        Command="{Binding GoToAboutCommand}" />
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
 </ContentPage>

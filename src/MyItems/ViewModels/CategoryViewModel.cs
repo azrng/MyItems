@@ -15,6 +15,7 @@ public partial class CategoryViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
     private bool _hasLoaded;
+    private bool _isLoadingData;
 
     public static readonly string[] CategoryIcons =
     [
@@ -217,6 +218,7 @@ public partial class CategoryViewModel : ObservableObject
 
     private async void OnCategoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_isLoadingData) return;
         if (e.PropertyName == nameof(CategoryDto.IsActive) && sender is CategoryDto dto)
         {
             var cat = new Category { Id = dto.Id, Name = dto.Name, Icon = dto.Icon, SortOrder = dto.SortOrder, IsPreset = dto.IsPreset, IsActive = dto.IsActive };
@@ -226,6 +228,7 @@ public partial class CategoryViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
+        _isLoadingData = true;
         try
         {
             Categories.Clear();
@@ -242,6 +245,7 @@ public partial class CategoryViewModel : ObservableObject
         }
         finally
         {
+            _isLoadingData = false;
             IsLoading = false;
         }
     }

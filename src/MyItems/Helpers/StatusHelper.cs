@@ -27,10 +27,8 @@ public static class StatusHelper
         {
             ExpiryStatus.Expired when expiryDate.HasValue => $"过期 {(DateTime.Today - expiryDate.Value.Date).Days} 天",
             ExpiryStatus.Expired => "已过期",
-            ExpiryStatus.Expiring when expiryDate.HasValue => $"还剩 {(expiryDate.Value.Date - DateTime.Today).Days} 天",
+            ExpiryStatus.Expiring when expiryDate.HasValue => $"临期 {(expiryDate.Value.Date - DateTime.Today).Days} 天",
             ExpiryStatus.Expiring => "临期",
-            ExpiryStatus.Safe => "安全",
-            ExpiryStatus.NoExpiry => "无保质期",
             _ => string.Empty
         };
     }
@@ -59,7 +57,7 @@ public static class StatusHelper
             return 0;
 
         var days = (DateTime.Today - purchaseDate.Value.Date).Days;
-        return days > 0 ? days : 0;
+        return days > 0 ? days : 1;
     }
 
     public static decimal CalculateDailyCost(decimal? price, int quantity, DateTime? purchaseDate)

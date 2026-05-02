@@ -51,7 +51,7 @@ public partial class StorageViewModel : ObservableObject
     [RelayCommand]
     private async Task ClearAllDataAsync()
     {
-        var confirm = await Shell.Current.DisplayAlertAsync("清空数据", "将删除所有物品和批次数据，此操作不可恢复！\n\n确定要继续吗？", "清空", "取消");
+        var confirm = await Shell.Current.DisplayAlertAsync("清空数据", "将删除所有物品数据，此操作不可恢复！\n\n确定要继续吗？", "清空", "取消");
         if (!confirm) return;
 
         var secondConfirm = await Shell.Current.DisplayAlertAsync("二次确认", "真的要清空所有数据吗？", "确认清空", "再想想");

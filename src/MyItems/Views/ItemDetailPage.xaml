@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
-    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     x:Class="MyItems.Views.ItemDetailPage"
     x:DataType="viewmodels:ItemDetailViewModel"
     Title="物品详情"
@@ -13,115 +12,124 @@
     <ContentPage.Resources>
         <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
         <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
-        <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
+        <converters:HasValueConverter x:Key="HasValue" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
-        <!-- Item info header -->
-        <Frame
-            Grid.Row="0"
-            Style="{StaticResource CardStyle}"
-            Margin="{StaticResource PagePadding}">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" Text="{Binding ItemName}" Style="{StaticResource HeadlineLabel}" />
-                    <Button Grid.Column="1"
-                            Text="移除"
-                            Style="{StaticResource DangerSoftButton}"
-                            Command="{Binding RemoveItemCommand}" />
+    <ScrollView>
+        <VerticalStackLayout Spacing="{StaticResource SpacingMd}" Padding="{StaticResource PagePadding}">
+
+            <!-- Loading -->
+            <ActivityIndicator
+                IsRunning="{Binding IsLoading}"
+                IsVisible="{Binding IsLoading}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Color="{StaticResource AppPrimaryColor}" />
+
+            <!-- Detail card -->
+            <Frame Style="{StaticResource CardStyle}"
+                   IsVisible="{Binding Item, Converter={StaticResource NotNullOrEmpty}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingSm}">
+
+                    <!-- Row 0: Name + Status badge -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                        <Label Grid.Column="0"
+                               Text="{Binding Item.ItemName}"
+                               Style="{StaticResource HeadlineLabel}"
+                               LineBreakMode="TailTruncation" />
+                        <Frame Grid.Column="1"
+                               Style="{StaticResource StatusBadgeFrame}"
+                               BackgroundColor="{Binding Item.ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                            <Frame.Triggers>
+                                <DataTrigger TargetType="Frame" Binding="{Binding Item.ExpiryStatus}" Value="Expired">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Frame" Binding="{Binding Item.ExpiryStatus}" Value="Safe">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Frame" Binding="{Binding Item.ExpiryStatus}" Value="NoExpiry">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                            </Frame.Triggers>
+                            <Label Text="临期"
+                                   Style="{StaticResource StatusBadgeLabel}"
+                                   TextColor="{Binding Item.ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                        </Frame>
+                    </Grid>
+
+                    <!-- Row 1: Category + Brand -->
+                    <Label Grid.Row="1" Style="{StaticResource BodyLabel}">
+                        <Label.Text>
+                            <MultiBinding StringFormat="{}{0} · {1}">
+                                <Binding Path="Item.CategoryName" />
+                                <Binding Path="Item.Brand" TargetNullValue="" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Row 2: Location -->
+                    <Label Grid.Row="2"
+                           Style="{StaticResource CaptionLabel}"
+                           Text="{Binding Item.Location, StringFormat='存放位置：{0}'}" />
+
+                    <!-- Row 3: CreatedAt label -->
+                    <Label Grid.Row="3"
+                           Style="{StaticResource CaptionLabel}"
+                           Text="{Binding Item.CreatedAtLabel, StringFormat='标识：{0}'}" />
+
+                    <!-- Row 4: Purchase info -->
+                    <BoxView Grid.Row="4" HeightRequest="1" Color="{StaticResource AppBorderColor}" />
+
+                    <Label Grid.Row="5" Style="{StaticResource BodyLabel}">
+                        <Label.Text>
+                            <MultiBinding StringFormat="{}购买日期：{0:yyyy-MM-dd}    价格：¥{1:F1}">
+                                <Binding Path="Item.PurchaseDate" />
+                                <Binding Path="Item.PurchasePrice" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Row 6: Expiry + Quantity -->
+                    <Grid Grid.Row="6" ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Style="{StaticResource BodyLabel}"
+                               Text="{Binding Item.ExpiryDate, StringFormat='保质期：{0:yyyy-MM-dd}'}"
+                               IsVisible="{Binding Item.ExpiryDate, Converter={StaticResource HasValue}}" />
+                        <Label Grid.Column="1"
+                               Style="{StaticResource BodyLabel}"
+                               Text="{Binding Item.Quantity, StringFormat='数量：{0}'}" />
+                    </Grid>
+
+                    <!-- Row 7: Holding + Daily cost -->
+                    <Label Grid.Row="7" Style="{StaticResource CaptionLabel}">
+                        <Label.Text>
+                            <MultiBinding StringFormat="{}{0}    {1}">
+                                <Binding Path="Item.HoldingText" />
+                                <Binding Path="Item.DailyCostText" TargetNullValue="" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Row 8: Notes -->
+                    <Label Grid.Row="8"
+                           Style="{StaticResource CaptionLabel}"
+                           Text="{Binding Item.Notes, StringFormat='备注：{0}'}"
+                           IsVisible="{Binding Item.Notes, FallbackValue=''}" />
+
+                    <!-- Row 9: Actions -->
+                    <HorizontalStackLayout Grid.Row="9"
+                                           Spacing="{StaticResource SpacingSm}"
+                                           HorizontalOptions="End">
+                        <Button Text="编辑"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding EditItemCommand}" />
+                        <Button Text="删除"
+                                Style="{StaticResource DangerSoftButton}"
+                                Command="{Binding DeleteItemCommand}" />
+                    </HorizontalStackLayout>
                 </Grid>
-                <Label Grid.Row="1" Text="{Binding CategoryName}" Style="{StaticResource BodyLabel}" />
-                <Label Grid.Row="2" Style="{StaticResource CaptionLabel}">
-                    <Label.Text>
-                        <MultiBinding StringFormat="{}存放位置：{0}">
-                            <Binding Path="ItemLocation" />
-                        </MultiBinding>
-                    </Label.Text>
-                </Label>
-                <Label Grid.Row="3" Text="{Binding Barcode, StringFormat='条形码：{0}'}"
-                       Style="{StaticResource CaptionLabel}"
-                       IsVisible="{Binding Barcode, Converter={StaticResource NotNullOrEmpty}}" />
-            </Grid>
-        </Frame>
+            </Frame>
 
-        <!-- Add batch button -->
-        <Button
-            Grid.Row="1"
-            Text="+ 快速添加新批次"
-            Style="{StaticResource SecondaryButton}"
-            Command="{Binding AddBatchCommand}"
-            Margin="{StaticResource PagePadding}" />
-
-        <!-- Batch list -->
-        <CollectionView
-            Grid.Row="2"
-            ItemsSource="{Binding Batches}"
-            Margin="{StaticResource PagePadding}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="dtos:BatchDisplayDto">
-                    <Frame Style="{StaticResource ListCardStyle}">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
-
-                            <!-- Row 0: Label + Status -->
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                <Label Grid.Column="0"
-                                       Text="{Binding BatchLabel}"
-                                       Style="{StaticResource SubheadLabel}" />
-                                <Frame Grid.Column="1"
-                                       Style="{StaticResource StatusBadgeFrame}"
-                                       BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
-                                    <Label Text="{Binding ExpiryStatusText}"
-                                           Style="{StaticResource StatusBadgeLabel}"
-                                           TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
-                                </Frame>
-                            </Grid>
-
-                            <!-- Row 1: Price + Location -->
-                            <Label Grid.Row="1" Style="{StaticResource BodyLabel}">
-                                <Label.Text>
-                                    <MultiBinding StringFormat="{}¥{0:F1} · {1} · {2}个">
-                                        <Binding Path="PurchasePrice" />
-                                        <Binding Path="Location" />
-                                        <Binding Path="Quantity" />
-                                    </MultiBinding>
-                                </Label.Text>
-                            </Label>
-
-                            <!-- Row 2: Dates -->
-                            <Label Grid.Row="2"
-                                   Text="{Binding ExpiryDate, StringFormat='保质至 {0:yyyy-MM-dd}'}"
-                                   Style="{StaticResource CaptionLabel}" />
-
-                            <!-- Row 3: Inventory actions -->
-                            <HorizontalStackLayout Grid.Row="3"
-                                                   Spacing="{StaticResource SpacingSm}"
-                                                   HorizontalOptions="End">
-                                <Button Text="编辑"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=EditBatchCommand}"
-                                        CommandParameter="{Binding BatchId}" />
-                                <Button Text="已用完"
-                                        Style="{StaticResource SuccessSoftButton}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=ConsumeBatchCommand}"
-                                        CommandParameter="{Binding}" />
-                                <Button Text="移除"
-                                        Style="{StaticResource DangerSoftButton}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
-                                        CommandParameter="{Binding}" />
-                            </HorizontalStackLayout>
-                        </Grid>
-                    </Frame>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-        <!-- Loading -->
-        <ActivityIndicator
-            Grid.Row="2"
-            IsRunning="{Binding IsLoading}"
-            IsVisible="{Binding IsLoading}"
-            HorizontalOptions="Center"
-            VerticalOptions="Center"
-            Color="{StaticResource AppPrimaryColor}" />
-    </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

@@ -28,7 +28,11 @@ public class SqliteDataService : IDataService
 
             await _db.CreateTableAsync<Category>();
             await _db.CreateTableAsync<Item>();
-            await _db.CreateTableAsync<Batch>();
+
+            // Migration: clear items with null PurchasePrice (from old Batch-based schema)
+            var staleItems = await _db.Table<Item>().Where(i => i.PurchasePrice == null).CountAsync();
+            if (staleItems > 0)
+                await _db.ExecuteAsync("DELETE FROM Items WHERE PurchasePrice IS NULL");
 
             var count = await _db.Table<Category>().CountAsync();
             if (count == 0)
@@ -100,105 +104,93 @@ public class SqliteDataService : IDataService
         return item.Id;
     }
 
-    public async Task<int> ArchiveItemAsync(Guid itemId)
+    public async Task<int> DeleteItemAsync(Guid itemId)
     {
         await EnsureInitializedAsync();
-        var item = await _db.Table<Item>().Where(i => i.Id == itemId && !i.IsArchived).FirstOrDefaultAsync();
+        var item = await _db.Table<Item>().Where(i => i.Id == itemId).FirstOrDefaultAsync();
         if (item is null)
             return 0;
 
-        item.IsArchived = true;
-        item.UpdatedAt = DateTime.Now;
-        return await _db.UpdateAsync(item);
+        return await _db.DeleteAsync(item);
     }
 
     #endregion
 
-    #region Batch
+    #region Core Data Loader
 
-    public async Task<List<Batch>> GetBatchesAsync()
-    {
-        var activeItemIds = (await GetItemsAsync()).Select(i => i.Id).ToHashSet();
-        var allBatches = await _db.Table<Batch>().ToListAsync();
-        return allBatches.Where(b => activeItemIds.Contains(b.ItemId)).ToList();
-    }
-
-    public async Task<int> SaveBatchAsync(Batch batch)
+    private async Task<(List<Item> Items, Dictionary<Guid, Category> CatLookup)> LoadCoreDataAsync()
     {
         await EnsureInitializedAsync();
-        var existing = await _db.Table<Batch>().Where(b => b.Id == batch.Id).FirstOrDefaultAsync();
-        if (existing is not null)
-            return await _db.UpdateAsync(batch);
-        return await _db.InsertAsync(batch);
+
+        var itemsTask = _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
+        var categoriesTask = _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
+
+        await Task.WhenAll(itemsTask, categoriesTask);
+
+        var items = itemsTask.Result;
+        var catLookup = categoriesTask.Result.ToDictionary(c => c.Id);
+
+        return (items, catLookup);
     }
 
-    public async Task<int> DeleteBatchAsync(Guid batchId)
+    private static ItemDisplayDto ToItemDisplayDto(Item item, Category? category)
     {
-        await EnsureInitializedAsync();
-        var batch = await _db.Table<Batch>().Where(b => b.Id == batchId).FirstOrDefaultAsync();
-        if (batch is null)
-            return 0;
+        var expiryStatus = StatusHelper.CalculateExpiryStatus(item.ExpiryDate);
 
-        return await _db.DeleteAsync(batch);
+        return new ItemDisplayDto
+        {
+            ItemId = item.Id,
+            ItemName = item.Name,
+            ItemIcon = item.Icon,
+            Brand = item.Brand,
+            CategoryId = item.CategoryId,
+            CategoryName = category?.Name ?? string.Empty,
+            CategoryIcon = category?.Icon,
+            PurchaseDate = item.PurchaseDate,
+            PurchasePrice = item.PurchasePrice,
+            ExpiryDate = item.ExpiryDate,
+            Location = item.DefaultLocation,
+            Quantity = item.Quantity,
+            Notes = item.Notes,
+            CreatedAt = item.CreatedAt,
+            ExpiryStatus = expiryStatus,
+            ExpiryStatusText = StatusHelper.GetExpiryStatusText(expiryStatus, item.ExpiryDate),
+            HoldingDays = StatusHelper.GetHoldingDays(item.PurchaseDate),
+            DailyCost = StatusHelper.CalculateDailyCost(item.PurchasePrice, item.Quantity, item.PurchaseDate),
+            DailyCostText = item.TrackDailyCost ? StatusHelper.GetDailyCostText(item.PurchasePrice, item.Quantity, item.PurchaseDate) : string.Empty,
+            HoldingText = StatusHelper.GetHoldingText(item.PurchaseDate),
+        };
     }
 
     #endregion
 
     #region DTO Queries
 
-    public async Task<List<BatchDisplayDto>> GetBatchDisplayDtosAsync()
+    public async Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync()
     {
-        var items = await GetItemsAsync();
-        var itemLookup = items.ToDictionary(i => i.Id);
-        var categories = await GetCategoriesAsync();
-        var catLookup = categories.ToDictionary(c => c.Id);
-        var batches = await GetBatchesAsync();
-
-        return batches.Select(b =>
+        var (items, catLookup) = await LoadCoreDataAsync();
+        return items.Select(item =>
         {
-            if (!itemLookup.TryGetValue(b.ItemId, out var item))
-                return null;
-
             catLookup.TryGetValue(item.CategoryId, out var category);
-            var expiryStatus = StatusHelper.CalculateExpiryStatus(b.ExpiryDate);
-
-            return new BatchDisplayDto
-            {
-                BatchId = b.Id,
-                ItemId = item.Id,
-                ItemName = item.Name,
-                ItemIcon = item.Icon,
-                Brand = item.Brand,
-                CategoryName = category?.Name ?? string.Empty,
-                CategoryIcon = category?.Icon,
-                PurchaseDate = b.PurchaseDate,
-                PurchasePrice = b.PurchasePrice,
-                ExpiryDate = b.ExpiryDate,
-                Location = b.Location,
-                Quantity = b.Quantity,
-                Notes = b.Notes,
-                BatchLabel = b.BatchLabel,
-                TrackDailyCost = b.TrackDailyCost,
-                ExpiryStatus = expiryStatus,
-                ExpiryStatusText = StatusHelper.GetExpiryStatusText(expiryStatus, b.ExpiryDate),
-                HoldingDays = StatusHelper.GetHoldingDays(b.PurchaseDate),
-                DailyCost = StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate),
-                DailyCostText = b.TrackDailyCost ? StatusHelper.GetDailyCostText(b.PurchasePrice, b.Quantity, b.PurchaseDate) : string.Empty,
-                HoldingText = StatusHelper.GetHoldingText(b.PurchaseDate),
-            };
-        }).Where(d => d is not null).ToList()!;
+            return ToItemDisplayDto(item, category);
+        }).ToList();
     }
 
     public async Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync()
     {
-        var batches = await GetBatchDisplayDtosAsync();
+        var (items, catLookup) = await LoadCoreDataAsync();
+        var dtos = items.Select(item =>
+        {
+            catLookup.TryGetValue(item.CategoryId, out var category);
+            return ToItemDisplayDto(item, category);
+        }).ToList();
 
         return Enum.GetValues<ExpiryStatus>()
             .Select(status =>
             {
-                var groupBatches = batches
-                    .Where(b => b.ExpiryStatus == status)
-                    .OrderBy(b => b.ExpiryDate)
+                var groupItems = dtos
+                    .Where(d => d.ExpiryStatus == status)
+                    .OrderBy(d => d.ExpiryDate)
                     .ToList();
 
                 return new ExpiryGroupDto
@@ -206,59 +198,19 @@ public class SqliteDataService : IDataService
                     Status = status,
                     Title = StatusHelper.GetGroupTitle(status),
                     StatusIcon = StatusHelper.GetGroupIcon(status),
-                    Batches = groupBatches,
+                    Items = groupItems,
                     IsExpanded = status is ExpiryStatus.Expired or ExpiryStatus.Expiring,
                 };
             })
-            .Where(g => g.Batches.Count > 0)
+            .Where(g => g.Items.Count > 0)
             .ToList();
-    }
-
-    public async Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync()
-    {
-        var items = await GetItemsAsync();
-        var categories = await GetCategoriesAsync();
-        var catLookup = categories.ToDictionary(c => c.Id);
-        var batches = await GetBatchesAsync();
-        var batchesByItem = batches.GroupBy(b => b.ItemId).ToDictionary(g => g.Key, g => g.ToList());
-
-        return items.Select(item =>
-        {
-            catLookup.TryGetValue(item.CategoryId, out var category);
-            batchesByItem.TryGetValue(item.Id, out var itemBatches);
-            itemBatches ??= [];
-
-            var worstStatus = itemBatches
-                .Select(b => StatusHelper.CalculateExpiryStatus(b.ExpiryDate))
-                .DefaultIfEmpty(ExpiryStatus.NoExpiry)
-                .Min();
-
-            var dailyCost = itemBatches.Sum(b => StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate));
-
-            return new ItemDisplayDto
-            {
-                ItemId = item.Id,
-                Name = item.Name,
-                Icon = item.Icon,
-                CategoryId = item.CategoryId,
-                CategoryName = category?.Name ?? string.Empty,
-                CategoryIcon = category?.Icon,
-                Barcode = item.Barcode,
-                Brand = item.Brand,
-                DefaultLocation = item.DefaultLocation,
-                BatchCount = itemBatches.Count,
-                TotalSpent = itemBatches.Sum(b => b.PurchasePrice ?? 0),
-                WorstExpiryStatus = worstStatus,
-                WorstExpiryStatusText = StatusHelper.GetExpiryStatusText(worstStatus, null),
-                DailyCostText = dailyCost > 0 ? $"{dailyCost:F2}/天" : null,
-            };
-        }).ToList();
     }
 
     public async Task<List<CategoryDto>> GetCategoryDtosAsync()
     {
-        var categories = await GetCategoriesAsync();
-        var items = await GetItemsAsync();
+        await EnsureInitializedAsync();
+        var categories = await _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
+        var items = await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
         var itemCounts = items.GroupBy(i => i.CategoryId).ToDictionary(g => g.Key, g => g.Count());
 
         return categories.Select(c => new CategoryDto
@@ -273,20 +225,25 @@ public class SqliteDataService : IDataService
         }).ToList();
     }
 
-    public async Task<(decimal TotalSpent, int TotalBatches, int ValidBatches)> GetStatisticsAsync()
+    public async Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync()
     {
-        var items = await GetItemsAsync();
-        var itemIdSet = items.Select(i => i.Id).ToHashSet();
-        var batches = await GetBatchesAsync();
-        var totalBatches = batches.Count;
+        var (items, _) = await LoadCoreDataAsync();
 
-        var allDisplay = await GetBatchDisplayDtosAsync();
-        var validBatches = allDisplay
-            .Where(b => itemIdSet.Contains(b.ItemId) && b.ExpiryStatus != ExpiryStatus.Expired)
-            .ToList();
+        var totalItems = items.Count;
+        decimal totalSpent = 0;
+        var validCount = 0;
 
-        var totalSpent = validBatches.Sum(b => b.PurchasePrice * b.Quantity ?? 0);
-        return (totalSpent, totalBatches, validBatches.Count);
+        foreach (var item in items)
+        {
+            var status = StatusHelper.CalculateExpiryStatus(item.ExpiryDate);
+            if (status != ExpiryStatus.Expired)
+            {
+                totalSpent += (item.PurchasePrice ?? 0) * item.Quantity;
+                validCount++;
+            }
+        }
+
+        return (totalSpent, totalItems, validCount);
     }
 
     #endregion
@@ -295,17 +252,16 @@ public class SqliteDataService : IDataService
 
     public async Task<string> ExportToExcelAsync()
     {
-        var batches = await GetBatchDisplayDtosAsync();
+        var dtos = await GetItemDisplayDtosAsync();
         var filePath = Path.Combine(FileSystem.CacheDirectory, $"MyItems_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("物品清单");
 
-        // Headers
         ws.Cell(1, 1).Value = "物品名称";
         ws.Cell(1, 2).Value = "品牌";
         ws.Cell(1, 3).Value = "分类";
-        ws.Cell(1, 4).Value = "批次标签";
+        ws.Cell(1, 4).Value = "创建时间";
         ws.Cell(1, 5).Value = "购买日期";
         ws.Cell(1, 6).Value = "购入价格";
         ws.Cell(1, 7).Value = "保质期";
@@ -314,21 +270,20 @@ public class SqliteDataService : IDataService
         ws.Cell(1, 10).Value = "数量";
         ws.Cell(1, 11).Value = "日均成本";
 
-        // Data rows
-        for (var i = 0; i < batches.Count; i++)
+        for (var i = 0; i < dtos.Count; i++)
         {
-            var b = batches[i];
-            ws.Cell(i + 2, 1).Value = b.ItemName;
-            ws.Cell(i + 2, 2).Value = b.Brand ?? string.Empty;
-            ws.Cell(i + 2, 3).Value = b.CategoryName;
-            ws.Cell(i + 2, 4).Value = b.BatchLabel;
-            ws.Cell(i + 2, 5).Value = b.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-            ws.Cell(i + 2, 6).Value = (double)(b.PurchasePrice ?? 0);
-            ws.Cell(i + 2, 7).Value = b.ExpiryDate?.ToString("yyyy-MM-dd") ?? "无";
-            ws.Cell(i + 2, 8).Value = b.ExpiryStatusText;
-            ws.Cell(i + 2, 9).Value = b.Location ?? string.Empty;
-            ws.Cell(i + 2, 10).Value = b.Quantity;
-            ws.Cell(i + 2, 11).Value = b.DailyCostText ?? string.Empty;
+            var d = dtos[i];
+            ws.Cell(i + 2, 1).Value = d.ItemName;
+            ws.Cell(i + 2, 2).Value = d.Brand ?? string.Empty;
+            ws.Cell(i + 2, 3).Value = d.CategoryName;
+            ws.Cell(i + 2, 4).Value = d.CreatedAtLabel;
+            ws.Cell(i + 2, 5).Value = d.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            ws.Cell(i + 2, 6).Value = (double)(d.PurchasePrice ?? 0);
+            ws.Cell(i + 2, 7).Value = d.ExpiryDate?.ToString("yyyy-MM-dd") ?? "无";
+            ws.Cell(i + 2, 8).Value = d.ExpiryStatusText;
+            ws.Cell(i + 2, 9).Value = d.Location ?? string.Empty;
+            ws.Cell(i + 2, 10).Value = d.Quantity;
+            ws.Cell(i + 2, 11).Value = d.DailyCostText ?? string.Empty;
         }
 
         ws.Columns().AdjustToContents();
@@ -368,55 +323,38 @@ public class SqliteDataService : IDataService
         };
 
         var items = new List<Item>();
-        var batches = new List<Batch>();
 
         foreach (var (catId, productNames, icon) in categoryData)
         {
             for (var i = 0; i < productNames.Length; i++)
             {
                 var (name, brand) = productNames[i];
-                var itemId = Guid.NewGuid();
+                var purchaseDaysAgo = random.Next(0, 90);
+                var hasExpiry = random.Next(100) < 70;
+                var trackDailyCost = random.Next(100) < 60;
+                var price = random.Next(3, 500) + random.Next(10, 99) / 100m;
 
                 items.Add(new Item
                 {
-                    Id = itemId,
+                    Id = Guid.NewGuid(),
                     Name = name,
                     CategoryId = catId,
                     Brand = brand,
                     Icon = icon,
                     DefaultLocation = locations[random.Next(locations.Length)],
-                    CreatedAt = DateTime.Now,
+                    PurchaseDate = DateTime.Today.AddDays(-purchaseDaysAgo),
+                    PurchasePrice = price,
+                    ExpiryDate = hasExpiry ? DateTime.Today.AddDays(random.Next(-15, 180)) : null,
+                    Quantity = random.Next(1, 6),
+                    TrackDailyCost = trackDailyCost,
+                    Notes = null,
+                    CreatedAt = DateTime.Now.AddDays(-purchaseDaysAgo).AddHours(random.Next(0, 24)).AddMinutes(random.Next(0, 60)),
                     UpdatedAt = DateTime.Now,
                 });
-
-                // Each item gets 1-3 batches with varied dates
-                var batchCount = random.Next(1, 4);
-                for (var j = 0; j < batchCount; j++)
-                {
-                    var purchaseDaysAgo = random.Next(0, 90);
-                    var hasExpiry = random.Next(100) < 70;
-                    var trackDailyCost = random.Next(100) < 60;
-                    var price = random.Next(3, 500) + random.Next(10, 99) / 100m;
-
-                    batches.Add(new Batch
-                    {
-                        Id = Guid.NewGuid(),
-                        ItemId = itemId,
-                        PurchaseDate = DateTime.Today.AddDays(-purchaseDaysAgo),
-                        PurchasePrice = price,
-                        ExpiryDate = hasExpiry ? DateTime.Today.AddDays(random.Next(-15, 180)) : null,
-                        Location = locations[random.Next(locations.Length)],
-                        Quantity = random.Next(1, 6),
-                        TrackDailyCost = trackDailyCost,
-                        BatchLabel = DateTime.Today.AddDays(-purchaseDaysAgo).ToString("yyyyMMddHHmmss"),
-                        CreatedAt = DateTime.Now,
-                    });
-                }
             }
         }
 
         await _db.InsertAllAsync(items);
-        await _db.InsertAllAsync(batches);
     }
 
     #endregion
@@ -427,7 +365,6 @@ public class SqliteDataService : IDataService
     {
         await EnsureInitializedAsync();
         await _db.DeleteAllAsync<Item>();
-        await _db.DeleteAllAsync<Batch>();
     }
 
     #endregion

@@ -40,7 +40,10 @@ public partial class ItemLibraryViewModel : ObservableObject
     private string validCountText = string.Empty;
 
     [ObservableProperty]
-    private string totalBatchesText = string.Empty;
+    private string totalItemsText = string.Empty;
+
+    [ObservableProperty]
+    private bool isSettingsOpen;
 
     public bool IsEmpty => !IsLoading && Items.Count == 0 && _allItems.Count == 0;
 
@@ -53,6 +56,18 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleSettings()
+    {
+        IsSettingsOpen = !IsSettingsOpen;
+    }
+
+    [RelayCommand]
+    private void CloseSettings()
+    {
+        IsSettingsOpen = false;
+    }
+
+    [RelayCommand]
     private async Task ViewItemDetailAsync(Guid itemId)
     {
         await Shell.Current.GoToAsync($"itemdetail?itemId={itemId}");
@@ -61,18 +76,21 @@ public partial class ItemLibraryViewModel : ObservableObject
     [RelayCommand]
     private async Task GoToCategoryAsync()
     {
+        IsSettingsOpen = false;
         await Shell.Current.GoToAsync("category");
     }
 
     [RelayCommand]
     private async Task GoToStorageAsync()
     {
+        IsSettingsOpen = false;
         await Shell.Current.GoToAsync("storage");
     }
 
     [RelayCommand]
     private async Task GoToAboutAsync()
     {
+        IsSettingsOpen = false;
         await Shell.Current.GoToAsync("AboutPage");
     }
 
@@ -159,8 +177,8 @@ public partial class ItemLibraryViewModel : ObservableObject
     {
         var stats = await _dataService.GetStatisticsAsync();
         TotalSpentText = $"¥{stats.TotalSpent:F1}";
-        ValidCountText = $"{stats.ValidBatches} 件有效";
-        TotalBatchesText = $"共 {stats.TotalBatches} 件";
+        ValidCountText = $"{stats.ValidItems} 件有效";
+        TotalItemsText = $"共 {stats.TotalItems} 件";
 
         var items = (await _dataService.GetItemDisplayDtosAsync()).AsEnumerable();
 
@@ -168,9 +186,9 @@ public partial class ItemLibraryViewModel : ObservableObject
             items = items.Where(i => i.CategoryId == categoryId);
 
         if (!string.IsNullOrWhiteSpace(SearchText))
-            items = items.Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-        _allItems = items.OrderBy(i => i.Name).ToList();
+        _allItems = items.OrderBy(i => i.ItemName).ToList();
         _loadedCount = 0;
         Items.Clear();
 

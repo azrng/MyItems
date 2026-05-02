@@ -5,7 +5,6 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
-    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.CategoryPage"
     x:Name="PageRoot"
     x:DataType="viewmodels:CategoryViewModel"
@@ -128,11 +127,10 @@
                             </VerticalStackLayout>
 
                             <!-- Active toggle -->
-                            <toolkit:SfSwitch Grid.Column="3"
-                                              IsOn="{Binding IsActive}"
-                                              VerticalOptions="Center"
-                                              WidthRequest="44"
-                                              HeightRequest="24" />
+                            <Switch Grid.Column="3"
+                                    IsToggled="{Binding IsActive}"
+                                    VerticalOptions="Center"
+                                    OnColor="{StaticResource AppPrimaryColor}" />
 
                             <!-- Delete button -->
                             <Button Grid.Column="4"
