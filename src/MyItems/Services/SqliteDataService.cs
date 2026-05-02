@@ -122,13 +122,9 @@ public class SqliteDataService : IDataService
     {
         await EnsureInitializedAsync();
 
-        var itemsTask = _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
-        var categoriesTask = _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
-
-        await Task.WhenAll(itemsTask, categoriesTask);
-
-        var items = itemsTask.Result;
-        var catLookup = categoriesTask.Result.ToDictionary(c => c.Id);
+        var items = await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
+        var categories = await _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
+        var catLookup = categories.ToDictionary(c => c.Id);
 
         return (items, catLookup);
     }
@@ -210,8 +206,7 @@ public class SqliteDataService : IDataService
     {
         await EnsureInitializedAsync();
         var categories = await _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
-        var items = await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
-        var itemCounts = items.GroupBy(i => i.CategoryId).ToDictionary(g => g.Key, g => g.Count());
+        var itemCounts = await GetCategoryItemCountsAsync();
 
         return categories.Select(c => new CategoryDto
         {
@@ -223,6 +218,14 @@ public class SqliteDataService : IDataService
             IsActive = c.IsActive,
             ItemCount = itemCounts.GetValueOrDefault(c.Id),
         }).ToList();
+    }
+
+    private async Task<Dictionary<Guid, int>> GetCategoryItemCountsAsync()
+    {
+        var rows = await _db.QueryAsync<CategoryItemCount>(
+            "SELECT CategoryId, COUNT(*) AS Count FROM Items WHERE IsArchived = 0 GROUP BY CategoryId");
+
+        return rows.ToDictionary(r => r.CategoryId, r => r.Count);
     }
 
     public async Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync()
@@ -368,4 +371,11 @@ public class SqliteDataService : IDataService
     }
 
     #endregion
+}
+
+public class CategoryItemCount
+{
+    public Guid CategoryId { get; set; }
+
+    public int Count { get; set; }
 }

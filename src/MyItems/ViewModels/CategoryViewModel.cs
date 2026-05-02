@@ -231,8 +231,16 @@ public partial class CategoryViewModel : ObservableObject
         _isLoadingData = true;
         try
         {
+            var loadTask = _dataService.GetCategoryDtosAsync();
+            var completedTask = await Task.WhenAny(loadTask, Task.Delay(TimeSpan.FromSeconds(5)));
+            if (completedTask != loadTask)
+            {
+                await Shell.Current.DisplayAlertAsync("加载超时", "分类数据加载时间过长，请稍后重试。", "确定");
+                return;
+            }
+
+            var dtos = await loadTask;
             Categories.Clear();
-            var dtos = await _dataService.GetCategoryDtosAsync();
             foreach (var cat in dtos.OrderBy(c => c.SortOrder))
             {
                 cat.PropertyChanged += OnCategoryPropertyChanged;

@@ -14,6 +14,7 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
 
     public ObservableCollection<ItemDisplayDto> Items { get; } = [];
     public ObservableCollection<Category> Categories { get; } = [];
@@ -178,25 +179,35 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var stats = await _dataService.GetStatisticsAsync();
-        TotalSpentText = $"¥{stats.TotalSpent:F1}";
-        ValidCountText = $"{stats.ValidItems} 件有效";
-        TotalItemsText = $"共 {stats.TotalItems} 件";
+        if (!await _loadLock.WaitAsync(0))
+            return;
 
-        var items = (await _dataService.GetItemDisplayDtosAsync()).AsEnumerable();
+        try
+        {
+            var stats = await _dataService.GetStatisticsAsync();
+            TotalSpentText = $"¥{stats.TotalSpent:F1}";
+            ValidCountText = $"{stats.ValidItems} 件有效";
+            TotalItemsText = $"共 {stats.TotalItems} 件";
 
-        if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
-            items = items.Where(i => i.CategoryId == categoryId);
+            var items = (await _dataService.GetItemDisplayDtosAsync()).AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
+                items = items.Where(i => i.CategoryId == categoryId);
 
-        _allItems = items.OrderBy(i => i.ItemName).ToList();
-        _loadedCount = 0;
-        Items.Clear();
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-        AppendPage();
-        IsLoading = false;
+            _allItems = items.OrderBy(i => i.ItemName).ToList();
+            _loadedCount = 0;
+            Items.Clear();
+
+            AppendPage();
+        }
+        finally
+        {
+            IsLoading = false;
+            _loadLock.Release();
+        }
     }
 
     private async Task LoadMoreAsync()
