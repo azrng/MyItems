@@ -135,13 +135,29 @@
                 </Frame>
 
                 <!-- Category filter chips -->
-                <toolkit:SfChipGroup
+                <ScrollView
                     Grid.Row="2"
                     Margin="{StaticResource PagePadding}"
-                    ItemsSource="{Binding Categories}"
-                    SelectedItem="{Binding SelectedCategory}"
-                    DisplayMemberPath="Name"
-                    SelectionType="Single" />
+                    Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never">
+                    <toolkit:SfChipGroup
+                        ItemsSource="{Binding Categories}"
+                        SelectedItem="{Binding SelectedCategory}"
+                        DisplayMemberPath="Name"
+                        ChipType="Choice"
+                        ChoiceMode="Single"
+                        ShowIcon="False"
+                        ItemHeight="36"
+                        ChipCornerRadius="{StaticResource RadiusFull}"
+                        ChipPadding="{StaticResource SpacingSm}"
+                        ChipBackground="{StaticResource AppCardBackgroundColor}"
+                        ChipTextColor="{StaticResource AppTextSecondaryColor}"
+                        ChipStroke="{StaticResource AppBorderStrongColor}"
+                        ChipStrokeThickness="1"
+                        SelectedChipBackground="{StaticResource AppActiveBackgroundColor}"
+                        SelectedChipTextColor="{StaticResource AppPrimaryColor}"
+                        SelectionIndicatorColor="{StaticResource AppPrimaryColor}" />
+                </ScrollView>
 
                 <!-- Item list -->
                 <CollectionView
