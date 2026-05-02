@@ -7,7 +7,6 @@
         android:supportsRtl="true"
         android:label="我的物品">
     </application>
-    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
