@@ -9,6 +9,7 @@ public partial class ExpiryGroupDto : ObservableObject
     public string Title { get; set; } = string.Empty;
     public string StatusIcon { get; set; } = string.Empty;
     public List<BatchDisplayDto> Batches { get; set; } = [];
+    public string HeaderText => $"{Title} ({Batches.Count})";
 
     [ObservableProperty]
     private bool isExpanded;

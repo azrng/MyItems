@@ -5,16 +5,23 @@ namespace MyItems.Converters;
 
 public class ExpiryStatusToTextColorConverter : IValueConverter
 {
+    private static Color? _expired, _expiring, _safe, _noExpiry;
+
+    private static Color GetColor(string key, Color fallback)
+    {
+        return Application.Current?.Resources.TryGetValue(key, out var c) == true ? (Color)c : fallback;
+    }
+
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is ExpiryStatus status)
         {
             return status switch
             {
-                ExpiryStatus.Expired => Application.Current?.Resources.TryGetValue("AppExpiredColor", out var c) == true ? c : Colors.Red,
-                ExpiryStatus.Expiring => Application.Current?.Resources.TryGetValue("AppExpiringColor", out var c) == true ? c : Colors.Orange,
-                ExpiryStatus.Safe => Application.Current?.Resources.TryGetValue("AppSafeColor", out var c) == true ? c : Colors.Green,
-                ExpiryStatus.NoExpiry => Application.Current?.Resources.TryGetValue("AppNoExpiryColor", out var c) == true ? c : Colors.Blue,
+                ExpiryStatus.Expired => _expired ??= GetColor("AppExpiredColor", Colors.Red),
+                ExpiryStatus.Expiring => _expiring ??= GetColor("AppExpiringColor", Colors.Orange),
+                ExpiryStatus.Safe => _safe ??= GetColor("AppSafeColor", Colors.Green),
+                ExpiryStatus.NoExpiry => _noExpiry ??= GetColor("AppNoExpiryColor", Colors.Blue),
                 _ => Colors.Gray
             };
         }
@@ -27,16 +34,23 @@ public class ExpiryStatusToTextColorConverter : IValueConverter
 
 public class ExpiryStatusToBgColorConverter : IValueConverter
 {
+    private static Color? _expired, _expiring, _safe, _noExpiry;
+
+    private static Color GetColor(string key, string fallback)
+    {
+        return Application.Current?.Resources.TryGetValue(key, out var c) == true ? (Color)c : Color.FromArgb(fallback);
+    }
+
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is ExpiryStatus status)
         {
             return status switch
             {
-                ExpiryStatus.Expired => Application.Current?.Resources.TryGetValue("AppExpiredBgColor", out var c) == true ? c : Color.FromArgb("#FFE0E4"),
-                ExpiryStatus.Expiring => Application.Current?.Resources.TryGetValue("AppExpiringBgColor", out var c) == true ? c : Color.FromArgb("#FEEFC8"),
-                ExpiryStatus.Safe => Application.Current?.Resources.TryGetValue("AppSafeBgColor", out var c) == true ? c : Color.FromArgb("#DCFBE6"),
-                ExpiryStatus.NoExpiry => Application.Current?.Resources.TryGetValue("AppNoExpiryBgColor", out var c) == true ? c : Color.FromArgb("#D9EEFF"),
+                ExpiryStatus.Expired => _expired ??= GetColor("AppExpiredBgColor", "#FFE0E4"),
+                ExpiryStatus.Expiring => _expiring ??= GetColor("AppExpiringBgColor", "#FEEFC8"),
+                ExpiryStatus.Safe => _safe ??= GetColor("AppSafeBgColor", "#DCFBE6"),
+                ExpiryStatus.NoExpiry => _noExpiry ??= GetColor("AppNoExpiryBgColor", "#D9EEFF"),
                 _ => Colors.Transparent
             };
         }

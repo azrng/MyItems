@@ -135,13 +135,15 @@ public static class MockDataService
     public static List<BatchDisplayDto> GetBatchDisplayDtos()
     {
         var items = GetMockItems();
+        var itemLookup = items.ToDictionary(i => i.Id);
         var categories = GetPresetCategories();
+        var catLookup = categories.ToDictionary(c => c.Id);
         var batches = GetMockBatches();
 
         return batches.Select(b =>
         {
-            var item = items.First(i => i.Id == b.ItemId);
-            var category = categories.First(c => c.Id == item.CategoryId);
+            var item = itemLookup[b.ItemId];
+            var category = catLookup[item.CategoryId];
             var expiryStatus = StatusHelper.CalculateExpiryStatus(b.ExpiryDate);
 
             return new BatchDisplayDto
@@ -200,12 +202,15 @@ public static class MockDataService
     {
         var items = GetMockItems();
         var categories = GetPresetCategories();
+        var catLookup = categories.ToDictionary(c => c.Id);
         var batches = GetMockBatches();
+        var batchesByItem = batches.GroupBy(b => b.ItemId).ToDictionary(g => g.Key, g => g.ToList());
 
         return items.Select(item =>
         {
-            var category = categories.First(c => c.Id == item.CategoryId);
-            var itemBatches = batches.Where(b => b.ItemId == item.Id).ToList();
+            var category = catLookup[item.CategoryId];
+            batchesByItem.TryGetValue(item.Id, out var itemBatches);
+            itemBatches ??= [];
 
             var worstStatus = itemBatches
                 .Select(b => StatusHelper.CalculateExpiryStatus(b.ExpiryDate))
@@ -238,6 +243,7 @@ public static class MockDataService
     {
         var categories = GetPresetCategories();
         var items = GetMockItems();
+        var itemCounts = items.GroupBy(i => i.CategoryId).ToDictionary(g => g.Key, g => g.Count());
 
         return categories.Select(c => new CategoryDto
         {
@@ -247,7 +253,7 @@ public static class MockDataService
             SortOrder = c.SortOrder,
             IsPreset = c.IsPreset,
             IsActive = c.IsActive,
-            ItemCount = items.Count(i => i.CategoryId == c.Id),
+            ItemCount = itemCounts.GetValueOrDefault(c.Id),
         }).ToList();
     }
 
@@ -257,19 +263,18 @@ public static class MockDataService
 
     public static (decimal TotalSpent, int TotalBatches, int ValidBatches) GetStatistics()
     {
-        var items = GetMockItems().Where(i => !i.IsArchived).ToList();
-        var batches = GetMockBatches().Where(b => items.Any(i => i.Id == b.ItemId)).ToList();
-        var allDisplay = GetBatchDisplayDtos();
+        var items = GetMockItems();
+        var itemIdSet = items.Select(i => i.Id).ToHashSet();
+        var batches = GetMockBatches();
+        var totalBatches = batches.Count;
 
-        var validBatches = allDisplay.Where(b =>
-            items.Any(i => i.Id == b.ItemId) &&
-            b.ExpiryStatus != Enums.ExpiryStatus.Expired).ToList();
+        var allDisplay = GetBatchDisplayDtos();
+        var validBatches = allDisplay
+            .Where(b => itemIdSet.Contains(b.ItemId) && b.ExpiryStatus != Enums.ExpiryStatus.Expired)
+            .ToList();
 
         var totalSpent = validBatches.Sum(b => b.PurchasePrice * b.Quantity ?? 0);
-        var totalBatches = batches.Count;
-        var validCount = validBatches.Count;
-
-        return (totalSpent, totalBatches, validCount);
+        return (totalSpent, totalBatches, validBatches.Count);
     }
 
     #endregion

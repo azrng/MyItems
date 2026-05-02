@@ -57,16 +57,9 @@
                                     VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
-                                    VerticalOptions="Center">
-                                    <Label.FormattedText>
-                                        <FormattedString>
-                                            <Span Text="{Binding Title}" FontAttributes="Bold" />
-                                            <Span Text=" (" ForegroundColor="{StaticResource AppTextMutedColor}" />
-                                            <Span Text="{Binding Batches.Count}" ForegroundColor="{StaticResource AppTextMutedColor}" />
-                                            <Span Text=")" ForegroundColor="{StaticResource AppTextMutedColor}" />
-                                        </FormattedString>
-                                    </Label.FormattedText>
-                                </Label>
+                                    Text="{Binding HeaderText}"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="2"
                                     TextColor="{StaticResource AppPrimaryColor}"

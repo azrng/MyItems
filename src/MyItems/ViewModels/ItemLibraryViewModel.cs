@@ -9,7 +9,7 @@ namespace MyItems.ViewModels;
 
 public partial class ItemLibraryViewModel : ObservableObject
 {
-    public ObservableCollection<ItemDisplayDto> Items { get; } = [];
+    public ObservableCollection<ItemDisplayDto> Items { get; private set; } = [];
     public ObservableCollection<Category> Categories { get; } = [];
 
     [ObservableProperty]
@@ -29,6 +29,8 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private string totalBatchesText = string.Empty;
+
+    private CancellationTokenSource? _searchCts;
 
     public ItemLibraryViewModel()
     {
@@ -59,7 +61,6 @@ public partial class ItemLibraryViewModel : ObservableObject
     {
         IsLoading = true;
         LoadData();
-        IsLoading = false;
     }
 
     partial void OnSelectedCategoryChanged(Category value)
@@ -69,7 +70,19 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value)
     {
-        LoadData();
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        _ = DebounceSearchAsync(_searchCts.Token);
+    }
+
+    private async Task DebounceSearchAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(300, ct);
+            LoadData();
+        }
+        catch (TaskCanceledException) { }
     }
 
     private void LoadCategories()
@@ -96,10 +109,8 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(SearchText))
             items = items.Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-        Items.Clear();
-        foreach (var item in items.OrderBy(i => i.Name))
-            Items.Add(item);
-
+        Items = new ObservableCollection<ItemDisplayDto>(items.OrderBy(i => i.Name));
+        OnPropertyChanged(nameof(Items));
         IsLoading = false;
     }
 }

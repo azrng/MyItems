@@ -54,16 +54,8 @@
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="{Binding Name}" Style="{StaticResource SubheadLabel}" />
                                 <HorizontalStackLayout Spacing="4">
-                                    <Label Style="{StaticResource CaptionLabel}">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="True">
-                                                <Setter Property="Text" Value="预置" />
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="False">
-                                                <Setter Property="Text" Value="{Binding ItemCount, StringFormat='{}{0} 个物品'}" />
-                                            </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
+                                    <Label Text="{Binding SubtitleText}"
+                                           Style="{StaticResource CaptionLabel}" />
                                     <Label Text="{Binding SortOrder, StringFormat='排序 {0}'}"
                                            Style="{StaticResource CaptionLabel}"
                                            TextColor="{StaticResource AppTextMutedColor}" />

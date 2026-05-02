@@ -9,13 +9,15 @@ namespace MyItems.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    public ObservableCollection<ExpiryGroupDto> ExpiryGroups { get; } = [];
+    public ObservableCollection<ExpiryGroupDto> ExpiryGroups { get; private set; } = [];
 
     [ObservableProperty]
     private bool isLoading = true;
 
     [ObservableProperty]
     private string searchText = string.Empty;
+
+    private CancellationTokenSource? _searchCts;
 
     public MainViewModel()
     {
@@ -27,7 +29,6 @@ public partial class MainViewModel : ObservableObject
     {
         IsLoading = true;
         LoadData();
-        IsLoading = false;
     }
 
     [RelayCommand]
@@ -50,7 +51,19 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value)
     {
-        LoadData();
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        _ = DebounceSearchAsync(_searchCts.Token);
+    }
+
+    private async Task DebounceSearchAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(300, ct);
+            LoadData();
+        }
+        catch (TaskCanceledException) { }
     }
 
     private void LoadData()
@@ -72,10 +85,8 @@ public partial class MainViewModel : ObservableObject
             }).Where(g => g.Batches.Count > 0).ToList();
         }
 
-        ExpiryGroups.Clear();
-        foreach (var group in groups)
-            ExpiryGroups.Add(group);
-
+        ExpiryGroups = new ObservableCollection<ExpiryGroupDto>(groups);
+        OnPropertyChanged(nameof(ExpiryGroups));
         IsLoading = false;
     }
 }

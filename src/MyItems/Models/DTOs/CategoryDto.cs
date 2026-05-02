@@ -9,4 +9,5 @@ public class CategoryDto
     public bool IsPreset { get; set; }
     public bool IsActive { get; set; } = true;
     public int ItemCount { get; set; }
+    public string SubtitleText => IsPreset ? "预置" : $"{ItemCount} 个物品";
 }
