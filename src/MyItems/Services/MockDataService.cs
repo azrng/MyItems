@@ -7,9 +7,15 @@ namespace MyItems.Services;
 
 public static class MockDataService
 {
+    private static readonly List<Category> PresetCategories = CreatePresetCategories();
+    private static readonly List<Item> Items = CreateMockItems();
+    private static readonly List<Batch> Batches = CreateMockBatches();
+
     #region Preset Categories
 
-    public static List<Category> GetPresetCategories() =>
+    public static List<Category> GetPresetCategories() => PresetCategories.ToList();
+
+    private static List<Category> CreatePresetCategories() =>
     [
         new() { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Name = "食品/饮料", Icon = "\U0001F354", SortOrder = 1, IsPreset = true },
         new() { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Name = "化妆品/护肤品", Icon = "\U0001F484", SortOrder = 2, IsPreset = true },
@@ -23,7 +29,9 @@ public static class MockDataService
 
     #region Mock Items + Batches
 
-    public static List<Item> GetMockItems() =>
+    public static List<Item> GetMockItems() => Items.Where(i => !i.IsArchived).ToList();
+
+    private static List<Item> CreateMockItems() =>
     [
         new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000001"), Name = "纯牛奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", Brand = "蒙牛", DefaultLocation = "冰箱上层" },
         new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000002"), Name = "酸奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", Brand = "伊利", DefaultLocation = "冰箱上层" },
@@ -34,7 +42,13 @@ public static class MockDataService
         new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000007"), Name = "面霜", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002"), Icon = "\U0001F9F4", Brand = "科颜氏", DefaultLocation = "卫生间" },
     ];
 
-    public static List<Batch> GetMockBatches() =>
+    public static List<Batch> GetMockBatches()
+    {
+        var activeItemIds = GetMockItems().Select(i => i.Id).ToHashSet();
+        return Batches.Where(b => activeItemIds.Contains(b.ItemId)).ToList();
+    }
+
+    private static List<Batch> CreateMockBatches() =>
     [
         // 已过期
         new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000001"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000001"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 15.5m, ExpiryDate = DateTime.Today.AddDays(-3), Location = "冰箱上层", Quantity = 2, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
@@ -52,6 +66,67 @@ public static class MockDataService
         // 无保质期
         new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000008"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000005"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 2999.0m, Location = "书桌", Quantity = 1, TrackDailyCost = false, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
     ];
+
+    #endregion
+
+    #region Mutations
+
+    public static Guid AddItem(AddItemDto dto)
+    {
+        var category = PresetCategories.FirstOrDefault(c => c.Id == dto.CategoryId);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            Name = dto.Name.Trim(),
+            CategoryId = dto.CategoryId,
+            Barcode = dto.Barcode,
+            Brand = dto.Brand,
+            Icon = category?.Icon ?? "\U0001F4E6",
+            DefaultLocation = dto.DefaultLocation,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+        };
+
+        Items.Add(item);
+        Batches.Add(new Batch
+        {
+            Id = Guid.NewGuid(),
+            ItemId = item.Id,
+            PurchaseDate = dto.PurchaseDate,
+            PurchasePrice = dto.PurchasePrice,
+            ExpiryDate = dto.NoExpiry ? null : dto.ExpiryDate,
+            Location = dto.Location,
+            Quantity = Math.Max(1, dto.Quantity),
+            TrackDailyCost = dto.TrackDailyCost,
+            Notes = dto.Notes,
+            BatchLabel = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            CreatedAt = DateTime.Now,
+        });
+
+        return item.Id;
+    }
+
+    public static bool MarkBatchConsumed(Guid batchId) => RemoveBatch(batchId);
+
+    public static bool RemoveBatch(Guid batchId)
+    {
+        var batch = Batches.FirstOrDefault(b => b.Id == batchId);
+        if (batch is null)
+            return false;
+
+        return Batches.Remove(batch);
+    }
+
+    public static bool ArchiveItem(Guid itemId)
+    {
+        var item = Items.FirstOrDefault(i => i.Id == itemId && !i.IsArchived);
+        if (item is null)
+            return false;
+
+        item.IsArchived = true;
+        item.UpdatedAt = DateTime.Now;
+        return true;
+    }
 
     #endregion
 

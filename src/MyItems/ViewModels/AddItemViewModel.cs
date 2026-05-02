@@ -79,7 +79,7 @@ public partial class AddItemViewModel : ObservableObject
         // Phase 1: mock save — Phase 2 will implement real persistence
         await Task.Delay(500);
 
-        var dto = new AddItemDto
+        MockDataService.AddItem(new AddItemDto
         {
             Name = ItemName,
             CategoryId = SelectedCategory.Id,
@@ -94,7 +94,7 @@ public partial class AddItemViewModel : ObservableObject
             Location = Location,
             Quantity = Quantity,
             Notes = Notes,
-        };
+        });
 
         IsSaving = false;
 

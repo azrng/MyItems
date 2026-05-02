@@ -53,11 +53,37 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private async Task DeleteBatchAsync(BatchDisplayDto batch)
     {
-        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除批次「{batch.BatchLabel}」吗？", "删除", "取消");
-        if (confirm)
-        {
+        var confirm = await Shell.Current.DisplayAlertAsync("确认移除", $"确定要移除批次「{batch.BatchLabel}」吗？此操作会从当前库存中删除该批次。", "移除", "取消");
+        if (!confirm)
+            return;
+
+        if (MockDataService.RemoveBatch(batch.BatchId))
             Batches.Remove(batch);
-        }
+    }
+
+    [RelayCommand]
+    private async Task ConsumeBatchAsync(BatchDisplayDto batch)
+    {
+        var confirm = await Shell.Current.DisplayAlertAsync("确认已用完", $"确定将「{batch.ItemName}」的批次「{batch.BatchLabel}」标记为已用完吗？", "已用完", "取消");
+        if (!confirm)
+            return;
+
+        if (MockDataService.MarkBatchConsumed(batch.BatchId))
+            Batches.Remove(batch);
+    }
+
+    [RelayCommand]
+    private async Task RemoveItemAsync()
+    {
+        if (Item is null)
+            return;
+
+        var confirm = await Shell.Current.DisplayAlertAsync("确认移除物品", $"确定要移除「{ItemName}」吗？该物品会从首页和物品库中隐藏。", "移除", "取消");
+        if (!confirm)
+            return;
+
+        if (MockDataService.ArchiveItem(Item.ItemId))
+            await Shell.Current.GoToAsync("..");
     }
 
     private void LoadItem(Guid itemId)

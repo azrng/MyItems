@@ -21,7 +21,7 @@
         <!-- Search bar + Add button -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto"
               Margin="{StaticResource PagePadding}"
-              ColumnSpacing="8">
+              ColumnSpacing="{StaticResource SpacingSm}">
             <SearchBar
                 Grid.Column="0"
                 Placeholder="搜索物品..."
@@ -30,9 +30,8 @@
             <Button
                 Grid.Column="1"
                 Text="＋"
-                Style="{StaticResource PrimaryButton}"
+                Style="{StaticResource IconButton}"
                 Command="{Binding GoToAddCommand}"
-                WidthRequest="80"
                 VerticalOptions="Center" />
         </Grid>
 
@@ -99,7 +98,7 @@
                                 </BindableLayout.ItemsSource>
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:BatchDisplayDto">
-                                        <Frame Style="{StaticResource CardStyle}">
+                                        <Frame Style="{StaticResource ListCardStyle}">
                                             <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                                                 <!-- Row 0: Name + status badge -->

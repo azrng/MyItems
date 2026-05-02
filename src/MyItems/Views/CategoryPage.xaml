@@ -18,16 +18,16 @@
         <!-- Add category -->
         <Grid
             Grid.Row="0"
-            ColumnDefinitions="Auto,*,Auto"
+            ColumnDefinitions="*,Auto"
             Padding="{StaticResource PagePadding}"
             ColumnSpacing="{StaticResource SpacingSm}">
             <Entry
-                Grid.Column="1"
+                Grid.Column="0"
                 Text="{Binding NewCategoryName}"
                 Placeholder="新分类名称"
                 Style="{StaticResource EntryStyle}" />
             <Button
-                Grid.Column="2"
+                Grid.Column="1"
                 Text="新增"
                 Style="{StaticResource PrimaryButton}"
                 Command="{Binding AddCategoryCommand}"
@@ -41,7 +41,7 @@
             Margin="{StaticResource PagePadding}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:CategoryDto">
-                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                    <Frame Style="{StaticResource ListCardStyle}">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
 
                             <Label Grid.Column="0"
@@ -67,18 +67,14 @@
                             <!-- Edit / Delete buttons for custom categories -->
                             <Button Grid.Column="2"
                                     Text="编辑"
+                                    Style="{StaticResource SecondaryButton}"
+                                    WidthRequest="64"
                                     FontSize="{StaticResource FontSizeCaption}"
-                                    HeightRequest="36"
-                                    CornerRadius="{StaticResource RadiusSm}"
                                     IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}" />
 
                             <Button Grid.Column="3"
                                     Text="删除"
-                                    FontSize="{StaticResource FontSizeCaption}"
-                                    HeightRequest="36"
-                                    CornerRadius="{StaticResource RadiusSm}"
-                                    BackgroundColor="{StaticResource AppErrorBgColor}"
-                                    TextColor="{StaticResource AppErrorColor}"
+                                    Style="{StaticResource DangerSoftButton}"
                                     IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=DeleteCategoryCommand}"
                                     CommandParameter="{Binding}" />

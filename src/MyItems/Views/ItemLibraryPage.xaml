@@ -54,7 +54,7 @@
         </toolkit:SfNavigationDrawer.DrawerSettings>
 
         <toolkit:SfNavigationDrawer.ContentView>
-            <Grid RowDefinitions="Auto,Auto,Auto,*">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
 
                 <!-- Title bar + hamburger -->
                 <Grid Grid.Row="0"
@@ -66,18 +66,21 @@
                            VerticalOptions="Center" />
                     <Button Grid.Column="1"
                             Text="☰"
-                            FontSize="22"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource AppTextColor}"
+                            Style="{StaticResource IconButton}"
                             Clicked="OnSettingsClicked"
-                            WidthRequest="48"
-                            HeightRequest="48"
                             Padding="0" />
                 </Grid>
 
+                <SearchBar
+                    Grid.Row="1"
+                    Margin="{StaticResource PagePadding}"
+                    Placeholder="搜索物品..."
+                    Text="{Binding SearchText}"
+                    SearchCommand="{Binding RefreshCommand}" />
+
                 <!-- Statistics summary -->
                 <Frame
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Style="{StaticResource CardStyle}"
                     Margin="16,0"
                     Padding="16,12">
@@ -119,7 +122,7 @@
 
                 <!-- Category filter chips -->
                 <toolkit:SfChipGroup
-                    Grid.Row="2"
+                    Grid.Row="3"
                     Margin="{StaticResource PagePadding}"
                     ItemsSource="{Binding Categories}"
                     SelectedItem="{Binding SelectedCategory}"
@@ -128,13 +131,13 @@
 
                 <!-- Item list -->
                 <CollectionView
-                    Grid.Row="3"
+                    Grid.Row="4"
                     ItemsSource="{Binding Items}"
                     Margin="{StaticResource PagePadding}"
                     ItemSizingStrategy="MeasureFirstItem">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                            <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                            <Frame Style="{StaticResource ListCardStyle}">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
 
                                     <!-- Row 0: Icon + Name -->
@@ -181,7 +184,7 @@
 
                 <!-- Loading -->
                 <ActivityIndicator
-                    Grid.Row="3"
+                    Grid.Row="4"
                     IsRunning="{Binding IsLoading}"
                     IsVisible="{Binding IsLoading}"
                     HorizontalOptions="Center"

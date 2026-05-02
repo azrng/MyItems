@@ -14,4 +14,12 @@ public partial class ItemLibraryPage : ContentPage
     {
         Drawer.ToggleDrawer();
     }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is ItemLibraryViewModel viewModel)
+            viewModel.RefreshCommand.Execute(null);
+    }
 }

@@ -5,7 +5,14 @@
     xmlns:views="clr-namespace:MyItems.Views"
     x:Class="MyItems.AppShell"
     Title="我的物品"
-    FlyoutBehavior="Disabled">
+    FlyoutBehavior="Disabled"
+    BackgroundColor="{StaticResource AppGray800Color}"
+    ForegroundColor="{StaticResource AppTextInverseColor}"
+    TitleColor="{StaticResource AppTextInverseColor}"
+    TabBarBackgroundColor="{StaticResource AppCardBackgroundColor}"
+    TabBarForegroundColor="{StaticResource AppTextMutedColor}"
+    TabBarTitleColor="{StaticResource AppTextColor}"
+    TabBarUnselectedColor="{StaticResource AppTextDisabledColor}">
 
     <TabBar>
         <Tab Title="主页">

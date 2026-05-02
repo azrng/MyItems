@@ -20,7 +20,12 @@
         <Setter Property="BorderColor" Value="{StaticResource AppBorderColor}" />
         <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
         <Setter Property="Padding" Value="{StaticResource CardPadding}" />
-        <Setter Property="HasShadow" Value="True" />
+        <Setter Property="HasShadow" Value="False" />
+    </Style>
+
+    <Style x:Key="ListCardStyle" TargetType="Frame" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Margin" Value="0,0,0,12" />
+        <Setter Property="Padding" Value="14" />
     </Style>
 
     <!-- Typography -->
@@ -62,6 +67,17 @@
         <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
+    <Style x:Key="IconButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppActiveBackgroundColor}" />
+        <Setter Property="TextColor" Value="{StaticResource AppPrimaryColor}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="WidthRequest" Value="{StaticResource TouchTargetMinHeight}" />
+        <Setter Property="HeightRequest" Value="{StaticResource TouchTargetMinHeight}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
     <Style x:Key="SecondaryButton" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource AppSurfaceColor}" />
         <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
@@ -78,6 +94,26 @@
         <Setter Property="HeightRequest" Value="{StaticResource ButtonHeight}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
+    </Style>
+
+    <Style x:Key="DangerSoftButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppErrorBgColor}" />
+        <Setter Property="TextColor" Value="{StaticResource AppErrorColor}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+        <Setter Property="Padding" Value="12,0" />
+    </Style>
+
+    <Style x:Key="SuccessSoftButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppSuccessBgColor}" />
+        <Setter Property="TextColor" Value="{StaticResource AppSuccessColor}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+        <Setter Property="Padding" Value="12,0" />
     </Style>
 
     <!-- Input -->

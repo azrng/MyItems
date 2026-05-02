@@ -90,8 +90,8 @@ public partial class ItemLibraryViewModel : ObservableObject
 
         var items = MockDataService.GetItemDisplayDtos().AsEnumerable();
 
-        if (SelectedCategory?.Id != Guid.Empty)
-            items = items.Where(i => i.CategoryId == SelectedCategory.Id);
+        if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
+            items = items.Where(i => i.CategoryId == categoryId);
 
         if (!string.IsNullOrWhiteSpace(SearchText))
             items = items.Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));

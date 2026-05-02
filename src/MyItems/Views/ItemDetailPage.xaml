@@ -23,7 +23,13 @@
             Style="{StaticResource CardStyle}"
             Margin="{StaticResource PagePadding}">
             <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
-                <Label Grid.Row="0" Text="{Binding ItemName}" Style="{StaticResource HeadlineLabel}" />
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="{Binding ItemName}" Style="{StaticResource HeadlineLabel}" />
+                    <Button Grid.Column="1"
+                            Text="移除"
+                            Style="{StaticResource DangerSoftButton}"
+                            Command="{Binding RemoveItemCommand}" />
+                </Grid>
                 <Label Grid.Row="1" Text="{Binding CategoryName}" Style="{StaticResource BodyLabel}" />
                 <Label Grid.Row="2" Style="{StaticResource CaptionLabel}">
                     <Label.Text>
@@ -53,7 +59,7 @@
             Margin="{StaticResource PagePadding}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:BatchDisplayDto">
-                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                    <Frame Style="{StaticResource ListCardStyle}">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                             <!-- Row 0: Label + Status -->
@@ -86,17 +92,19 @@
                                    Text="{Binding ExpiryDate, StringFormat='保质至 {0:yyyy-MM-dd}'}"
                                    Style="{StaticResource CaptionLabel}" />
 
-                            <!-- Row 3: Delete -->
-                            <Button Grid.Row="3"
-                                    Text="删除"
-                                    FontSize="{StaticResource FontSizeCaption}"
-                                    HeightRequest="32"
-                                    CornerRadius="{StaticResource RadiusSm}"
-                                    BackgroundColor="{StaticResource AppErrorBgColor}"
-                                    TextColor="{StaticResource AppErrorColor}"
-                                    HorizontalOptions="End"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
-                                    CommandParameter="{Binding}" />
+                            <!-- Row 3: Inventory actions -->
+                            <HorizontalStackLayout Grid.Row="3"
+                                                   Spacing="{StaticResource SpacingSm}"
+                                                   HorizontalOptions="End">
+                                <Button Text="已用完"
+                                        Style="{StaticResource SuccessSoftButton}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=ConsumeBatchCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Text="移除"
+                                        Style="{StaticResource DangerSoftButton}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
+                                        CommandParameter="{Binding}" />
+                            </HorizontalStackLayout>
                         </Grid>
                     </Frame>
                 </DataTemplate>
