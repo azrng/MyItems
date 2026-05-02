@@ -12,6 +12,27 @@
     Title="物品库"
     Style="{StaticResource PageStyle}">
 
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="Auto,*"
+              ColumnSpacing="{StaticResource SpacingMd}"
+              HorizontalOptions="Fill"
+              VerticalOptions="Center">
+            <Button
+                Grid.Column="0"
+                Text="☰"
+                Style="{StaticResource IconButton}"
+                Clicked="OnSettingsClicked"
+                Padding="0" />
+            <Label
+                Grid.Column="1"
+                Text="物品库"
+                FontSize="{StaticResource FontSizeTitle}"
+                FontAttributes="Bold"
+                TextColor="{StaticResource AppTextInverseColor}"
+                VerticalOptions="Center" />
+        </Grid>
+    </Shell.TitleView>
+
     <toolkit:SfNavigationDrawer x:Name="Drawer"
                                  DrawerPosition="Right"
                                  DrawerWidth="280">
@@ -40,6 +61,14 @@
                                     Command="{Binding GoToCategoryCommand}" />
                             </Label.GestureRecognizers>
                         </Label>
+                        <Label Text="📊 导出 Excel"
+                               FontSize="18"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding ExportExcelCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
                         <Label Text="ℹ 关于"
                                FontSize="18"
                                VerticalOptions="Center">
@@ -54,21 +83,10 @@
         </toolkit:SfNavigationDrawer.DrawerSettings>
 
         <toolkit:SfNavigationDrawer.ContentView>
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
-
-                <!-- Settings entry -->
-                <Grid Grid.Row="0"
-                      Padding="{StaticResource PagePadding}">
-                    <Button
-                        Text="☰"
-                        Style="{StaticResource IconButton}"
-                        Clicked="OnSettingsClicked"
-                        HorizontalOptions="Start"
-                        Padding="0" />
-                </Grid>
+            <Grid RowDefinitions="Auto,Auto,Auto,*">
 
                 <SearchBar
-                    Grid.Row="1"
+                    Grid.Row="0"
                     Margin="{StaticResource PagePadding}"
                     Placeholder="搜索物品..."
                     Text="{Binding SearchText}"
@@ -76,7 +94,7 @@
 
                 <!-- Statistics summary -->
                 <Frame
-                    Grid.Row="2"
+                    Grid.Row="1"
                     Style="{StaticResource CardStyle}"
                     Margin="16,0"
                     Padding="16,12">
@@ -118,7 +136,7 @@
 
                 <!-- Category filter chips -->
                 <toolkit:SfChipGroup
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Margin="{StaticResource PagePadding}"
                     ItemsSource="{Binding Categories}"
                     SelectedItem="{Binding SelectedCategory}"
@@ -127,7 +145,7 @@
 
                 <!-- Item list -->
                 <CollectionView
-                    Grid.Row="4"
+                    Grid.Row="3"
                     ItemsSource="{Binding Items}"
                     Margin="{StaticResource PagePadding}"
                     ItemSizingStrategy="MeasureFirstItem">
@@ -180,7 +198,7 @@
 
                 <!-- Loading -->
                 <ActivityIndicator
-                    Grid.Row="4"
+                    Grid.Row="3"
                     IsRunning="{Binding IsLoading}"
                     IsVisible="{Binding IsLoading}"
                     HorizontalOptions="Center"
