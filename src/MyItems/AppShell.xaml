@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:MyItems.Views"
+    x:Class="MyItems.AppShell"
+    Title="我的物品">
+
+    <TabBar>
+        <Tab Title="主页">
+            <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
+        </Tab>
+        <Tab Title="物品库">
+            <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />
+        </Tab>
+        <Tab Title="添加">
+            <ShellContent ContentTemplate="{DataTemplate views:AddItemPage}" />
+        </Tab>
+        <Tab Title="分类">
+            <ShellContent ContentTemplate="{DataTemplate views:CategoryPage}" />
+        </Tab>
+    </TabBar>
+
+    <ShellContent
+        Route="itemdetail"
+        ContentTemplate="{DataTemplate views:ItemDetailPage}" />
+
+</Shell>

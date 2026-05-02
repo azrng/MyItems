@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    x:Class="MyItems.Views.ItemDetailPage"
+    x:DataType="viewmodels:ItemDetailViewModel"
+    Title="物品详情"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
+        <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
+        <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Item info header -->
+        <Frame
+            Grid.Row="0"
+            Style="{StaticResource CardStyle}"
+            Margin="{StaticResource PagePadding}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                <Label Grid.Row="0" Text="{Binding ItemName}" Style="{StaticResource HeadlineLabel}" />
+                <Label Grid.Row="1" Text="{Binding CategoryName}" Style="{StaticResource BodyLabel}" />
+                <Label Grid.Row="2" Style="{StaticResource CaptionLabel}">
+                    <Label.Text>
+                        <MultiBinding StringFormat="{}存放位置：{0}">
+                            <Binding Path="ItemLocation" />
+                        </MultiBinding>
+                    </Label.Text>
+                </Label>
+                <Label Grid.Row="3" Text="{Binding Barcode, StringFormat='条形码：{0}'}"
+                       Style="{StaticResource CaptionLabel}"
+                       IsVisible="{Binding Barcode, Converter={StaticResource NotNullOrEmpty}}" />
+            </Grid>
+        </Frame>
+
+        <!-- Add batch button -->
+        <Button
+            Grid.Row="1"
+            Text="+ 快速添加新批次"
+            Style="{StaticResource SecondaryButton}"
+            Command="{Binding AddBatchCommand}"
+            Margin="{StaticResource PagePadding}" />
+
+        <!-- Batch list -->
+        <CollectionView
+            Grid.Row="2"
+            ItemsSource="{Binding Batches}"
+            Margin="{StaticResource PagePadding}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,{StaticResource SpacingSm}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+
+                            <!-- Row 0: Label + Status -->
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="{Binding BatchLabel}"
+                                       Style="{StaticResource SubheadLabel}" />
+                                <Frame Grid.Column="1"
+                                       Style="{StaticResource StatusBadgeFrame}"
+                                       BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                    <Label Text="{Binding ExpiryStatusText}"
+                                           Style="{StaticResource StatusBadgeLabel}"
+                                           TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                </Frame>
+                            </Grid>
+
+                            <!-- Row 1: Price + Location -->
+                            <Label Grid.Row="1" Style="{StaticResource BodyLabel}">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}¥{0:F1} · {1} · {2}个">
+                                        <Binding Path="PurchasePrice" />
+                                        <Binding Path="Location" />
+                                        <Binding Path="Quantity" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+
+                            <!-- Row 2: Dates -->
+                            <Label Grid.Row="2"
+                                   Text="{Binding ExpiryDate, StringFormat='保质至 {0:yyyy-MM-dd}'}"
+                                   Style="{StaticResource CaptionLabel}" />
+
+                            <!-- Row 3: Warranty + Delete -->
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="{Binding WarrantyStatusText}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       TextColor="{StaticResource AppSecondaryColor}" />
+                                <Button Grid.Column="1"
+                                        Text="删除"
+                                        FontSize="{StaticResource FontSizeCaption}"
+                                        HeightRequest="32"
+                                        CornerRadius="{StaticResource RadiusSm}"
+                                        BackgroundColor="{StaticResource AppErrorBgColor}"
+                                        TextColor="{StaticResource AppErrorColor}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading -->
+        <ActivityIndicator
+            Grid.Row="2"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+    </Grid>
+</ContentPage>

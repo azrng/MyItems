@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    xmlns:models="clr-namespace:MyItems.Models"
+    x:Class="MyItems.Views.ItemLibraryPage"
+    x:DataType="viewmodels:ItemLibraryViewModel"
+    Title="物品库"
+    Style="{StaticResource PageStyle}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Search -->
+        <SearchBar
+            Grid.Row="0"
+            Placeholder="搜索物品..."
+            Text="{Binding SearchText}"
+            Margin="{StaticResource PagePadding}" />
+
+        <!-- Category filter chips -->
+        <ScrollView
+            Grid.Row="1"
+            Orientation="Horizontal"
+            Margin="{StaticResource PagePadding}">
+            <HorizontalStackLayout Spacing="{StaticResource SpacingSm}" BindableLayout.ItemsSource="{Binding Categories}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Button
+                            Text="{Binding Name, FallbackValue='全部'}"
+                            HeightRequest="36"
+                            CornerRadius="18"
+                            Padding="12,0"
+                            FontSize="12"
+                            Clicked="OnCategoryClicked" />
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <!-- Item list -->
+        <CollectionView
+            Grid.Row="2"
+            ItemsSource="{Binding Items}"
+            Margin="{StaticResource PagePadding}"
+            ItemSizingStrategy="MeasureFirstItem">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dtos:ItemDisplayDto">
+                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
+
+                            <!-- Row 0: Icon + Name -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       Margin="0,0,8,0" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       Style="{StaticResource TitleLabel}"
+                                       LineBreakMode="TailTruncation" />
+                            </Grid>
+
+                            <!-- Row 1: batch info -->
+                            <Label Grid.Row="1" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}{0} 个批次 · {1} · ¥{2:F0}">
+                                        <Binding Path="BatchCount" />
+                                        <Binding Path="WorstExpiryStatusText" />
+                                        <Binding Path="TotalSpent" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                        </Grid>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
+                                CommandParameter="{Binding ItemId}" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading -->
+        <ActivityIndicator
+            Grid.Row="2"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+    </Grid>
+</ContentPage>

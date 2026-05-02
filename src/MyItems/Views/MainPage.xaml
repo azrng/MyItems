@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    x:Class="MyItems.Views.MainPage"
+    x:DataType="viewmodels:MainViewModel"
+    Title="我的物品"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
+        <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
+        <converters:InvertedBoolConverter x:Key="InvertedBool" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Search bar -->
+        <SearchBar
+            Grid.Row="0"
+            Placeholder="搜索物品..."
+            Text="{Binding SearchText}"
+            SearchCommand="{Binding SearchCommand}"
+            Margin="{StaticResource PagePadding}" />
+
+        <!-- Grouped content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                BindableLayout.ItemsSource="{Binding ExpiryGroups}"
+                Spacing="{StaticResource SpacingMd}"
+                Padding="{StaticResource PagePadding}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="dtos:ExpiryGroupDto">
+                        <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
+
+                            <!-- Group header -->
+                            <Grid
+                                ColumnDefinitions="Auto,*,Auto"
+                                HeightRequest="{StaticResource TouchTargetMinHeight}"
+                                Padding="0,{StaticResource SpacingXs}">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="{Binding StatusIcon}"
+                                    FontSize="{StaticResource FontSizeSubhead}"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    VerticalOptions="Center">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding Title}" FontAttributes="Bold" />
+                                            <Span Text=" (" ForegroundColor="{StaticResource AppTextMutedColor}" />
+                                            <Span Text="{Binding Batches.Count}" ForegroundColor="{StaticResource AppTextMutedColor}" />
+                                            <Span Text=")" ForegroundColor="{StaticResource AppTextMutedColor}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Label
+                                    Grid.Column="2"
+                                    TextColor="{StaticResource AppPrimaryColor}"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End"
+                                    Margin="0,0,{StaticResource SpacingSm},0">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
+                                            <Setter Property="Text" Value="▼ 展开" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="False">
+                                            <Setter Property="Text" Value="▶ 折叠" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ToggleGroupCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Grid>
+
+                            <!-- Batch cards -->
+                            <VerticalStackLayout
+                                Spacing="{StaticResource SpacingSm}"
+                                IsVisible="{Binding IsExpanded}">
+                                <BindableLayout.ItemsSource>
+                                    <Binding Path="Batches" />
+                                </BindableLayout.ItemsSource>
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                                        <Frame Style="{StaticResource CardStyle}">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+
+                                                <!-- Row 0: Name + status badge -->
+                                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                                    <Label Grid.Column="0"
+                                                           Text="{Binding ItemName}"
+                                                           Style="{StaticResource TitleLabel}"
+                                                           LineBreakMode="TailTruncation" />
+                                                    <Frame Grid.Column="1"
+                                                           Style="{StaticResource StatusBadgeFrame}"
+                                                           BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                                        <Label Text="{Binding ExpiryStatusText}"
+                                                               Style="{StaticResource StatusBadgeLabel}"
+                                                               TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                                    </Frame>
+                                                </Grid>
+
+                                                <!-- Row 1: Category · Location · Price -->
+                                                <Label Grid.Row="1"
+                                                       LineBreakMode="TailTruncation"
+                                                       Style="{StaticResource BodyLabel}">
+                                                    <Label.Text>
+                                                        <MultiBinding StringFormat="{}{0} · {1} · ¥{2:F1}">
+                                                            <Binding Path="CategoryName" />
+                                                            <Binding Path="Location" />
+                                                            <Binding Path="PurchasePrice" />
+                                                        </MultiBinding>
+                                                    </Label.Text>
+                                                </Label>
+
+                                                <!-- Row 2: Expiry / Warranty -->
+                                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                                    <Label Grid.Column="0"
+                                                           Text="{Binding ExpiryDate, StringFormat='保质 {0:yyyy-MM-dd}'}"
+                                                           Style="{StaticResource CaptionLabel}" />
+                                                    <Label Grid.Column="1"
+                                                           Text="{Binding WarrantyStatusText}"
+                                                           Style="{StaticResource CaptionLabel}"
+                                                           TextColor="{StaticResource AppSecondaryColor}" />
+                                                </Grid>
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Loading indicator -->
+        <ActivityIndicator
+            Grid.Row="1"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+    </Grid>
+</ContentPage>

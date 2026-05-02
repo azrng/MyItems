@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    x:Class="MyItems.Views.CategoryPage"
+    x:DataType="viewmodels:CategoryViewModel"
+    Title="分类管理"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBool" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Add category -->
+        <Grid
+            Grid.Row="0"
+            ColumnDefinitions="Auto,*,Auto"
+            Padding="{StaticResource PagePadding}"
+            ColumnSpacing="{StaticResource SpacingSm}">
+            <Entry
+                Grid.Column="1"
+                Text="{Binding NewCategoryName}"
+                Placeholder="新分类名称"
+                Style="{StaticResource EntryStyle}" />
+            <Button
+                Grid.Column="2"
+                Text="新增"
+                Style="{StaticResource PrimaryButton}"
+                Command="{Binding AddCategoryCommand}"
+                WidthRequest="80" />
+        </Grid>
+
+        <!-- Category list -->
+        <CollectionView
+            Grid.Row="1"
+            ItemsSource="{Binding Categories}"
+            Margin="{StaticResource PagePadding}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dtos:CategoryDto">
+                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,{StaticResource SpacingSm}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
+
+                            <Label Grid.Column="0"
+                                   Text="{Binding Icon}"
+                                   FontSize="{StaticResource FontSizeTitle}"
+                                   VerticalOptions="Center"
+                                   Margin="0,0,{StaticResource SpacingMd},0" />
+
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding Name}" Style="{StaticResource SubheadLabel}" />
+                                <Label Style="{StaticResource CaptionLabel}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="True">
+                                            <Setter Property="Text" Value="预置" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="False">
+                                            <Setter Property="Text" Value="{Binding ItemCount, StringFormat='{}{0} 个物品'}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </VerticalStackLayout>
+
+                            <!-- Edit / Delete buttons for custom categories -->
+                            <Button Grid.Column="2"
+                                    Text="编辑"
+                                    FontSize="{StaticResource FontSizeCaption}"
+                                    HeightRequest="36"
+                                    CornerRadius="{StaticResource RadiusSm}"
+                                    IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}" />
+
+                            <Button Grid.Column="3"
+                                    Text="删除"
+                                    FontSize="{StaticResource FontSizeCaption}"
+                                    HeightRequest="36"
+                                    CornerRadius="{StaticResource RadiusSm}"
+                                    BackgroundColor="{StaticResource AppErrorBgColor}"
+                                    TextColor="{StaticResource AppErrorColor}"
+                                    IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=DeleteCategoryCommand}"
+                                    CommandParameter="{Binding}" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading -->
+        <ActivityIndicator
+            Grid.Row="1"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+    </Grid>
+</ContentPage>
