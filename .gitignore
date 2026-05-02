@@ -1,0 +1,51 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Ll]inux/
+[Ll]inux64/
+[Ll]inux[Aa][Rr][Mm]64/
+
+## Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Rider / IntelliJ
+.idea/
+
+## VS Code
+.vscode/
+
+## NuGet
+**/[Pp]ackages/*
+*.nupkg
+**/[Ss]rc/**/project.assets.json
+**/[Ss]rc/**/project.nuget.cache
+**/[Ss]rc/**/*.nuget.g.props
+**/[Ss]rc/**/*.nuget.g.targets
+**/[Ss]rc/**/*.nuget.dgspec.json
+
+## MAUI
+**/*.apk
+**/*.aab
+**/*.ipa
+**/_ReSharper.Caches/
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Misc
+*.log
+*.tmp
