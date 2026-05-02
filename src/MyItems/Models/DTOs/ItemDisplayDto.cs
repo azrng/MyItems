@@ -11,6 +11,7 @@ public class ItemDisplayDto
     public string CategoryName { get; set; } = string.Empty;
     public string? CategoryIcon { get; set; }
     public string? Barcode { get; set; }
+    public string? Brand { get; set; }
     public string? DefaultLocation { get; set; }
     public int BatchCount { get; set; }
     public decimal TotalSpent { get; set; }

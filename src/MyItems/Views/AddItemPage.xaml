@@ -46,6 +46,15 @@
                         Style="{StaticResource PickerStyle}" />
                 </VerticalStackLayout>
 
+                <!-- Brand -->
+                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                    <Label Text="品牌" Style="{StaticResource SubheadLabel}" />
+                    <Entry
+                        Text="{Binding Brand}"
+                        Placeholder="如：蒙牛、三九、戴尔"
+                        Style="{StaticResource EntryStyle}" />
+                </VerticalStackLayout>
+
                 <!-- Section: Batch info -->
                 <Label Text="── 批次信息 ──" Style="{StaticResource CaptionLabel}"
                        HorizontalOptions="Center"

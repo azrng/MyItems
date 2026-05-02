@@ -8,6 +8,7 @@ public class BatchDisplayDto
     public Guid ItemId { get; set; }
     public string ItemName { get; set; } = string.Empty;
     public string? ItemIcon { get; set; }
+    public string? Brand { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string? CategoryIcon { get; set; }
     public DateTime? PurchaseDate { get; set; }

@@ -25,13 +25,13 @@ public static class MockDataService
 
     public static List<Item> GetMockItems() =>
     [
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000001"), Name = "纯牛奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", DefaultLocation = "冰箱上层" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000002"), Name = "酸奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", DefaultLocation = "冰箱上层" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000003"), Name = "感冒药", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000003"), Icon = "\U0001F48A", DefaultLocation = "药箱" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000004"), Name = "洗面奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002"), Icon = "\U0001F9FC", DefaultLocation = "卫生间" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000005"), Name = "显示器", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000005"), Icon = "\U0001F5A5", DefaultLocation = "书桌" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000006"), Name = "电池", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000004"), Icon = "\U0001F50B", DefaultLocation = "抽屉" },
-        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000007"), Name = "面霜", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002"), Icon = "\U0001F9F4", DefaultLocation = "卫生间" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000001"), Name = "纯牛奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", Brand = "蒙牛", DefaultLocation = "冰箱上层" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000002"), Name = "酸奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001"), Icon = "\U0001F95B", Brand = "伊利", DefaultLocation = "冰箱上层" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000003"), Name = "感冒药", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000003"), Icon = "\U0001F48A", Brand = "三九", DefaultLocation = "药箱" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000004"), Name = "洗面奶", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002"), Icon = "\U0001F9FC", Brand = "芙丽芳丝", DefaultLocation = "卫生间" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000005"), Name = "显示器", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000005"), Icon = "\U0001F5A5", Brand = "戴尔", DefaultLocation = "书桌" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000006"), Name = "电池", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000004"), Icon = "\U0001F50B", Brand = "南孚", DefaultLocation = "抽屉" },
+        new() { Id = Guid.Parse("20000000-0000-0000-0000-000000000007"), Name = "面霜", CategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002"), Icon = "\U0001F9F4", Brand = "科颜氏", DefaultLocation = "卫生间" },
     ];
 
     public static List<Batch> GetMockBatches() =>
@@ -76,6 +76,7 @@ public static class MockDataService
                 ItemId = item.Id,
                 ItemName = item.Name,
                 ItemIcon = item.Icon,
+                Brand = item.Brand,
                 CategoryName = category.Name,
                 CategoryIcon = category.Icon,
                 PurchaseDate = b.PurchaseDate,
@@ -146,6 +147,7 @@ public static class MockDataService
                 CategoryName = category.Name,
                 CategoryIcon = category.Icon,
                 Barcode = item.Barcode,
+                Brand = item.Brand,
                 DefaultLocation = item.DefaultLocation,
                 BatchCount = itemBatches.Count,
                 TotalSpent = itemBatches.Sum(b => b.PurchasePrice ?? 0),
@@ -170,6 +172,27 @@ public static class MockDataService
             IsPreset = c.IsPreset,
             ItemCount = items.Count(i => i.CategoryId == c.Id),
         }).ToList();
+    }
+
+    #endregion
+
+    #region Statistics
+
+    public static (decimal TotalSpent, int TotalBatches, int ValidBatches) GetStatistics()
+    {
+        var items = GetMockItems().Where(i => !i.IsArchived).ToList();
+        var batches = GetMockBatches().Where(b => items.Any(i => i.Id == b.ItemId)).ToList();
+        var allDisplay = GetBatchDisplayDtos();
+
+        var validBatches = allDisplay.Where(b =>
+            items.Any(i => i.Id == b.ItemId) &&
+            b.ExpiryStatus != Enums.ExpiryStatus.Expired).ToList();
+
+        var totalSpent = validBatches.Sum(b => b.PurchasePrice * b.Quantity ?? 0);
+        var totalBatches = batches.Count;
+        var validCount = validBatches.Count;
+
+        return (totalSpent, totalBatches, validCount);
     }
 
     #endregion

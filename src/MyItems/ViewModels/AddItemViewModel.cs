@@ -21,6 +21,9 @@ public partial class AddItemViewModel : ObservableObject
     private string? barcode;
 
     [ObservableProperty]
+    private string? brand;
+
+    [ObservableProperty]
     private string? location;
 
     [ObservableProperty]
@@ -84,6 +87,7 @@ public partial class AddItemViewModel : ObservableObject
             Name = ItemName,
             CategoryId = SelectedCategory.Id,
             Barcode = Barcode,
+            Brand = Brand,
             DefaultLocation = Location,
             PurchaseDate = PurchaseDate,
             PurchasePrice = PurchasePrice,

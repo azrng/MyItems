@@ -16,7 +16,7 @@
         <converters:InvertedBoolConverter x:Key="InvertedBool" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         <!-- Search bar -->
         <SearchBar
             Grid.Row="0"
@@ -25,8 +25,50 @@
             SearchCommand="{Binding SearchCommand}"
             Margin="{StaticResource PagePadding}" />
 
+        <!-- Statistics summary -->
+        <Frame
+            Grid.Row="1"
+            Style="{StaticResource CardStyle}"
+            Margin="16,0"
+            Padding="16,12">
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="有效商品花费"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="0"
+                       Text="{Binding TotalSpentText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppPrimaryColor}"
+                       HorizontalOptions="Center" />
+
+                <Label Grid.Row="0" Grid.Column="1"
+                       Text="有效商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="1"
+                       Text="{Binding ValidCountText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppSafeColor}"
+                       HorizontalOptions="Center" />
+
+                <Label Grid.Row="0" Grid.Column="2"
+                       Text="全部商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="2"
+                       Text="{Binding TotalBatchesText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextSecondaryColor}"
+                       HorizontalOptions="Center" />
+            </Grid>
+        </Frame>
+
         <!-- Grouped content -->
-        <ScrollView Grid.Row="1">
+        <ScrollView Grid.Row="2">
             <VerticalStackLayout
                 BindableLayout.ItemsSource="{Binding ExpiryGroups}"
                 Spacing="{StaticResource SpacingMd}"
@@ -65,10 +107,10 @@
                                     Margin="0,0,{StaticResource SpacingSm},0">
                                     <Label.Triggers>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
-                                            <Setter Property="Text" Value="▼ 展开" />
+                                            <Setter Property="Text" Value="▼ 收起" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="False">
-                                            <Setter Property="Text" Value="▶ 折叠" />
+                                            <Setter Property="Text" Value="▶ 展开" />
                                         </DataTrigger>
                                     </Label.Triggers>
                                     <Label.GestureRecognizers>
@@ -106,12 +148,13 @@
                                                     </Frame>
                                                 </Grid>
 
-                                                <!-- Row 1: Category · Location · Price -->
+                                                <!-- Row 1: Brand · Category · Location · Price -->
                                                 <Label Grid.Row="1"
                                                        LineBreakMode="TailTruncation"
                                                        Style="{StaticResource BodyLabel}">
                                                     <Label.Text>
-                                                        <MultiBinding StringFormat="{}{0} · {1} · ¥{2:F1}">
+                                                        <MultiBinding StringFormat="{}{0} · {1} · {2} · ¥{3:F1}">
+                                                            <Binding Path="Brand" TargetNullValue="" />
                                                             <Binding Path="CategoryName" />
                                                             <Binding Path="Location" />
                                                             <Binding Path="PurchasePrice" />
@@ -142,7 +185,7 @@
 
         <!-- Loading indicator -->
         <ActivityIndicator
-            Grid.Row="1"
+            Grid.Row="2"
             IsRunning="{Binding IsLoading}"
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
