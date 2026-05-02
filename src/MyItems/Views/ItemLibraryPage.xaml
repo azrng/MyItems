@@ -56,19 +56,15 @@
         <toolkit:SfNavigationDrawer.ContentView>
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
 
-                <!-- Title bar + hamburger -->
+                <!-- Settings entry -->
                 <Grid Grid.Row="0"
-                      ColumnDefinitions="*,Auto"
                       Padding="{StaticResource PagePadding}">
-                    <Label Grid.Column="0"
-                           Text="物品库"
-                           Style="{StaticResource HeadlineLabel}"
-                           VerticalOptions="Center" />
-                    <Button Grid.Column="1"
-                            Text="☰"
-                            Style="{StaticResource IconButton}"
-                            Clicked="OnSettingsClicked"
-                            Padding="0" />
+                    <Button
+                        Text="☰"
+                        Style="{StaticResource IconButton}"
+                        Clicked="OnSettingsClicked"
+                        HorizontalOptions="Start"
+                        Padding="0" />
                 </Grid>
 
                 <SearchBar
