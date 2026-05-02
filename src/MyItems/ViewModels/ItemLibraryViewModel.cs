@@ -78,8 +78,16 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task GoToCategoryAsync()
     {
         IsSettingsOpen = false;
-        await Task.Delay(100);
-        await Shell.Current.GoToAsync("category");
+        await Task.Yield();
+
+        try
+        {
+            await Shell.Current.GoToAsync("category");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("打开失败", $"无法打开分类管理：{ex.Message}", "确定");
+        }
     }
 
     [RelayCommand]
