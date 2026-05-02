@@ -149,7 +149,7 @@
                         ShowIcon="False"
                         ItemHeight="36"
                         ChipCornerRadius="{StaticResource RadiusFull}"
-                        ChipPadding="{StaticResource SpacingSm}"
+                        ChipPadding="4,4"
                         ChipBackground="{StaticResource AppCardBackgroundColor}"
                         ChipTextColor="{StaticResource AppTextSecondaryColor}"
                         ChipStroke="{StaticResource AppBorderStrongColor}"
