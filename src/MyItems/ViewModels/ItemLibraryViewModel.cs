@@ -10,8 +10,12 @@ namespace MyItems.ViewModels;
 public partial class ItemLibraryViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private const int PageSize = 10;
 
-    public ObservableCollection<ItemDisplayDto> Items { get; private set; } = [];
+    private List<ItemDisplayDto> _allItems = [];
+    private int _loadedCount;
+
+    public ObservableCollection<ItemDisplayDto> Items { get; } = [];
     public ObservableCollection<Category> Categories { get; } = [];
 
     [ObservableProperty]
@@ -19,6 +23,12 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isLoading = true;
+
+    [ObservableProperty]
+    private bool isLoadingMore;
+
+    [ObservableProperty]
+    private bool hasMoreItems;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -31,6 +41,8 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private string totalBatchesText = string.Empty;
+
+    public bool IsEmpty => !IsLoading && Items.Count == 0 && _allItems.Count == 0;
 
     private CancellationTokenSource? _searchCts;
 
@@ -50,6 +62,12 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task GoToCategoryAsync()
     {
         await Shell.Current.GoToAsync("category");
+    }
+
+    [RelayCommand]
+    private async Task GoToStorageAsync()
+    {
+        await Shell.Current.GoToAsync("storage");
     }
 
     [RelayCommand]
@@ -77,10 +95,26 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task SeedTestDataAsync()
+    {
+        var confirm = await Shell.Current.DisplayAlertAsync("初始化测试数据", "将插入约 200 个测试物品，确认继续？", "确定", "取消");
+        if (!confirm) return;
+
+        await _dataService.SeedSampleDataAsync();
+        await InitializeAsync();
+    }
+
+    [RelayCommand]
     private void Refresh()
     {
-        IsLoading = true;
         _ = LoadDataAsync();
+    }
+
+    [RelayCommand]
+    private void LoadMore()
+    {
+        if (IsLoadingMore || !HasMoreItems) return;
+        _ = LoadMoreAsync();
     }
 
     partial void OnSelectedCategoryChanged(Category value)
@@ -136,8 +170,30 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(SearchText))
             items = items.Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-        Items = new ObservableCollection<ItemDisplayDto>(items.OrderBy(i => i.Name));
-        OnPropertyChanged(nameof(Items));
+        _allItems = items.OrderBy(i => i.Name).ToList();
+        _loadedCount = 0;
+        Items.Clear();
+
+        AppendPage();
         IsLoading = false;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        IsLoadingMore = true;
+        await Task.Delay(100);
+        AppendPage();
+        IsLoadingMore = false;
+    }
+
+    private void AppendPage()
+    {
+        var next = _allItems.Skip(_loadedCount).Take(PageSize).ToList();
+        foreach (var item in next)
+            Items.Add(item);
+
+        _loadedCount += next.Count;
+        HasMoreItems = _loadedCount < _allItems.Count;
+        OnPropertyChanged(nameof(IsEmpty));
     }
 }

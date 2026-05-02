@@ -5,8 +5,13 @@ namespace MyItems.Models.DTOs;
 public partial class CategoryDto : ObservableObject
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Icon { get; set; }
+
+    [ObservableProperty]
+    private string name = string.Empty;
+
+    [ObservableProperty]
+    private string? icon;
+
     public int SortOrder { get; set; }
     public bool IsPreset { get; set; }
 

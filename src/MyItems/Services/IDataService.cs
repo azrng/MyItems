@@ -31,4 +31,10 @@ public interface IDataService
 
     // Excel export
     Task<string> ExportToExcelAsync();
+
+    // Testing
+    Task SeedSampleDataAsync();
+
+    // Data management
+    Task ClearAllDataAsync();
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    x:Class="MyItems.Views.StoragePage"
+    x:DataType="viewmodels:StorageViewModel"
+    Title="存储管理"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBool" xmlns:converters="clr-namespace:MyItems.Converters" />
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="{StaticResource PagePadding}" Spacing="16">
+
+            <!-- Data section -->
+            <Label Text="数据管理"
+                   FontAttributes="Bold"
+                   FontSize="{StaticResource FontSizeSubhead}" />
+
+            <Frame Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="16">
+                    <Button Text="📊 导出 Excel"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ExportExcelCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+
+                    <Button Text="🧪 初始化测试数据"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding SeedTestDataCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+
+                    <Button Text="🗑 清空所有数据"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding ClearAllDataCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                HorizontalOptions="Center"
+                Color="{StaticResource AppPrimaryColor}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

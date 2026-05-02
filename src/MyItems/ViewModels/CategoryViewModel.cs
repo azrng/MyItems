@@ -1,18 +1,37 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Mvvm.Input;
 using MyItems.Models;
 using MyItems.Models.DTOs;
 using MyItems.Services;
+using MyItems.Views;
 
 namespace MyItems.ViewModels;
 
 public partial class CategoryViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private bool _hasLoaded;
+
+    public static readonly string[] CategoryIcons =
+    [
+        "📦", "🏷️", "📋", "🗂️",
+        "🍎", "🍞", "🥛", "🍳",
+        "💊", "🩹", "🏥",
+        "📱", "💻", "🔌", "🔋",
+        "👕", "👗", "🧣",
+        "📚", "✏️", "📝", "🎨",
+        "🏠", "🧴", "🧹", "💡", "🔑",
+        "⚽", "🎮", "🧸",
+        "🚗", "🚲",
+        "⭐", "🌿", "🎁",
+    ];
 
     public ObservableCollection<CategoryDto> Categories { get; } = [];
+    public ObservableCollection<SelectableIcon> AvailableIcons { get; } = [];
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -29,7 +48,19 @@ public partial class CategoryViewModel : ObservableObject
     public CategoryViewModel(IDataService dataService)
     {
         _dataService = dataService;
-        _ = LoadDataAsync();
+        InitializeIcons();
+    }
+
+    private void InitializeIcons()
+    {
+        foreach (var icon in CategoryIcons)
+            AvailableIcons.Add(new SelectableIcon(icon));
+
+        if (AvailableIcons.Count > 0)
+        {
+            AvailableIcons[0].IsSelected = true;
+            NewCategoryIcon = CategoryIcons[0];
+        }
     }
 
     [RelayCommand]
@@ -37,7 +68,16 @@ public partial class CategoryViewModel : ObservableObject
     {
         IsLoading = true;
         await LoadDataAsync();
-        IsLoading = false;
+    }
+
+    public async Task InitializeAsync()
+    {
+        if (_hasLoaded)
+            return;
+
+        IsLoading = true;
+        await LoadDataAsync();
+        _hasLoaded = true;
     }
 
     [RelayCommand]
@@ -52,7 +92,7 @@ public partial class CategoryViewModel : ObservableObject
         {
             Id = Guid.NewGuid(),
             Name = NewCategoryName,
-            Icon = string.IsNullOrWhiteSpace(NewCategoryIcon) ? "\U0001F3F7" : NewCategoryIcon,
+            Icon = NewCategoryIcon ?? CategoryIcons[0],
             SortOrder = Categories.Count + 1,
             IsPreset = false,
             IsActive = true,
@@ -74,8 +114,38 @@ public partial class CategoryViewModel : ObservableObject
         Categories.Add(dto);
 
         NewCategoryName = null;
-        NewCategoryIcon = null;
         IsAdding = false;
+    }
+
+    [RelayCommand]
+    private void SelectNewIcon(SelectableIcon icon)
+    {
+        foreach (var item in AvailableIcons)
+            item.IsSelected = ReferenceEquals(item, icon);
+        NewCategoryIcon = icon.Icon;
+    }
+
+    [RelayCommand]
+    private async Task EditCategoryAsync(CategoryDto category)
+    {
+        var popup = new CategoryEditPopup(category.Name, category.Icon);
+        var popupResult = await Shell.Current.ShowPopupAsync<CategoryEditResult>(popup, null, null);
+        if (popupResult.WasDismissedByTappingOutsideOfPopup || popupResult.Result is null) return;
+
+        var editResult = popupResult.Result;
+        category.Name = editResult.Name;
+        category.Icon = editResult.Icon;
+
+        var cat = new Category
+        {
+            Id = category.Id,
+            Name = editResult.Name,
+            Icon = editResult.Icon,
+            SortOrder = category.SortOrder,
+            IsPreset = category.IsPreset,
+            IsActive = category.IsActive,
+        };
+        await _dataService.SaveCategoryAsync(cat);
     }
 
     [RelayCommand]
@@ -156,13 +226,37 @@ public partial class CategoryViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        Categories.Clear();
-        var dtos = await _dataService.GetCategoryDtosAsync();
-        foreach (var cat in dtos.OrderBy(c => c.SortOrder))
+        try
         {
-            cat.PropertyChanged += OnCategoryPropertyChanged;
-            Categories.Add(cat);
+            Categories.Clear();
+            var dtos = await _dataService.GetCategoryDtosAsync();
+            foreach (var cat in dtos.OrderBy(c => c.SortOrder))
+            {
+                cat.PropertyChanged += OnCategoryPropertyChanged;
+                Categories.Add(cat);
+            }
         }
-        IsLoading = false;
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("加载失败", $"无法加载分类：{ex.Message}", "确定");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
+
+public partial class SelectableIcon : ObservableObject
+{
+    public string Icon { get; }
+
+    [ObservableProperty]
+    private bool isSelected;
+
+    public SelectableIcon(string icon, bool isSelected = false)
+    {
+        Icon = icon;
+        IsSelected = isSelected;
     }
 }

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    x:Class="MyItems.Views.ExpiringPage"
+    x:DataType="viewmodels:ExpiringViewModel"
+    Title="临期"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
+        <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Search bar -->
+        <SearchBar
+            Grid.Row="0"
+            Margin="16,8"
+            Placeholder="搜索物品..."
+            Text="{Binding SearchText}"
+            SearchCommand="{Binding SearchCommand}" />
+
+        <!-- Two sections: Expiring + Expired -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{StaticResource PagePadding}" Spacing="16">
+
+                <!-- Expiring section -->
+                <VerticalStackLayout Spacing="8"
+                                     IsVisible="{Binding HasExpiring}">
+                    <Label Text="⏰ 临期提醒"
+                           FontAttributes="Bold"
+                           FontSize="{StaticResource FontSizeSubhead}" />
+                    <CollectionView
+                        ItemsSource="{Binding ExpiringItems}"
+                        ItemSizingStrategy="MeasureFirstItem">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                                <Frame Style="{StaticResource ListCardStyle}">
+                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding ItemName}"
+                                                   Style="{StaticResource TitleLabel}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Frame Grid.Column="1"
+                                                   Style="{StaticResource StatusBadgeFrame}"
+                                                   BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                                <Label Text="{Binding ExpiryStatusText}"
+                                                       Style="{StaticResource StatusBadgeLabel}"
+                                                       TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                            </Frame>
+                                        </Grid>
+                                        <Label Grid.Row="1"
+                                               LineBreakMode="TailTruncation"
+                                               Style="{StaticResource BodyLabel}">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
+                                                    <Binding Path="BatchLabel" />
+                                                    <Binding Path="Brand" TargetNullValue="" />
+                                                    <Binding Path="CategoryName" />
+                                                    <Binding Path="Location" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Style="{StaticResource CaptionLabel}"
+                                                   Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding DailyCostText}"
+                                                   Style="{StaticResource CaptionLabel}"
+                                                   TextColor="{StaticResource AppPrimaryColor}"
+                                                   IsVisible="{Binding TrackDailyCost}" />
+                                        </Grid>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!-- Expired section -->
+                <VerticalStackLayout Spacing="8"
+                                     IsVisible="{Binding HasExpired}">
+                    <Label Text="⚠️ 已过期"
+                           FontAttributes="Bold"
+                           FontSize="{StaticResource FontSizeSubhead}" />
+                    <CollectionView
+                        ItemsSource="{Binding ExpiredItems}"
+                        ItemSizingStrategy="MeasureFirstItem">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="dtos:BatchDisplayDto">
+                                <Frame Style="{StaticResource ListCardStyle}">
+                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding ItemName}"
+                                                   Style="{StaticResource TitleLabel}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Frame Grid.Column="1"
+                                                   Style="{StaticResource StatusBadgeFrame}"
+                                                   BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                                <Label Text="{Binding ExpiryStatusText}"
+                                                       Style="{StaticResource StatusBadgeLabel}"
+                                                       TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                            </Frame>
+                                        </Grid>
+                                        <Label Grid.Row="1"
+                                               LineBreakMode="TailTruncation"
+                                               Style="{StaticResource BodyLabel}">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
+                                                    <Binding Path="BatchLabel" />
+                                                    <Binding Path="Brand" TargetNullValue="" />
+                                                    <Binding Path="CategoryName" />
+                                                    <Binding Path="Location" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Style="{StaticResource CaptionLabel}"
+                                                   Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding DailyCostText}"
+                                                   Style="{StaticResource CaptionLabel}"
+                                                   TextColor="{StaticResource AppPrimaryColor}"
+                                                   IsVisible="{Binding TrackDailyCost}" />
+                                        </Grid>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!-- Empty state -->
+                <StackLayout
+                    IsVisible="{Binding IsEmpty}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Spacing="8"
+                    Margin="0,80,0,0">
+                    <Label Text="✅"
+                           FontSize="40"
+                           HorizontalOptions="Center" />
+                    <Label Text="没有临期或过期的物品"
+                           Style="{StaticResource BodyLabel}"
+                           HorizontalOptions="Center" />
+                </StackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Loading indicator -->
+        <ActivityIndicator
+            Grid.Row="1"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Color="{StaticResource AppPrimaryColor}" />
+    </Grid>
+</ContentPage>

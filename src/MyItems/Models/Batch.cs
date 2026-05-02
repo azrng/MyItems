@@ -15,6 +15,6 @@ public class Batch
     public bool TrackDailyCost { get; set; } = true;
     public string? Notes { get; set; }
     public string? ImagePath { get; set; }
-    public string BatchLabel { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+    public string BatchLabel { get; set; } = DateTime.Now.ToString("yyyyMMddHHmmss");
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

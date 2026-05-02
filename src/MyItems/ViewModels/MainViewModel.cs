@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MyItems.Enums;
 using MyItems.Models.DTOs;
 using MyItems.Services;
 
@@ -10,11 +9,24 @@ namespace MyItems.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private const int PageSize = 10;
 
-    public ObservableCollection<ExpiryGroupDto> ExpiryGroups { get; private set; } = [];
+    private List<BatchDisplayDto> _allItems = [];
+    private int _loadedCount;
+
+    public ObservableCollection<BatchDisplayDto> RecentItems { get; } = [];
 
     [ObservableProperty]
     private bool isLoading = true;
+
+    [ObservableProperty]
+    private bool isLoadingMore;
+
+    [ObservableProperty]
+    private bool hasMoreItems;
+
+    [ObservableProperty]
+    private bool isRefreshing;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -28,28 +40,46 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Refresh()
+    private async Task RefreshAsync()
     {
-        IsLoading = true;
-        _ = LoadDataAsync();
-    }
-
-    [RelayCommand]
-    private void ToggleGroup(ExpiryGroupDto group)
-    {
-        group.IsExpanded = !group.IsExpanded;
-    }
-
-    [RelayCommand]
-    private void Search()
-    {
-        _ = LoadDataAsync();
+        IsRefreshing = true;
+        await LoadDataAsync();
+        IsRefreshing = false;
     }
 
     [RelayCommand]
     private async Task GoToAddAsync()
     {
         await Shell.Current.GoToAsync("add");
+    }
+
+    [RelayCommand]
+    private async Task DeleteBatchAsync(BatchDisplayDto batch)
+    {
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{batch.ItemName}」吗？", "删除", "取消");
+        if (!confirm) return;
+
+        await _dataService.DeleteBatchAsync(batch.BatchId);
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
+    private async Task ViewItemDetailAsync(Guid itemId)
+    {
+        await Shell.Current.GoToAsync($"itemdetail?itemId={itemId}");
+    }
+
+    public async Task DeleteBatchByIdAsync(Guid batchId)
+    {
+        await _dataService.DeleteBatchAsync(batchId);
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
+    private void LoadMore()
+    {
+        if (IsLoadingMore || !HasMoreItems) return;
+        _ = LoadMoreAsync();
     }
 
     partial void OnSearchTextChanged(string value)
@@ -71,25 +101,47 @@ public partial class MainViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var groups = (await _dataService.GetExpiryGroupsAsync())
-            .Where(g => g.Status is ExpiryStatus.Expired or ExpiryStatus.Expiring)
+        var cutoff = DateTime.Now.AddDays(-7);
+        var batches = await _dataService.GetBatchDisplayDtosAsync();
+
+        var filtered = batches
+            .Where(b => (b.PurchaseDate ?? DateTime.MinValue) >= cutoff)
+            .OrderByDescending(b => b.PurchaseDate)
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            groups = groups.Select(g => new ExpiryGroupDto
-            {
-                Status = g.Status,
-                Title = g.Title,
-                StatusIcon = g.StatusIcon,
-                IsExpanded = true,
-                Batches = g.Batches.Where(b =>
-                    b.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList(),
-            }).Where(g => g.Batches.Count > 0).ToList();
+            filtered = filtered
+                .Where(b => b.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
 
-        ExpiryGroups = new ObservableCollection<ExpiryGroupDto>(groups);
-        OnPropertyChanged(nameof(ExpiryGroups));
+        _allItems = filtered;
+        _loadedCount = 0;
+        RecentItems.Clear();
+
+        AppendPage();
         IsLoading = false;
     }
+
+    private async Task LoadMoreAsync()
+    {
+        IsLoadingMore = true;
+        await Task.Delay(100); // brief delay for smoother UX
+        AppendPage();
+        IsLoadingMore = false;
+    }
+
+    private void AppendPage()
+    {
+        var next = _allItems.Skip(_loadedCount).Take(PageSize).ToList();
+        foreach (var item in next)
+            RecentItems.Add(item);
+
+        _loadedCount += next.Count;
+        HasMoreItems = _loadedCount < _allItems.Count;
+        OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    public bool IsEmpty => !IsLoading && RecentItems.Count == 0 && _allItems.Count == 0;
 }

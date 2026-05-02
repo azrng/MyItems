@@ -96,6 +96,10 @@
                             <HorizontalStackLayout Grid.Row="3"
                                                    Spacing="{StaticResource SpacingSm}"
                                                    HorizontalOptions="End">
+                                <Button Text="编辑"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=EditBatchCommand}"
+                                        CommandParameter="{Binding BatchId}" />
                                 <Button Text="已用完"
                                         Style="{StaticResource SuccessSoftButton}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=ConsumeBatchCommand}"

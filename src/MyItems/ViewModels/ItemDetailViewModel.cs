@@ -51,6 +51,12 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     }
 
     [RelayCommand]
+    private async Task EditBatchAsync(Guid batchId)
+    {
+        await Shell.Current.GoToAsync($"add?batchId={batchId}");
+    }
+
+    [RelayCommand]
     private async Task AddBatchAsync()
     {
         await Shell.Current.DisplayAlertAsync("添加批次", "添加批次功能将在后续版本实现", "确定");

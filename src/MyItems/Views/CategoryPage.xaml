@@ -7,6 +7,7 @@
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.CategoryPage"
+    x:Name="PageRoot"
     x:DataType="viewmodels:CategoryViewModel"
     Title="分类管理"
     Style="{StaticResource PageStyle}">
@@ -15,16 +16,44 @@
         <converters:InvertedBoolConverter x:Key="InvertedBool" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Icon selector -->
+        <ScrollView Grid.Row="0" Orientation="Horizontal" Margin="16,8,16,0">
+            <HorizontalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding AvailableIcons}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:SelectableIcon">
+                        <Border WidthRequest="40" HeightRequest="40"
+                                StrokeShape="RoundRectangle 8"
+                                BackgroundColor="Transparent"
+                                StrokeThickness="2"
+                                StrokeColor="Transparent">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource AppActiveBackgroundColor}" />
+                                    <Setter Property="StrokeColor" Value="{StaticResource AppPrimaryColor}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.SelectNewIconCommand, Source={x:Reference PageRoot}}"
+                                    CommandParameter="{Binding}" />
+                            </Border.GestureRecognizers>
+                            <Label Text="{Binding Icon}" FontSize="20"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+        </ScrollView>
+
         <!-- Add category -->
-        <Grid
-            Grid.Row="0"
-            ColumnDefinitions="*,Auto"
-            Padding="{StaticResource PagePadding}"
-            ColumnSpacing="{StaticResource SpacingSm}">
+        <Grid Grid.Row="1"
+              ColumnDefinitions="*,Auto"
+              Padding="{StaticResource PagePadding}"
+              ColumnSpacing="{StaticResource SpacingSm}">
             <Entry
                 Grid.Column="0"
-                Text="{Binding NewCategoryName, UpdateSourceEvent=PropertyChanged}"
+                Text="{Binding NewCategoryName}"
                 Placeholder="新分类名称"
                 Style="{StaticResource EntryStyle}" />
             <Button
@@ -37,7 +66,7 @@
 
         <!-- Category list -->
         <CollectionView
-            Grid.Row="1"
+            Grid.Row="2"
             ItemsSource="{Binding Categories}"
             Margin="{StaticResource PagePadding}">
             <CollectionView.ItemTemplate>
@@ -56,6 +85,17 @@
                                 <HorizontalStackLayout Spacing="4">
                                     <Label Text="{Binding SubtitleText}"
                                            Style="{StaticResource CaptionLabel}" />
+                                    <Label Text="·"
+                                           Style="{StaticResource CaptionLabel}" />
+                                    <Label Text="编辑"
+                                           Style="{StaticResource CaptionLabel}"
+                                           TextColor="{StaticResource AppPrimaryColor}">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding BindingContext.EditCategoryCommand, Source={x:Reference PageRoot}}"
+                                                CommandParameter="{Binding}" />
+                                        </Label.GestureRecognizers>
+                                    </Label>
                                     <Label Text="{Binding SortOrder, StringFormat='排序 {0}'}"
                                            Style="{StaticResource CaptionLabel}"
                                            TextColor="{StaticResource AppTextMutedColor}" />
@@ -73,7 +113,7 @@
                                         CornerRadius="4"
                                         BackgroundColor="Transparent"
                                         TextColor="{StaticResource AppPrimaryColor}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortUpAsyncCommand}"
+                                        Command="{Binding BindingContext.SortUpCommand, Source={x:Reference PageRoot}}"
                                         CommandParameter="{Binding .}" />
                                 <Button Text="↓"
                                         FontSize="12"
@@ -83,7 +123,7 @@
                                         CornerRadius="4"
                                         BackgroundColor="Transparent"
                                         TextColor="{StaticResource AppPrimaryColor}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortDownAsyncCommand}"
+                                        Command="{Binding BindingContext.SortDownCommand, Source={x:Reference PageRoot}}"
                                         CommandParameter="{Binding .}" />
                             </VerticalStackLayout>
 
@@ -99,7 +139,7 @@
                                     Text="删除"
                                     Style="{StaticResource DangerSoftButton}"
                                     IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=DeleteCategoryAsyncCommand}"
+                                    Command="{Binding BindingContext.DeleteCategoryCommand, Source={x:Reference PageRoot}}"
                                     CommandParameter="{Binding}" />
                         </Grid>
                     </Frame>
@@ -109,7 +149,7 @@
 
         <!-- Loading -->
         <ActivityIndicator
-            Grid.Row="1"
+            Grid.Row="2"
             IsRunning="{Binding IsLoading}"
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"

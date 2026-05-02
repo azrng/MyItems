@@ -19,30 +19,32 @@ public static class MauiProgram
             {
             });
 
-        // Register database service as singleton
-        builder.Services.AddSingleton<IDataService>(sp =>
+        // Register database service as singleton (lazy init on first use)
+        builder.Services.AddSingleton<IDataService>(_ =>
         {
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-            var service = new SqliteDataService(dbPath);
-            service.InitializeAsync().GetAwaiter().GetResult();
-            return service;
+            return new SqliteDataService(dbPath);
         });
 
         // Register ViewModels
         builder.Services.AddTransient<MainViewModel>();
+        builder.Services.AddTransient<ExpiringViewModel>();
         builder.Services.AddTransient<ItemLibraryViewModel>();
         builder.Services.AddTransient<AddItemViewModel>();
         builder.Services.AddTransient<ItemDetailViewModel>();
         builder.Services.AddTransient<CategoryViewModel>();
         builder.Services.AddTransient<AboutViewModel>();
+        builder.Services.AddTransient<StorageViewModel>();
 
         // Register Pages
         builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<ExpiringPage>();
         builder.Services.AddTransient<ItemLibraryPage>();
         builder.Services.AddTransient<AddItemPage>();
         builder.Services.AddTransient<ItemDetailPage>();
         builder.Services.AddTransient<CategoryPage>();
         builder.Services.AddTransient<AboutPage>();
+        builder.Services.AddTransient<StoragePage>();
 
         return builder.Build();
     }

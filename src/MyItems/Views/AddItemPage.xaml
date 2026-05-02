@@ -6,7 +6,7 @@
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
-    Title="添加物品"
+    Title="{Binding PageTitle}"
     Style="{StaticResource PageStyle}">
 
     <ContentPage.Resources>
@@ -152,7 +152,7 @@
         <!-- Save button -->
         <Button
             Grid.Row="1"
-            Text="保存"
+            Text="{Binding SaveButtonText}"
             Style="{StaticResource PrimaryButton}"
             Command="{Binding SaveCommand}"
             IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBool}}"

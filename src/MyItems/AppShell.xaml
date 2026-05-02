@@ -18,6 +18,9 @@
         <Tab Title="主页">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
+        <Tab Title="临期">
+            <ShellContent ContentTemplate="{DataTemplate views:ExpiringPage}" />
+        </Tab>
         <Tab Title="物品库">
             <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />
         </Tab>

@@ -69,9 +69,9 @@ public static class StatusHelper
 
         var days = GetHoldingDays(purchaseDate);
         if (days <= 0)
-            return price.Value * quantity;
+            return price.Value;
 
-        return price.Value * quantity / days;
+        return price.Value / days;
     }
 
     public static string GetHoldingText(DateTime? purchaseDate)
