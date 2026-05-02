@@ -78,44 +78,58 @@ public partial class CategoryViewModel : ObservableObject
 
         IsLoading = true;
         await LoadDataAsync();
-        _hasLoaded = true;
+        if (Categories.Count > 0)
+            _hasLoaded = true;
     }
 
     [RelayCommand]
     private async Task AddCategoryAsync()
     {
         if (string.IsNullOrWhiteSpace(NewCategoryName))
+        {
+            await Shell.Current.DisplayAlertAsync("提示", "请输入分类名称", "确定");
             return;
+        }
 
         IsAdding = true;
 
-        var category = new Category
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = NewCategoryName,
-            Icon = NewCategoryIcon ?? CategoryIcons[0],
-            SortOrder = Categories.Count + 1,
-            IsPreset = false,
-            IsActive = true,
-        };
+            var category = new Category
+            {
+                Id = Guid.NewGuid(),
+                Name = NewCategoryName.Trim(),
+                Icon = NewCategoryIcon ?? CategoryIcons[0],
+                SortOrder = Categories.Count + 1,
+                IsPreset = false,
+                IsActive = true,
+            };
 
-        await _dataService.SaveCategoryAsync(category);
+            await _dataService.SaveCategoryAsync(category);
 
-        var dto = new CategoryDto
+            var dto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Icon = category.Icon,
+                SortOrder = category.SortOrder,
+                IsPreset = false,
+                IsActive = true,
+                ItemCount = 0,
+            };
+            dto.PropertyChanged += OnCategoryPropertyChanged;
+            Categories.Add(dto);
+
+            NewCategoryName = null;
+        }
+        catch (Exception ex)
         {
-            Id = category.Id,
-            Name = category.Name,
-            Icon = category.Icon,
-            SortOrder = category.SortOrder,
-            IsPreset = false,
-            IsActive = true,
-            ItemCount = 0,
-        };
-        dto.PropertyChanged += OnCategoryPropertyChanged;
-        Categories.Add(dto);
-
-        NewCategoryName = null;
-        IsAdding = false;
+            await Shell.Current.DisplayAlertAsync("添加失败", $"无法添加分类：{ex.Message}", "确定");
+        }
+        finally
+        {
+            IsAdding = false;
+        }
     }
 
     [RelayCommand]

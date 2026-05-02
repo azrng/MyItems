@@ -75,7 +75,7 @@
                                Keyboard="Numeric"
                                Style="{StaticResource EntryStyle}" />
                         <Label Grid.Column="1" Text="元" VerticalOptions="Center"
-                               Margin="{StaticResource SpacingSm},0,0,0"
+                               Margin="8,0,0,0"
                                Style="{StaticResource BodyLabel}" />
                     </Grid>
                 </VerticalStackLayout>

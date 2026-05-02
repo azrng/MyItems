@@ -48,11 +48,23 @@
                                     <Label Text="{Binding SubtitleText}" Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
 
-                                <Button
-                                    Grid.Column="2"
-                                    Text="删除"
-                                    Style="{StaticResource DangerSoftButton}"
-                                    Clicked="OnDeleteCategoryClicked" />
+                                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                                    <Button Text="↑"
+                                            Style="{StaticResource IconButton}"
+                                            WidthRequest="36"
+                                            HeightRequest="36"
+                                            FontSize="14"
+                                            Clicked="OnSortUpClicked" />
+                                    <Button Text="↓"
+                                            Style="{StaticResource IconButton}"
+                                            WidthRequest="36"
+                                            HeightRequest="36"
+                                            FontSize="14"
+                                            Clicked="OnSortDownClicked" />
+                                    <Button Text="删除"
+                                            Style="{StaticResource DangerSoftButton}"
+                                            Clicked="OnDeleteCategoryClicked" />
+                                </HorizontalStackLayout>
                             </Grid>
                         </Frame>
                     </DataTemplate>

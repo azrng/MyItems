@@ -44,6 +44,18 @@ public partial class CategoryPage : ContentPage
             _viewModel.DeleteCategoryCommand.Execute(category);
     }
 
+    private void OnSortUpClicked(object? sender, EventArgs e)
+    {
+        if (sender is BindableObject { BindingContext: CategoryDto category })
+            _viewModel.SortUpCommand.Execute(category);
+    }
+
+    private void OnSortDownClicked(object? sender, EventArgs e)
+    {
+        if (sender is BindableObject { BindingContext: CategoryDto category })
+            _viewModel.SortDownCommand.Execute(category);
+    }
+
     private static View CreateLoadFailedView(string message)
     {
         return new ScrollView
