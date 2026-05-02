@@ -8,6 +8,8 @@ namespace MyItems.ViewModels;
 
 public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
 {
+    private readonly IDataService _dataService;
+
     public ObservableCollection<BatchDisplayDto> Batches { get; } = [];
 
     [ObservableProperty]
@@ -28,11 +30,16 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private string? barcode;
 
+    public ItemDetailViewModel(IDataService dataService)
+    {
+        _dataService = dataService;
+    }
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("itemId", out var idObj) && idObj is string idStr && Guid.TryParse(idStr, out var itemId))
         {
-            LoadItem(itemId);
+            _ = LoadItemAsync(itemId);
         }
     }
 
@@ -40,13 +47,12 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     private void Refresh()
     {
         if (Item is not null)
-            LoadItem(Item.ItemId);
+            _ = LoadItemAsync(Item.ItemId);
     }
 
     [RelayCommand]
     private async Task AddBatchAsync()
     {
-        // Phase 2: navigate to add batch page
         await Shell.Current.DisplayAlertAsync("添加批次", "添加批次功能将在后续版本实现", "确定");
     }
 
@@ -57,7 +63,8 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
         if (!confirm)
             return;
 
-        if (MockDataService.RemoveBatch(batch.BatchId))
+        var result = await _dataService.DeleteBatchAsync(batch.BatchId);
+        if (result > 0)
             Batches.Remove(batch);
     }
 
@@ -68,7 +75,8 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
         if (!confirm)
             return;
 
-        if (MockDataService.MarkBatchConsumed(batch.BatchId))
+        var result = await _dataService.DeleteBatchAsync(batch.BatchId);
+        if (result > 0)
             Batches.Remove(batch);
     }
 
@@ -82,15 +90,16 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
         if (!confirm)
             return;
 
-        if (MockDataService.ArchiveItem(Item.ItemId))
+        var result = await _dataService.ArchiveItemAsync(Item.ItemId);
+        if (result > 0)
             await Shell.Current.GoToAsync("..");
     }
 
-    private void LoadItem(Guid itemId)
+    private async Task LoadItemAsync(Guid itemId)
     {
         IsLoading = true;
 
-        var items = MockDataService.GetItemDisplayDtos();
+        var items = await _dataService.GetItemDisplayDtosAsync();
         var item = items.FirstOrDefault(i => i.ItemId == itemId);
         if (item is null)
         {
@@ -104,7 +113,7 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
         ItemLocation = item.DefaultLocation;
         Barcode = item.Barcode;
 
-        var allBatches = MockDataService.GetBatchDisplayDtos();
+        var allBatches = await _dataService.GetBatchDisplayDtosAsync();
         var itemBatches = allBatches.Where(b => b.ItemId == itemId).ToList();
 
         Batches.Clear();

@@ -9,6 +9,8 @@ namespace MyItems.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private readonly IDataService _dataService;
+
     public ObservableCollection<ExpiryGroupDto> ExpiryGroups { get; private set; } = [];
 
     [ObservableProperty]
@@ -19,16 +21,17 @@ public partial class MainViewModel : ObservableObject
 
     private CancellationTokenSource? _searchCts;
 
-    public MainViewModel()
+    public MainViewModel(IDataService dataService)
     {
-        LoadData();
+        _dataService = dataService;
+        _ = LoadDataAsync();
     }
 
     [RelayCommand]
     private void Refresh()
     {
         IsLoading = true;
-        LoadData();
+        _ = LoadDataAsync();
     }
 
     [RelayCommand]
@@ -40,7 +43,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Search()
     {
-        LoadData();
+        _ = LoadDataAsync();
     }
 
     [RelayCommand]
@@ -61,14 +64,14 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            LoadData();
+            await LoadDataAsync();
         }
         catch (TaskCanceledException) { }
     }
 
-    private void LoadData()
+    private async Task LoadDataAsync()
     {
-        var groups = MockDataService.GetExpiryGroups()
+        var groups = (await _dataService.GetExpiryGroupsAsync())
             .Where(g => g.Status is ExpiryStatus.Expired or ExpiryStatus.Expiring)
             .ToList();
 

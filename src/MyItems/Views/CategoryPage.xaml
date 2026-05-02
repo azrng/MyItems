@@ -73,7 +73,7 @@
                                         CornerRadius="4"
                                         BackgroundColor="Transparent"
                                         TextColor="{StaticResource AppPrimaryColor}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortUpCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortUpAsyncCommand}"
                                         CommandParameter="{Binding .}" />
                                 <Button Text="↓"
                                         FontSize="12"
@@ -83,7 +83,7 @@
                                         CornerRadius="4"
                                         BackgroundColor="Transparent"
                                         TextColor="{StaticResource AppPrimaryColor}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortDownCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortDownAsyncCommand}"
                                         CommandParameter="{Binding .}" />
                             </VerticalStackLayout>
 
@@ -99,7 +99,7 @@
                                     Text="删除"
                                     Style="{StaticResource DangerSoftButton}"
                                     IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=DeleteCategoryCommand}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=DeleteCategoryAsyncCommand}"
                                     CommandParameter="{Binding}" />
                         </Grid>
                     </Frame>

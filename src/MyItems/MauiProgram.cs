@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui;
+using MyItems.Services;
 using MyItems.ViewModels;
 using MyItems.Views;
 using Syncfusion.Maui.Toolkit.Hosting;
@@ -17,6 +18,15 @@ public static class MauiProgram
             .ConfigureFonts(fonts =>
             {
             });
+
+        // Register database service as singleton
+        builder.Services.AddSingleton<IDataService>(sp =>
+        {
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
+            var service = new SqliteDataService(dbPath);
+            service.InitializeAsync().GetAwaiter().GetResult();
+            return service;
+        });
 
         // Register ViewModels
         builder.Services.AddTransient<MainViewModel>();

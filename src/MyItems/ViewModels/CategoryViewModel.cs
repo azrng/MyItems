@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MyItems.Models;
 using MyItems.Models.DTOs;
 using MyItems.Services;
 
@@ -8,6 +10,8 @@ namespace MyItems.ViewModels;
 
 public partial class CategoryViewModel : ObservableObject
 {
+    private readonly IDataService _dataService;
+
     public ObservableCollection<CategoryDto> Categories { get; } = [];
 
     [ObservableProperty]
@@ -22,16 +26,17 @@ public partial class CategoryViewModel : ObservableObject
     [ObservableProperty]
     private bool isAdding;
 
-    public CategoryViewModel()
+    public CategoryViewModel(IDataService dataService)
     {
-        LoadData();
+        _dataService = dataService;
+        _ = LoadDataAsync();
     }
 
     [RelayCommand]
-    private void Refresh()
+    private async Task RefreshAsync()
     {
         IsLoading = true;
-        LoadData();
+        await LoadDataAsync();
         IsLoading = false;
     }
 
@@ -42,9 +47,8 @@ public partial class CategoryViewModel : ObservableObject
             return;
 
         IsAdding = true;
-        await Task.Delay(300);
 
-        Categories.Add(new CategoryDto
+        var category = new Category
         {
             Id = Guid.NewGuid(),
             Name = NewCategoryName,
@@ -52,8 +56,22 @@ public partial class CategoryViewModel : ObservableObject
             SortOrder = Categories.Count + 1,
             IsPreset = false,
             IsActive = true,
+        };
+
+        await _dataService.SaveCategoryAsync(category);
+
+        var dto = new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Icon = category.Icon,
+            SortOrder = category.SortOrder,
+            IsPreset = false,
+            IsActive = true,
             ItemCount = 0,
-        });
+        };
+        dto.PropertyChanged += OnCategoryPropertyChanged;
+        Categories.Add(dto);
 
         NewCategoryName = null;
         NewCategoryIcon = null;
@@ -78,18 +96,15 @@ public partial class CategoryViewModel : ObservableObject
         var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除分类「{category.Name}」吗？", "删除", "取消");
         if (confirm)
         {
+            var cat = new Category { Id = category.Id };
+            await _dataService.DeleteCategoryAsync(cat);
+            category.PropertyChanged -= OnCategoryPropertyChanged;
             Categories.Remove(category);
         }
     }
 
     [RelayCommand]
-    private void ToggleActive(CategoryDto category)
-    {
-        category.IsActive = !category.IsActive;
-    }
-
-    [RelayCommand]
-    private void SortUp(CategoryDto category)
+    private async Task SortUpAsync(CategoryDto category)
     {
         var index = Categories.IndexOf(category);
         if (index > 0)
@@ -97,11 +112,13 @@ public partial class CategoryViewModel : ObservableObject
             var prev = Categories[index - 1];
             (category.SortOrder, prev.SortOrder) = (prev.SortOrder, category.SortOrder);
             ReorderCollection();
+            await SaveSortOrderAsync(category);
+            await SaveSortOrderAsync(prev);
         }
     }
 
     [RelayCommand]
-    private void SortDown(CategoryDto category)
+    private async Task SortDownAsync(CategoryDto category)
     {
         var index = Categories.IndexOf(category);
         if (index < Categories.Count - 1)
@@ -109,6 +126,8 @@ public partial class CategoryViewModel : ObservableObject
             var next = Categories[index + 1];
             (category.SortOrder, next.SortOrder) = (next.SortOrder, category.SortOrder);
             ReorderCollection();
+            await SaveSortOrderAsync(category);
+            await SaveSortOrderAsync(next);
         }
     }
 
@@ -120,11 +139,30 @@ public partial class CategoryViewModel : ObservableObject
             Categories.Add(cat);
     }
 
-    private void LoadData()
+    private async Task SaveSortOrderAsync(CategoryDto dto)
+    {
+        var cat = new Category { Id = dto.Id, Name = dto.Name, Icon = dto.Icon, SortOrder = dto.SortOrder, IsPreset = dto.IsPreset, IsActive = dto.IsActive };
+        await _dataService.SaveCategoryAsync(cat);
+    }
+
+    private async void OnCategoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CategoryDto.IsActive) && sender is CategoryDto dto)
+        {
+            var cat = new Category { Id = dto.Id, Name = dto.Name, Icon = dto.Icon, SortOrder = dto.SortOrder, IsPreset = dto.IsPreset, IsActive = dto.IsActive };
+            await _dataService.SaveCategoryAsync(cat);
+        }
+    }
+
+    private async Task LoadDataAsync()
     {
         Categories.Clear();
-        foreach (var cat in MockDataService.GetCategoryDtos().OrderBy(c => c.SortOrder))
+        var dtos = await _dataService.GetCategoryDtosAsync();
+        foreach (var cat in dtos.OrderBy(c => c.SortOrder))
+        {
+            cat.PropertyChanged += OnCategoryPropertyChanged;
             Categories.Add(cat);
+        }
         IsLoading = false;
     }
 }

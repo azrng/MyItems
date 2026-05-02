@@ -1,9 +1,12 @@
+using SQLite;
+
 namespace MyItems.Models;
 
+[Table("Batches")]
 public class Batch
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid ItemId { get; set; }
+    [PrimaryKey] public Guid Id { get; set; } = Guid.NewGuid();
+    [Indexed] public Guid ItemId { get; set; }
     public DateTime? PurchaseDate { get; set; }
     public decimal? PurchasePrice { get; set; }
     public DateTime? ExpiryDate { get; set; }

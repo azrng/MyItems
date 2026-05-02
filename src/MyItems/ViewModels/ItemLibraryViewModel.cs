@@ -9,6 +9,8 @@ namespace MyItems.ViewModels;
 
 public partial class ItemLibraryViewModel : ObservableObject
 {
+    private readonly IDataService _dataService;
+
     public ObservableCollection<ItemDisplayDto> Items { get; private set; } = [];
     public ObservableCollection<Category> Categories { get; } = [];
 
@@ -32,10 +34,10 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     private CancellationTokenSource? _searchCts;
 
-    public ItemLibraryViewModel()
+    public ItemLibraryViewModel(IDataService dataService)
     {
-        LoadCategories();
-        LoadData();
+        _dataService = dataService;
+        _ = InitializeAsync();
     }
 
     [RelayCommand]
@@ -57,15 +59,33 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ExportExcelAsync()
+    {
+        try
+        {
+            var path = await _dataService.ExportToExcelAsync();
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "导出物品数据",
+                File = new ShareFile(path)
+            });
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("导出失败", ex.Message, "确定");
+        }
+    }
+
+    [RelayCommand]
     private void Refresh()
     {
         IsLoading = true;
-        LoadData();
+        _ = LoadDataAsync();
     }
 
     partial void OnSelectedCategoryChanged(Category value)
     {
-        LoadData();
+        _ = LoadDataAsync();
     }
 
     partial void OnSearchTextChanged(string value)
@@ -80,28 +100,35 @@ public partial class ItemLibraryViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            LoadData();
+            await LoadDataAsync();
         }
         catch (TaskCanceledException) { }
     }
 
-    private void LoadCategories()
+    private async Task InitializeAsync()
+    {
+        await LoadCategoriesAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task LoadCategoriesAsync()
     {
         Categories.Clear();
         Categories.Add(new Category { Id = Guid.Empty, Name = "全部" });
-        foreach (var cat in MockDataService.GetPresetCategories().Where(c => c.IsActive).OrderBy(c => c.SortOrder))
+        var categories = await _dataService.GetCategoriesAsync();
+        foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
             Categories.Add(cat);
         SelectedCategory = Categories[0];
     }
 
-    private void LoadData()
+    private async Task LoadDataAsync()
     {
-        var stats = MockDataService.GetStatistics();
+        var stats = await _dataService.GetStatisticsAsync();
         TotalSpentText = $"¥{stats.TotalSpent:F1}";
         ValidCountText = $"{stats.ValidBatches} 件有效";
         TotalBatchesText = $"共 {stats.TotalBatches} 件";
 
-        var items = MockDataService.GetItemDisplayDtos().AsEnumerable();
+        var items = (await _dataService.GetItemDisplayDtosAsync()).AsEnumerable();
 
         if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
             items = items.Where(i => i.CategoryId == categoryId);

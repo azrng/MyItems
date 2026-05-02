@@ -9,6 +9,8 @@ namespace MyItems.ViewModels;
 
 public partial class AddItemViewModel : ObservableObject
 {
+    private readonly IDataService _dataService;
+
     public ObservableCollection<Category> Categories { get; } = [];
 
     [ObservableProperty]
@@ -53,9 +55,10 @@ public partial class AddItemViewModel : ObservableObject
     [ObservableProperty]
     private string? errorMessage;
 
-    public AddItemViewModel()
+    public AddItemViewModel(IDataService dataService)
     {
-        LoadCategories();
+        _dataService = dataService;
+        _ = LoadCategoriesAsync();
     }
 
     [RelayCommand]
@@ -76,35 +79,48 @@ public partial class AddItemViewModel : ObservableObject
         IsSaving = true;
         ErrorMessage = null;
 
-        // Phase 1: mock save — Phase 2 will implement real persistence
-        await Task.Delay(500);
+        var category = await _dataService.GetCategoriesAsync()
+            .ContinueWith(t => t.Result.FirstOrDefault(c => c.Id == SelectedCategory.Id));
 
-        MockDataService.AddItem(new AddItemDto
+        var item = new Item
         {
-            Name = ItemName,
+            Id = Guid.NewGuid(),
+            Name = ItemName.Trim(),
             CategoryId = SelectedCategory.Id,
             Barcode = Barcode,
             Brand = Brand,
+            Icon = category?.Icon ?? "\U0001F4E6",
             DefaultLocation = Location,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+        };
+
+        await _dataService.SaveItemAsync(item);
+
+        var batch = new Batch
+        {
+            Id = Guid.NewGuid(),
+            ItemId = item.Id,
             PurchaseDate = PurchaseDate,
             PurchasePrice = PurchasePrice,
             ExpiryDate = NoExpiry ? null : ExpiryDate,
-            NoExpiry = NoExpiry,
-            TrackDailyCost = TrackDailyCost,
             Location = Location,
-            Quantity = Quantity,
+            Quantity = Math.Max(1, Quantity),
+            TrackDailyCost = TrackDailyCost,
             Notes = Notes,
-        });
+            BatchLabel = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            CreatedAt = DateTime.Now,
+        };
+
+        await _dataService.SaveBatchAsync(batch);
 
         IsSaving = false;
-
         await Shell.Current.GoToAsync("..");
     }
 
     [RelayCommand]
     private async Task ScanBarcodeAsync()
     {
-        // Phase 2: implement ZXing barcode scanning
         await Shell.Current.DisplayAlertAsync("扫码", "扫码功能将在后续版本实现", "确定");
     }
 
@@ -116,10 +132,11 @@ public partial class AddItemViewModel : ObservableObject
             ExpiryDate = DateTime.Today.AddMonths(1);
     }
 
-    private void LoadCategories()
+    private async Task LoadCategoriesAsync()
     {
         Categories.Clear();
-        foreach (var cat in MockDataService.GetPresetCategories().Where(c => c.IsActive).OrderBy(c => c.SortOrder))
+        var categories = await _dataService.GetCategoriesAsync();
+        foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
             Categories.Add(cat);
     }
 }
