@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <MyItemsVersionFile Condition="'$(MyItemsVersionFile)' == ''">$(MSBuildThisFileDirectory)VERSION</MyItemsVersionFile>
+    <MyItemsLegacyVersion Condition="'$(MyItemsLegacyVersion)' == '' and Exists('$(MyItemsVersionFile)')">$([System.String]::Copy($([System.IO.File]::ReadAllText('$(MyItemsVersionFile)'))).Trim())</MyItemsLegacyVersion>
+    <MyItemsLegacyVersionIsExplicit Condition="'$(MyItemsLegacyVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(MyItemsLegacyVersion)', '^\d+\.\d+\.\d+(?:\.\d+)?$'))</MyItemsLegacyVersionIsExplicit>
+    <MyItemsResolvedVersion Condition="'$(MyItemsResolvedVersion)' == '' and '$(MyItemsVersionDate)' != ''">$(MyItemsVersionDate)</MyItemsResolvedVersion>
+    <MyItemsResolvedVersion Condition="'$(MyItemsResolvedVersion)' == '' and '$(MyItemsLegacyVersionIsExplicit)' == 'True'">$(MyItemsLegacyVersion)</MyItemsResolvedVersion>
+    <MyItemsResolvedVersion Condition="'$(MyItemsResolvedVersion)' == ''">$([System.DateTime]::UtcNow.ToString('yyyy.M.d.HH'))</MyItemsResolvedVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <ApplicationDisplayVersion Condition="'$(ApplicationDisplayVersion)' == ''">$(MyItemsResolvedVersion)</ApplicationDisplayVersion>
+  </PropertyGroup>
+</Project>

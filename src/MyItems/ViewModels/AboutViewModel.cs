@@ -1,14 +1,20 @@
+using System.Net.Http.Json;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace MyItems.ViewModels;
 
 public partial class AboutViewModel : ObservableObject
 {
+    private const string RepoUrl = "https://github.com/azrng/MyItems";
+    private const string VersionsUrl = "https://github.com/azrng/MyItems/releases/latest/download/versions.json";
+
     [ObservableProperty]
     private string appName = "我的物品";
 
     [ObservableProperty]
-    private string version = "1.0.0";
+    private string version = AppInfo.Current.VersionString;
 
     [ObservableProperty]
     private string author = "azrng";
@@ -20,5 +26,84 @@ public partial class AboutViewModel : ObservableObject
     private string techStack = ".NET MAUI + SQLite";
 
     [ObservableProperty]
-    private string projectUrl = "https://github.com/azrng/MyItems";
+    private string projectUrl = RepoUrl;
+
+    [ObservableProperty]
+    private bool isCheckingUpdate;
+
+    [ObservableProperty]
+    private string updateStatusText = string.Empty;
+
+    [RelayCommand]
+    private async Task CheckUpdateAsync()
+    {
+        if (IsCheckingUpdate) return;
+
+        IsCheckingUpdate = true;
+        UpdateStatusText = "正在检查更新...";
+
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            var versions = await http.GetFromJsonAsync<List<VersionEntry>>(VersionsUrl);
+
+            if (versions is { Count: > 0 })
+            {
+                var latest = versions[0];
+                var current = AppInfo.Current.VersionString;
+
+                if (IsNewerVersion(latest.Version, current))
+                {
+                    UpdateStatusText = $"发现新版本 v{latest.Version}";
+                    var open = await Application.Current!.MainPage!.DisplayAlert(
+                        "发现新版本",
+                        $"当前版本: v{current}\n最新版本: v{latest.Version}\n发布时间: {latest.PubTime:yyyy-MM-dd HH:mm}",
+                        "前往下载",
+                        "稍后再说");
+
+                    if (open)
+                        await Launcher.Default.OpenAsync($"{RepoUrl}/releases/latest");
+                }
+                else
+                {
+                    UpdateStatusText = "当前已是最新版本";
+                }
+            }
+            else
+            {
+                UpdateStatusText = "无法获取版本信息";
+            }
+        }
+        catch (Exception)
+        {
+            UpdateStatusText = "检查更新失败，请检查网络";
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenProjectUrlAsync()
+    {
+        await Launcher.Default.OpenAsync(RepoUrl);
+    }
+
+    private static bool IsNewerVersion(string remote, string local)
+    {
+        if (System.Version.TryParse(remote.TrimStart('v'), out var r) &&
+            System.Version.TryParse(local.TrimStart('v'), out var l))
+        {
+            return r > l;
+        }
+        return false;
+    }
+
+    private record VersionEntry(
+        string PacketName,
+        string Hash,
+        string Version,
+        string Url,
+        DateTime PubTime);
 }
