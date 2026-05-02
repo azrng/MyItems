@@ -24,7 +24,7 @@
             ColumnSpacing="{StaticResource SpacingSm}">
             <Entry
                 Grid.Column="0"
-                Text="{Binding NewCategoryName}"
+                Text="{Binding NewCategoryName, UpdateSourceEvent=PropertyChanged}"
                 Placeholder="新分类名称"
                 Style="{StaticResource EntryStyle}" />
             <Button
