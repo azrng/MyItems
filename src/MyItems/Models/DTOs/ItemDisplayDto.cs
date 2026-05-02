@@ -17,5 +17,5 @@ public class ItemDisplayDto
     public decimal TotalSpent { get; set; }
     public ExpiryStatus WorstExpiryStatus { get; set; }
     public string WorstExpiryStatusText { get; set; } = string.Empty;
-    public string? WarrantyStatusText { get; set; }
+    public string? DailyCostText { get; set; }
 }

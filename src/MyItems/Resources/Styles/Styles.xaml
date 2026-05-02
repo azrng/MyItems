@@ -5,8 +5,8 @@
     x:Class="MyItems.Resources.Styles.Styles">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
-        <ResourceDictionary Source="Resources/Styles/Sizes.xaml" />
+        <ResourceDictionary Source="Colors.xaml" />
+        <ResourceDictionary Source="Sizes.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Page -->
@@ -32,7 +32,7 @@
 
     <Style x:Key="TitleLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
-        <Setter Property="FontAttributes" Value="SemiBold" />
+        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
     </Style>
 
@@ -56,7 +56,7 @@
         <Setter Property="BackgroundColor" Value="{StaticResource AppPrimaryColor}" />
         <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
-        <Setter Property="FontAttributes" Value="SemiBold" />
+        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HeightRequest" Value="{StaticResource ButtonHeight}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
@@ -99,7 +99,7 @@
     <!-- Section header -->
     <Style x:Key="SectionHeaderLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
-        <Setter Property="FontAttributes" Value="SemiBold" />
+        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
     </Style>
 
@@ -112,7 +112,7 @@
 
     <Style x:Key="StatusBadgeLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
-        <Setter Property="FontAttributes" Value="SemiBold" />
+        <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
 </ResourceDictionary>

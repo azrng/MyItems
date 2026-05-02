@@ -65,17 +65,17 @@ public partial class CategoryViewModel : ObservableObject
     {
         if (category.IsPreset)
         {
-            await Shell.Current.DisplayAlert("提示", "预置分类不可删除", "确定");
+            await Shell.Current.DisplayAlertAsync("提示", "预置分类不可删除", "确定");
             return;
         }
 
         if (category.ItemCount > 0)
         {
-            await Shell.Current.DisplayAlert("提示", $"分类「{category.Name}」下有 {category.ItemCount} 个物品，无法删除", "确定");
+            await Shell.Current.DisplayAlertAsync("提示", $"分类「{category.Name}」下有 {category.ItemCount} 个物品，无法删除", "确定");
             return;
         }
 
-        var confirm = await Shell.Current.DisplayAlert("确认删除", $"确定要删除分类「{category.Name}」吗？", "删除", "取消");
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除分类「{category.Name}」吗？", "删除", "取消");
         if (confirm)
         {
             Categories.Remove(category);

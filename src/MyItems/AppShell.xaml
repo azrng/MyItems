@@ -21,11 +21,17 @@
         </VerticalStackLayout>
     </Shell.FlyoutHeader>
 
-    <FlyoutItem Title="主页">
+    <TabBar>
         <Tab Title="主页">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
-    </FlyoutItem>
+        <Tab Title="物品库">
+            <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />
+        </Tab>
+        <Tab Title="分类">
+            <ShellContent ContentTemplate="{DataTemplate views:CategoryPage}" />
+        </Tab>
+    </TabBar>
 
     <FlyoutItem Title="添加">
         <Tab Title="添加">
@@ -33,24 +39,7 @@
         </Tab>
     </FlyoutItem>
 
-    <FlyoutItem Title="分类">
-        <Tab Title="分类">
-            <ShellContent ContentTemplate="{DataTemplate views:CategoryPage}" />
-        </Tab>
-    </FlyoutItem>
-
-    <FlyoutItem Title="物品库">
-        <Tab Title="物品库">
-            <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />
-        </Tab>
-    </FlyoutItem>
-
-    <ShellContent
-        Route="itemdetail"
-        ContentTemplate="{DataTemplate views:ItemDetailPage}" />
-
     <MenuItem Text="关于"
-              Command="{Binding AboutCommand}"
-              Icon="{FontImage FontFamily='Segoe MDL2 Assets', Glyph='&#xE946;', Size=22}" />
+              Command="{Binding AboutCommand}" />
 
 </Shell>

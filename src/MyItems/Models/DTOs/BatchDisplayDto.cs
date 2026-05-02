@@ -14,15 +14,12 @@ public class BatchDisplayDto
     public DateTime? PurchaseDate { get; set; }
     public decimal? PurchasePrice { get; set; }
     public DateTime? ExpiryDate { get; set; }
-    public DateTime? WarrantyDate { get; set; }
     public string? Location { get; set; }
     public int Quantity { get; set; }
     public string? Notes { get; set; }
     public string BatchLabel { get; set; } = string.Empty;
     public ExpiryStatus ExpiryStatus { get; set; }
-    public WarrantyStatus WarrantyStatus { get; set; }
     public string ExpiryStatusText { get; set; } = string.Empty;
-    public string? WarrantyStatusText { get; set; }
     public int HoldingDays { get; set; }
     public decimal DailyCost { get; set; }
     public string DailyCostText { get; set; } = string.Empty;

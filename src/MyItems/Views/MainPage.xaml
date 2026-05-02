@@ -17,7 +17,7 @@
         <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,*">
         <!-- Search bar -->
         <SearchBar
             Grid.Row="0"
@@ -26,50 +26,8 @@
             SearchCommand="{Binding SearchCommand}"
             Margin="{StaticResource PagePadding}" />
 
-        <!-- Statistics summary -->
-        <Frame
-            Grid.Row="1"
-            Style="{StaticResource CardStyle}"
-            Margin="16,0"
-            Padding="16,12">
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
-                <Label Grid.Row="0" Grid.Column="0"
-                       Text="有效商品花费"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="0"
-                       Text="{Binding TotalSpentText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppPrimaryColor}"
-                       HorizontalOptions="Center" />
-
-                <Label Grid.Row="0" Grid.Column="1"
-                       Text="有效商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="1"
-                       Text="{Binding ValidCountText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppSafeColor}"
-                       HorizontalOptions="Center" />
-
-                <Label Grid.Row="0" Grid.Column="2"
-                       Text="全部商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="2"
-                       Text="{Binding TotalBatchesText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppTextSecondaryColor}"
-                       HorizontalOptions="Center" />
-            </Grid>
-        </Frame>
-
-        <!-- Grouped content -->
-        <ScrollView Grid.Row="2">
+        <!-- Grouped content (expired + expiring only) -->
+        <ScrollView Grid.Row="1">
             <VerticalStackLayout
                 BindableLayout.ItemsSource="{Binding ExpiryGroups}"
                 Spacing="{StaticResource SpacingMd}"
@@ -82,7 +40,7 @@
                             <Grid
                                 ColumnDefinitions="Auto,*,Auto"
                                 HeightRequest="{StaticResource TouchTargetMinHeight}"
-                                Padding="0,{StaticResource SpacingXs}">
+                                Padding="0,4">
                                 <Label
                                     Grid.Column="0"
                                     Text="{Binding StatusIcon}"
@@ -105,7 +63,7 @@
                                     TextColor="{StaticResource AppPrimaryColor}"
                                     VerticalOptions="Center"
                                     HorizontalOptions="End"
-                                    Margin="0,0,{StaticResource SpacingSm},0">
+                                    Margin="0,0,8,0">
                                     <Label.Triggers>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
                                             <Setter Property="Text" Value="▼ 收起" />
@@ -132,7 +90,7 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:BatchDisplayDto">
                                         <Frame Style="{StaticResource CardStyle}">
-                                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                                                 <!-- Row 0: Name + status badge -->
                                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -181,13 +139,6 @@
                                                            Style="{StaticResource CaptionLabel}"
                                                            TextColor="{StaticResource AppPrimaryColor}" />
                                                 </Grid>
-
-                                                <!-- Row 3: Warranty (if any) -->
-                                                <Label Grid.Row="3"
-                                                       Text="{Binding WarrantyStatusText}"
-                                                       Style="{StaticResource CaptionLabel}"
-                                                       TextColor="{StaticResource AppSecondaryColor}"
-                                                       IsVisible="{Binding WarrantyStatusText, Converter={x:Static converters:StringNotNullOrEmptyConverter}}" />
                                             </Grid>
                                         </Frame>
                                     </DataTemplate>
@@ -201,7 +152,7 @@
 
         <!-- Loading indicator -->
         <ActivityIndicator
-            Grid.Row="2"
+            Grid.Row="1"
             IsRunning="{Binding IsLoading}"
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"

@@ -16,7 +16,7 @@ public partial class AppShell : Shell
             await GoToAsync(nameof(AboutPage));
         });
 
-        Routing.RegisterRoute(nameof(ItemDetailPage), typeof(ItemDetailPage));
+        Routing.RegisterRoute("itemdetail", typeof(ItemDetailPage));
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
     }
 }

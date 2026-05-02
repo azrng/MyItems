@@ -21,6 +21,15 @@ public partial class ItemLibraryViewModel : ObservableObject
     [ObservableProperty]
     private string searchText = string.Empty;
 
+    [ObservableProperty]
+    private string totalSpentText = string.Empty;
+
+    [ObservableProperty]
+    private string validCountText = string.Empty;
+
+    [ObservableProperty]
+    private string totalBatchesText = string.Empty;
+
     public ItemLibraryViewModel()
     {
         LoadCategories();
@@ -62,6 +71,11 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     private void LoadData()
     {
+        var stats = MockDataService.GetStatistics();
+        TotalSpentText = $"¥{stats.TotalSpent:F1}";
+        ValidCountText = $"{stats.ValidBatches} 件有效";
+        TotalBatchesText = $"共 {stats.TotalBatches} 件";
+
         var items = MockDataService.GetItemDisplayDtos().AsEnumerable();
 
         if (SelectedCategory is not null)

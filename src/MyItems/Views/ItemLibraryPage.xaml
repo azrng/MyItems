@@ -11,7 +11,7 @@
     Title="物品库"
     Style="{StaticResource PageStyle}">
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
         <!-- Search -->
         <SearchBar
             Grid.Row="0"
@@ -19,9 +19,51 @@
             Text="{Binding SearchText}"
             Margin="{StaticResource PagePadding}" />
 
+        <!-- Statistics summary -->
+        <Frame
+            Grid.Row="1"
+            Style="{StaticResource CardStyle}"
+            Margin="16,0"
+            Padding="16,12">
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="有效商品花费"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="0"
+                       Text="{Binding TotalSpentText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppPrimaryColor}"
+                       HorizontalOptions="Center" />
+
+                <Label Grid.Row="0" Grid.Column="1"
+                       Text="有效商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="1"
+                       Text="{Binding ValidCountText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppSafeColor}"
+                       HorizontalOptions="Center" />
+
+                <Label Grid.Row="0" Grid.Column="2"
+                       Text="全部商品"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+                <Label Grid.Row="1" Grid.Column="2"
+                       Text="{Binding TotalBatchesText}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextSecondaryColor}"
+                       HorizontalOptions="Center" />
+            </Grid>
+        </Frame>
+
         <!-- Category filter chips -->
         <ScrollView
-            Grid.Row="1"
+            Grid.Row="2"
             Orientation="Horizontal"
             Margin="{StaticResource PagePadding}">
             <HorizontalStackLayout Spacing="{StaticResource SpacingSm}" BindableLayout.ItemsSource="{Binding Categories}">
@@ -41,7 +83,7 @@
 
         <!-- Item list -->
         <CollectionView
-            Grid.Row="2"
+            Grid.Row="3"
             ItemsSource="{Binding Items}"
             Margin="{StaticResource PagePadding}"
             ItemSizingStrategy="MeasureFirstItem">
@@ -64,15 +106,22 @@
                             </Grid>
 
                             <!-- Row 1: batch info -->
-                            <Label Grid.Row="1" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
-                                <Label.Text>
-                                    <MultiBinding StringFormat="{}{0} 个批次 · {1} · ¥{2:F0}">
-                                        <Binding Path="BatchCount" />
-                                        <Binding Path="WorstExpiryStatusText" />
-                                        <Binding Path="TotalSpent" />
-                                    </MultiBinding>
-                                </Label.Text>
-                            </Label>
+                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Style="{StaticResource BodyLabel}" LineBreakMode="TailTruncation">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0} 个批次 · {1} · ¥{2:F0}">
+                                            <Binding Path="BatchCount" />
+                                            <Binding Path="WorstExpiryStatusText" />
+                                            <Binding Path="TotalSpent" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
+                                <Label Grid.Column="1"
+                                       Text="{Binding DailyCostText}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       TextColor="{StaticResource AppPrimaryColor}"
+                                       VerticalOptions="Center" />
+                            </Grid>
                         </Grid>
 
                         <Frame.GestureRecognizers>
@@ -87,7 +136,7 @@
 
         <!-- Loading -->
         <ActivityIndicator
-            Grid.Row="2"
+            Grid.Row="3"
             IsRunning="{Binding IsLoading}"
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"

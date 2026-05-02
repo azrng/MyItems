@@ -47,13 +47,13 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     private async Task AddBatchAsync()
     {
         // Phase 2: navigate to add batch page
-        await Shell.Current.DisplayAlert("添加批次", "添加批次功能将在后续版本实现", "确定");
+        await Shell.Current.DisplayAlertAsync("添加批次", "添加批次功能将在后续版本实现", "确定");
     }
 
     [RelayCommand]
     private async Task DeleteBatchAsync(BatchDisplayDto batch)
     {
-        var confirm = await Shell.Current.DisplayAlert("确认删除", $"确定要删除批次「{batch.BatchLabel}」吗？", "删除", "取消");
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除批次「{batch.BatchLabel}」吗？", "删除", "取消");
         if (confirm)
         {
             Batches.Remove(batch);

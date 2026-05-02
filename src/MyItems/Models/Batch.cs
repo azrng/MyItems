@@ -7,7 +7,6 @@ public class Batch
     public DateTime? PurchaseDate { get; set; }
     public decimal? PurchasePrice { get; set; }
     public DateTime? ExpiryDate { get; set; }
-    public DateTime? WarrantyDate { get; set; }
     public string? Location { get; set; }
     public int Quantity { get; set; } = 1;
     public string? Notes { get; set; }

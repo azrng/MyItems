@@ -49,3 +49,5 @@ Desktop.ini
 ## Misc
 *.log
 *.tmp
+.claude
+.codex

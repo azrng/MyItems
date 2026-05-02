@@ -53,7 +53,7 @@
             Margin="{StaticResource PagePadding}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:BatchDisplayDto">
-                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,{StaticResource SpacingSm}">
+                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                             <!-- Row 0: Label + Status -->
@@ -86,22 +86,17 @@
                                    Text="{Binding ExpiryDate, StringFormat='保质至 {0:yyyy-MM-dd}'}"
                                    Style="{StaticResource CaptionLabel}" />
 
-                            <!-- Row 3: Warranty + Delete -->
-                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                                <Label Grid.Column="0"
-                                       Text="{Binding WarrantyStatusText}"
-                                       Style="{StaticResource CaptionLabel}"
-                                       TextColor="{StaticResource AppSecondaryColor}" />
-                                <Button Grid.Column="1"
-                                        Text="删除"
-                                        FontSize="{StaticResource FontSizeCaption}"
-                                        HeightRequest="32"
-                                        CornerRadius="{StaticResource RadiusSm}"
-                                        BackgroundColor="{StaticResource AppErrorBgColor}"
-                                        TextColor="{StaticResource AppErrorColor}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
-                                        CommandParameter="{Binding}" />
-                            </Grid>
+                            <!-- Row 3: Delete -->
+                            <Button Grid.Row="3"
+                                    Text="删除"
+                                    FontSize="{StaticResource FontSizeCaption}"
+                                    HeightRequest="32"
+                                    CornerRadius="{StaticResource RadiusSm}"
+                                    BackgroundColor="{StaticResource AppErrorBgColor}"
+                                    TextColor="{StaticResource AppErrorColor}"
+                                    HorizontalOptions="End"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemDetailViewModel}}, Path=DeleteBatchCommand}"
+                                    CommandParameter="{Binding}" />
                         </Grid>
                     </Frame>
                 </DataTemplate>

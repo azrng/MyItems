@@ -58,7 +58,7 @@
                 <!-- Section: Batch info -->
                 <Label Text="── 批次信息 ──" Style="{StaticResource CaptionLabel}"
                        HorizontalOptions="Center"
-                       Margin="0,{StaticResource SpacingSm},0,{StaticResource SpacingSm}" />
+                       Margin="0,8,0,8" />
 
                 <!-- Purchase date -->
                 <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
@@ -99,13 +99,6 @@
                         <CheckBox IsChecked="{Binding NoExpiry}" VerticalOptions="Center" />
                         <Label Text="无保质期" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
-                </VerticalStackLayout>
-
-                <!-- Warranty date -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}"
-                                     IsVisible="{Binding ShowWarrantyField}">
-                    <Label Text="保修期" Style="{StaticResource SubheadLabel}" />
-                    <DatePicker Date="{Binding WarrantyDate}" Format="yyyy-MM-dd" />
                 </VerticalStackLayout>
 
                 <!-- Quantity -->

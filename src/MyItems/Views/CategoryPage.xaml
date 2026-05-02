@@ -41,14 +41,14 @@
             Margin="{StaticResource PagePadding}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:CategoryDto">
-                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,{StaticResource SpacingSm}">
+                    <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,8">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
 
                             <Label Grid.Column="0"
                                    Text="{Binding Icon}"
                                    FontSize="{StaticResource FontSizeTitle}"
                                    VerticalOptions="Center"
-                                   Margin="0,0,{StaticResource SpacingMd},0" />
+                                   Margin="0,0,12,0" />
 
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="{Binding Name}" Style="{StaticResource SubheadLabel}" />

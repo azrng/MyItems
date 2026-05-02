@@ -39,12 +39,6 @@ public partial class AddItemViewModel : ObservableObject
     private bool noExpiry;
 
     [ObservableProperty]
-    private DateTime? warrantyDate;
-
-    [ObservableProperty]
-    private bool showWarrantyField;
-
-    [ObservableProperty]
     private int quantity = 1;
 
     [ObservableProperty]
@@ -93,7 +87,6 @@ public partial class AddItemViewModel : ObservableObject
             PurchasePrice = PurchasePrice,
             ExpiryDate = NoExpiry ? null : ExpiryDate,
             NoExpiry = NoExpiry,
-            WarrantyDate = ShowWarrantyField ? WarrantyDate : null,
             Location = Location,
             Quantity = Quantity,
             Notes = Notes,
@@ -108,12 +101,7 @@ public partial class AddItemViewModel : ObservableObject
     private async Task ScanBarcodeAsync()
     {
         // Phase 2: implement ZXing barcode scanning
-        await Shell.Current.DisplayAlert("扫码", "扫码功能将在后续版本实现", "确定");
-    }
-
-    partial void OnSelectedCategoryChanged(Category? value)
-    {
-        ShowWarrantyField = value?.Name == "电子产品";
+        await Shell.Current.DisplayAlertAsync("扫码", "扫码功能将在后续版本实现", "确定");
     }
 
     partial void OnNoExpiryChanged(bool value)

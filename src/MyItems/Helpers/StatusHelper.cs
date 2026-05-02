@@ -21,35 +21,17 @@ public static class StatusHelper
         return ExpiryStatus.Safe;
     }
 
-    public static WarrantyStatus CalculateWarrantyStatus(DateTime? warrantyDate)
-    {
-        if (warrantyDate is null)
-            return WarrantyStatus.None;
-
-        return warrantyDate.Value.Date < DateTime.Today
-            ? WarrantyStatus.Expired
-            : WarrantyStatus.Active;
-    }
-
     public static string GetExpiryStatusText(ExpiryStatus status, DateTime? expiryDate)
     {
         return status switch
         {
-            ExpiryStatus.Expired => $"过期 {(DateTime.Today - expiryDate!.Value.Date).Days} 天",
-            ExpiryStatus.Expiring => $"还剩 {(expiryDate!.Value.Date - DateTime.Today).Days} 天",
+            ExpiryStatus.Expired when expiryDate.HasValue => $"过期 {(DateTime.Today - expiryDate.Value.Date).Days} 天",
+            ExpiryStatus.Expired => "已过期",
+            ExpiryStatus.Expiring when expiryDate.HasValue => $"还剩 {(expiryDate.Value.Date - DateTime.Today).Days} 天",
+            ExpiryStatus.Expiring => "临期",
             ExpiryStatus.Safe => "安全",
             ExpiryStatus.NoExpiry => "无保质期",
             _ => string.Empty
-        };
-    }
-
-    public static string? GetWarrantyStatusText(WarrantyStatus status, DateTime? warrantyDate)
-    {
-        return status switch
-        {
-            WarrantyStatus.Active => $"保修至 {warrantyDate!.Value:yyyy-MM-dd}",
-            WarrantyStatus.Expired => "已过保",
-            _ => null
         };
     }
 

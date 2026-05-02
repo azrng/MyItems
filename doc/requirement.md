@@ -9,7 +9,7 @@
 
 ### 1.1 定位
 
-个人/家庭自用的 Android 物品管理 App，核心功能是跟踪物品的保质期/保修期，同时管理物品的购入、存放等信息。到期追踪是核心亮点功能，但不是唯一功能。
+个人/家庭自用的 Android 物品管理 App，核心功能是跟踪物品的保质期，同时管理物品的购入、存放等信息。到期追踪是核心亮点功能，但不是唯一功能。
 
 ### 1.2 目标用户
 
@@ -22,7 +22,7 @@
 - 化妆品/护肤品（有保质期）
 - 药品/保健品（有保质期）
 - 日用品（电池、清洁剂等，部分有保质期）
-- 耐用品（显示器、电器等，有保修期，无保质期）
+- 耐用品（显示器、电器等，无保质期）
 
 ---
 
@@ -37,7 +37,7 @@
 | 主页到期提醒 | 按过期/临期/安全/无期限分组展示，到期追踪为核心功能 | P0 |
 | 物品库 | 所有物品去重展示，点击查看该物品所有批次和详情 | P0 |
 | 分类管理 | 预置分类 + 自定义分类 CRUD | P0 |
-| 数据导出/导入 | JSON 格式导入导出，支持备份恢复 | P1 |
+| 数据导出/导入 | Excel 格式（.xlsx）导入导出，支持备份恢复 | P1 |
 | 搜索 | 按物品名称搜索 | P1 |
 | 存放位置管理 | 记录和筛选物品存放位置 | P2 |
 | 统计概览 | 物品数量、花费统计、临期/过期统计 | P2 |
@@ -78,7 +78,6 @@
 | PurchaseDate | DateTime? | 购买日期（可选） |
 | PurchasePrice | decimal? | 购入价格（可选） |
 | ExpiryDate | DateTime? | 保质期截止日（空 = 无保质期） |
-| WarrantyDate | DateTime? | 保修期截止日（可选，适用于电子产品等） |
 | Location | string? | 存放位置（如"冰箱上层"、"药箱"） |
 | Quantity | int | 数量，默认 1 |
 | Notes | string? | 备注 |
@@ -119,9 +118,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 
 ### 4.1 状态判断
 
-综合 Batch 的 ExpiryDate 和 WarrantyDate 计算：
-
-**保质期状态（基于 ExpiryDate）：**
+基于 Batch 的 ExpiryDate 计算保质期状态：
 
 | 状态 | 条件 | 颜色 |
 |------|------|------|
@@ -130,15 +127,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 | 安全 | ExpiryDate > 今天+7天 | 绿色 |
 | 无保质期 | ExpiryDate 为 null | 蓝色 |
 
-**保修期状态（基于 WarrantyDate，卡片辅助展示）：**
-
-| 状态 | 条件 | 标识 |
-|------|------|------|
-| 已过保 | WarrantyDate < 今天 | "已过保" 标签 |
-| 保修中 | WarrantyDate >= 今天 | "保修至 YYYY-MM-DD" |
-| 无保修 | WarrantyDate 为 null | 不显示 |
-
-**主页排序规则：** 按保质期状态分组排序（过期 → 临期 → 安全 → 无保质期），每组内按日期升序。保修期状态作为辅助标签显示在卡片上，不影响分组排序。
+**主页排序规则：** 按保质期状态分组排序（过期 → 临期 → 安全 → 无保质期），每组内按日期升序。
 
 ### 4.2 录入流程
 
@@ -169,56 +158,43 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 
 ### 5.1 导航结构
 
-底部 Tab 导航栏，共 4 个 Tab：
+底部 TabBar + Flyout 侧边栏混合导航：
 
 ```
-[主页] [添加] [分类管理] [物品库]
+底部 TabBar：[主页] [物品库] [分类]
+侧边栏：[添加] [关于]
 ```
 
-右上角设置侧边栏（Flyout）：
-- 点击右上角汉堡菜单 → 打开侧边栏
-- 侧边栏显示：App 名称、副标题
-- 菜单项：「关于」（作者信息、版本、技术栈）
+- 底部 TabBar 提供 3 个主要页面快速切换
+- 添加页面通过左侧滑出侧边栏访问
+- 侧边栏头部显示：App 名称「📦 我的物品」、副标题「物品管理助手」
+- 侧边栏底部菜单项：「关于」（作者信息、版本、技术栈）
 
 ### 5.2 主页（Tab 1）— 到期追踪
 
-状态分组卡片列表，按批次维度展示，过期/临期优先。
+仅展示已过期和临期的物品批次，按状态分组。
 
 ```
 ┌──────────────────────────────┐
 │  我的物品           🔍 搜索   │
 ├──────────────────────────────┤
-│  ┌──────────────────────────┐│
-│  │ 有效花费    有效商品   全部││
-│  │ ¥3,132.8   6 件     8 件 ││
-│  └──────────────────────────┘│
-├──────────────────────────────┤
 │  🔴 已过期 (2)        [▼展开] │
 │  ┌──────────────────────────┐│
-│  │ 纯牛奶   过期 3 天        ││
+│  │ 纯牛奶          过期 3 天  ││
 │  │ 蒙牛 · 食品 · 冰箱上层 · ¥15.5││
-│  │ 保质 2026-03-01           ││
+│  │ 保质 2026-03-01  ¥0.25/天 ││
 │  └──────────────────────────┘│
 │  ┌──────────────────────────┐│
-│  │ 感冒药   过期 15 天       ││
+│  │ 感冒药          过期 15 天 ││
 │  │ 三九 · 药品 · 药箱 · ¥28.0││
-│  │ 保质 2026-01-15           ││
+│  │ 保质 2026-01-15  ¥0.15/天 ││
 │  └──────────────────────────┘│
 ├──────────────────────────────┤
 │  🟡 临期 (1)          [▼展开] │
 │  ┌──────────────────────────┐│
-│  │ 酸奶     还剩 2 天        ││
-│  │ 食品 · 冰箱上层 · ¥8.9   ││
-│  │ 保质 2026-05-04           ││
-│  └──────────────────────────┘│
-├──────────────────────────────┤
-│  🟢 安全 (5)          [▶折叠] │
-├──────────────────────────────┤
-│  🔵 无保质期 (3)       [▶折叠] │
-│  ┌──────────────────────────┐│
-│  │ 显示器                    ││
-│  │ 电子 · 书桌 · ¥2999      ││
-│  │ 保修至 2028-05-01         ││
+│  │ 酸奶            还剩 2 天 ││
+│  │ 伊利 · 食品 · 冰箱上层 · ¥8.9││
+│  │ 保质 2026-05-04  ¥0.89/天 ││
 │  └──────────────────────────┘│
 └──────────────────────────────┘
 ```
@@ -230,11 +206,16 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 
 ### 5.3 物品库（Tab 2）
 
-所有物品去重展示，按分类浏览。
+所有物品去重展示，按分类浏览，顶部显示统计汇总。
 
 ```
 ┌──────────────────────────────┐
 │  物品库             🔍 搜索   │
+├──────────────────────────────┤
+│  ┌──────────────────────────┐│
+│  │ 有效花费    有效商品   全部││
+│  │ ¥3,132.8   6 件     8 件 ││
+│  └──────────────────────────┘│
 ├──────────────────────────────┤
 │  [全部] [食品] [化妆品] [电子] │
 ├──────────────────────────────┤
@@ -245,7 +226,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 │     1 个批次 · 安全 · ¥89     │
 ├──────────────────────────────┤
 │  📦 显示器                    │
-│     1 个批次 · 保修中 · ¥2999 │
+│     1 个批次 · 无保质期 · ¥2999│
 └──────────────────────────────┘
 ```
 
@@ -253,7 +234,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 - 显示总花费（该物品所有批次价格之和）
 - 点击物品 → 物品详情页
   - 物品基本信息（名称、分类、条形码、默认存放位置）
-  - 该物品所有批次列表（含保质期/保修期状态）
+  - 该物品所有批次列表（含保质期状态）
   - "快速添加新批次"按钮（同物品再次购买时使用）
 
 ### 5.4 添加（Tab 3）
@@ -271,7 +252,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 │  存放位置  [冰箱上层      ]   │
 │  保质期   [2026-06-02    📅] │
 │  □ 无保质期                   │
-│  保修期   [________      📅] │
+│  数量     [1]                │
 │  数量     [1]                │
 │  备注     [____________]     │
 │                              │
@@ -280,7 +261,7 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 ```
 
 - 勾选"无保质期"后保质期字段禁用
-- 保修期默认隐藏，选择"电子产品"等分类时显示
+- 保质期默认为一个月后，勾选"无保质期"后隐藏
 - 保存时触发同名检查（见 4.2）
 
 ### 5.5 分类管理（Tab 4）
@@ -332,15 +313,15 @@ Category (1) ──── (N) Item (1) ──── (N) Batch
 
 | 类别 | 选型 | 版本 |
 |------|------|------|
-| 框架 | .NET MAUI | .NET 9 |
+| 框架 | .NET MAUI | .NET 10 |
 | 语言 | C# | 13 |
 | 架构模式 | MVVM | - |
-| UI 控件库 | Syncfusion.Maui.Toolkit | 1.0.9 |
+| UI 控件库 | Syncfusion.Maui.Toolkit | 最新 |
 | 本地数据库 | SQLite (sqlite-net-pcl) | 最新稳定 |
-| 扫码 | ZXing.Net.Maui | 最新稳定 |
-| MVVM 工具 | CommunityToolkit.Mvvm | 最新稳定 |
-| MAUI 扩展 | CommunityToolkit.Maui | 最新稳定 |
-| 序列化 | System.Text.Json | 内置 |
+| 扫码 | ZXing.Net.Maui.Controls | 0.7.* |
+| MVVM 工具 | CommunityToolkit.Mvvm | 8.* |
+| MAUI 扩展 | CommunityToolkit.Maui | 最新 |
+| Excel 导出 | ClosedXML | 最新 |
 | 最低 Android 版本 | Android 8.0 (API 26) | - |
 
 ### 6.2 项目结构
@@ -352,56 +333,71 @@ MyItems/
 │   └── MyItems/
 │       ├── MyItems.csproj
 │       ├── App.xaml / App.xaml.cs
+│       ├── AppShell.xaml / AppShell.xaml.cs
 │       ├── MauiProgram.cs
 │       ├── Models/
 │       │   ├── Item.cs
 │       │   ├── Batch.cs
-│       │   └── Category.cs
+│       │   ├── Category.cs
+│       │   └── DTOs/
+│       │       ├── BatchDisplayDto.cs
+│       │       ├── ItemDisplayDto.cs
+│       │       ├── ExpiryGroupDto.cs
+│       │       ├── CategoryDto.cs
+│       │       └── AddItemDto.cs
 │       ├── Enums/
-│       │   └── ExpiryStatus.cs       # 过期状态枚举
+│       │   └── ExpiryStatus.cs
 │       ├── ViewModels/
-│       │   ├── MainViewModel.cs          # 主页（到期追踪）
-│       │   ├── ItemLibraryViewModel.cs   # 物品库
-│       │   ├── AddItemViewModel.cs       # 添加物品
-│       │   ├── ItemDetailViewModel.cs    # 物品详情
-│       │   └── CategoryViewModel.cs      # 分类管理
+│       │   ├── MainViewModel.cs
+│       │   ├── ItemLibraryViewModel.cs
+│       │   ├── AddItemViewModel.cs
+│       │   ├── ItemDetailViewModel.cs
+│       │   ├── CategoryViewModel.cs
+│       │   └── AboutViewModel.cs
 │       ├── Views/
 │       │   ├── MainPage.xaml
 │       │   ├── ItemLibraryPage.xaml
 │       │   ├── AddItemPage.xaml
 │       │   ├── ItemDetailPage.xaml
-│       │   └── CategoryPage.xaml
+│       │   ├── CategoryPage.xaml
+│       │   └── AboutPage.xaml
 │       ├── Services/
-│       │   ├── DatabaseService.cs        # SQLite 增删改查
-│       │   ├── BarcodeService.cs         # 扫码 + API 查询
-│       │   └── ExportService.cs          # JSON 导入导出
+│       │   ├── MockDataService.cs        # Phase 1 模拟数据
+│       │   ├── DatabaseService.cs        # Phase 2 SQLite
+│       │   ├── BarcodeService.cs         # Phase 2 扫码
+│       │   └── ExportService.cs          # Phase 2 Excel 导出
 │       ├── Helpers/
-│       │   ├── StatusHelper.cs           # 保质期/保修期状态计算
-│       │   └── ColorMapper.cs            # 状态 → 颜色映射
+│       │   └── StatusHelper.cs
 │       ├── Converters/
-│       │   └── StatusToColorConverter.cs # XAML 值转换器
+│       │   └── StatusToColorConverter.cs
 │       ├── Resources/
-│       │   └── Styles/
-│       │       ├── Colors.xaml
-│       │       └── Styles.xaml
+│       │   ├── Styles/
+│       │   │   ├── Colors.xaml
+│       │   │   ├── Sizes.xaml
+│       │   │   └── Styles.xaml
+│       │   └── AppIcon/
 │       └── Platforms/
 │           └── Android/
-├── tests/
-│   └── MyItems.Tests/
-└── docs/
-    └── 2026-05-02-expiry-tracker-design.md
+│               └── AndroidManifest.xml
+├── doc/
+│   ├── requirement.md
+│   ├── design/设计文档.md
+│   ├── devlog/
+│   └── task-archive/
+└── design-system.yaml
 ```
 
 ### 6.3 关键依赖包
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="CommunityToolkit.Maui" />
-    <PackageReference Include="Syncfusion.Maui.Toolkit" />
-    <PackageReference Include="sqlite-net-pcl" />
-    <PackageReference Include="ZXing.Net.Maui" />
-    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="*" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="*" />
+    <PackageReference Include="Syncfusion.Maui.Toolkit" Version="*" />
+    <PackageReference Include="sqlite-net-pcl" Version="*" />
+    <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.*" />
+    <PackageReference Include="ClosedXML" Version="*" />
 </ItemGroup>
 ```
 
@@ -436,18 +432,12 @@ MyItems/
 | 购买日期 | DateTime | 2026-03-01 |
 | 购入价格 | decimal | 15.5 |
 | 保质期 | DateTime | 2026-04-28 |
-| 保修期 | DateTime | null |
 | 存放位置 | string | 冰箱上层 |
 | 数量 | int | 2 |
 | 备注 | string | 整箱购买 |
 | 批次标签 | string | 2026-03-01 10:00 |
 | 每日成本 | decimal | 0.52 |
-      "categoryId": "...",
-      "barcode": "6901234567890",
-      "brand": "蒙牛",
-      "defaultLocation": "冰箱上层",
-      "batches": [
-        {
+
 **导入规则：**
 - 预置分类按名称匹配，不重复创建
 - 物品按名称判断，已存在则跳过或覆盖（由用户选择）

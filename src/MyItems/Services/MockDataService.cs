@@ -49,8 +49,8 @@ public static class MockDataService
         new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000006"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000007"), PurchaseDate = DateTime.Today.AddDays(-3), PurchasePrice = 199.0m, ExpiryDate = DateTime.Today.AddMonths(12), Location = "卫生间", Quantity = 1, BatchLabel = DateTime.Now.AddDays(-3).ToString("yyyy-MM-dd HH:mm") },
         new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000007"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000001"), PurchaseDate = DateTime.Today.AddDays(-1), PurchasePrice = 16.0m, ExpiryDate = DateTime.Today.AddDays(30), Location = "冰箱上层", Quantity = 1, BatchLabel = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm") },
 
-        // 无保质期（保修期）
-        new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000008"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000005"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 2999.0m, WarrantyDate = DateTime.Today.AddYears(2), Location = "书桌", Quantity = 1, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
+        // 无保质期
+        new() { Id = Guid.Parse("30000000-0000-0000-0000-000000000008"), ItemId = Guid.Parse("20000000-0000-0000-0000-000000000005"), PurchaseDate = DateTime.Today.AddMonths(-2), PurchasePrice = 2999.0m, Location = "书桌", Quantity = 1, BatchLabel = DateTime.Now.AddMonths(-2).ToString("yyyy-MM-dd HH:mm") },
     ];
 
     #endregion
@@ -68,7 +68,6 @@ public static class MockDataService
             var item = items.First(i => i.Id == b.ItemId);
             var category = categories.First(c => c.Id == item.CategoryId);
             var expiryStatus = StatusHelper.CalculateExpiryStatus(b.ExpiryDate);
-            var warrantyStatus = StatusHelper.CalculateWarrantyStatus(b.WarrantyDate);
 
             return new BatchDisplayDto
             {
@@ -82,15 +81,12 @@ public static class MockDataService
                 PurchaseDate = b.PurchaseDate,
                 PurchasePrice = b.PurchasePrice,
                 ExpiryDate = b.ExpiryDate,
-                WarrantyDate = b.WarrantyDate,
                 Location = b.Location,
                 Quantity = b.Quantity,
                 Notes = b.Notes,
                 BatchLabel = b.BatchLabel,
                 ExpiryStatus = expiryStatus,
-                WarrantyStatus = warrantyStatus,
                 ExpiryStatusText = StatusHelper.GetExpiryStatusText(expiryStatus, b.ExpiryDate),
-                WarrantyStatusText = StatusHelper.GetWarrantyStatusText(warrantyStatus, b.WarrantyDate),
                 HoldingDays = StatusHelper.GetHoldingDays(b.PurchaseDate),
                 DailyCost = StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate),
                 DailyCostText = StatusHelper.GetDailyCostText(b.PurchasePrice, b.Quantity, b.PurchaseDate),
@@ -140,7 +136,7 @@ public static class MockDataService
                 .DefaultIfEmpty(ExpiryStatus.NoExpiry)
                 .Min();
 
-            var hasWarranty = itemBatches.Any(b => StatusHelper.CalculateWarrantyStatus(b.WarrantyDate) == WarrantyStatus.Active);
+            var dailyCost = itemBatches.Sum(b => StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate));
 
             return new ItemDisplayDto
             {
@@ -157,7 +153,7 @@ public static class MockDataService
                 TotalSpent = itemBatches.Sum(b => b.PurchasePrice ?? 0),
                 WorstExpiryStatus = worstStatus,
                 WorstExpiryStatusText = StatusHelper.GetExpiryStatusText(worstStatus, null),
-                WarrantyStatusText = hasWarranty ? "保修中" : null,
+                DailyCostText = dailyCost > 0 ? $"{dailyCost:F2}/天" : null,
             };
         }).ToList();
     }
