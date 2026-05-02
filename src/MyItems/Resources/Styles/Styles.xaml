@@ -78,6 +78,18 @@
         <Setter Property="Padding" Value="0" />
     </Style>
 
+    <Style x:Key="TitleIconButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppGray800Color}" />
+        <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="WidthRequest" Value="{StaticResource TouchTargetMinHeight}" />
+        <Setter Property="HeightRequest" Value="{StaticResource TouchTargetMinHeight}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusFull}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderWidth" Value="0" />
+    </Style>
+
     <Style x:Key="SecondaryButton" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource AppSurfaceColor}" />
         <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />

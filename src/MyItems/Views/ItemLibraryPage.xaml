@@ -20,7 +20,7 @@
             <Button
                 Grid.Column="0"
                 Text="☰"
-                Style="{StaticResource IconButton}"
+                Style="{StaticResource TitleIconButton}"
                 Clicked="OnSettingsClicked"
                 Padding="0" />
             <Label
