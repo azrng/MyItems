@@ -103,11 +103,16 @@
                 </VerticalStackLayout>
 
                 <!-- Track daily cost -->
-                <HorizontalStackLayout Spacing="{StaticResource SpacingSm}"
-                                       VerticalOptions="Center">
-                    <toolkit:SfSwitch IsOn="{Binding TrackDailyCost}" />
-                    <Label Text="记录日均成本" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                    <Label Text="记录日均成本" Style="{StaticResource SubheadLabel}" />
+                    <HorizontalStackLayout Spacing="{StaticResource SpacingSm}">
+                        <toolkit:SfSwitch IsOn="{Binding TrackDailyCost}"
+                                          WidthRequest="50"
+                                          HeightRequest="30"
+                                          VerticalOptions="Center" />
+                        <Label Text="开启后在首页显示日均成本" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
 
                 <!-- Quantity -->
                 <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
