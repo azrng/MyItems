@@ -27,6 +27,7 @@
 | T006 | UI 优化与 Syncfusion 组件替换 | 日均成本批次开关、物品库 SfNavigationDrawer + SfChipGroup、统计改名、搜索栏添加按钮、卡片显示批次标签 | 阶段 1 | Claude Code | DONE | P1 | 2026-05-02 |
 | T007 | 全局界面风格优化与物品移除 | 统一主要页面视觉风格，并为消耗完毕或移除物品增加二次确认与真实数据更新 | 阶段 3 | Codex | DONE | P0 | 2026-05-02 |
 | T008 | Android Release 明确生成 APK | 调整 GitHub Actions 发布命令，显式指定 Android 打包产物为 APK | 阶段 3 | Codex | DONE | P0 | 2026-05-02 |
+| T009 | 添加页日均成本开关修复 | 修复添加物品页记录日均成本开关不可见的问题，确保可切换并绑定保存 | 阶段 3 | Codex | DONE | P0 | 2026-05-02 |
 
 ---
 

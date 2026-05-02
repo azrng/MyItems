@@ -4,8 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
-    xmlns:models="clr-namespace:MyItems.Models"
-    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
     Title="添加物品"
@@ -104,14 +102,21 @@
 
                 <!-- Track daily cost -->
                 <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="记录日均成本" Style="{StaticResource SubheadLabel}" />
-                    <HorizontalStackLayout Spacing="{StaticResource SpacingSm}">
-                        <toolkit:SfSwitch IsOn="{Binding TrackDailyCost}"
-                                          WidthRequest="50"
-                                          HeightRequest="30"
-                                          VerticalOptions="Center" />
-                        <Label Text="开启后在首页显示日均成本" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
-                    </HorizontalStackLayout>
+                    <Grid ColumnDefinitions="*,Auto"
+                          MinimumHeightRequest="{StaticResource TouchTargetMinHeight}"
+                          ColumnSpacing="{StaticResource SpacingBase}">
+                        <VerticalStackLayout Grid.Column="0"
+                                             Spacing="{StaticResource SpacingXs}"
+                                             VerticalOptions="Center">
+                            <Label Text="记录日均成本" Style="{StaticResource SubheadLabel}" />
+                            <Label Text="开启后在首页显示日均成本"
+                                   Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding TrackDailyCost}"
+                                VerticalOptions="Center"
+                                HorizontalOptions="End" />
+                    </Grid>
                 </VerticalStackLayout>
 
                 <!-- Quantity -->
