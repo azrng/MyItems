@@ -18,7 +18,12 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('android')) == 'android'">26</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('windows')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
     <MinimumPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('windows')) == 'windows'">10.0.17763.0</MinimumPlatformVersion>
+    <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#2563EB" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" Version="*" />
