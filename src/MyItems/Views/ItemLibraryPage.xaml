@@ -7,6 +7,7 @@
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.ItemLibraryPage"
+    x:Name="PageRoot"
     x:DataType="viewmodels:ItemLibraryViewModel"
     Title="物品库"
     Style="{StaticResource PageStyle}">
@@ -36,7 +37,7 @@
                                VerticalOptions="Center">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type Shell}}, Path=BindingContext.CategoryCommand}" />
+                                    Command="{Binding GoToCategoryCommand}" />
                             </Label.GestureRecognizers>
                         </Label>
                         <Label Text="ℹ 关于"
@@ -44,7 +45,7 @@
                                VerticalOptions="Center">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type Shell}}, Path=BindingContext.AboutCommand}" />
+                                    Command="{Binding GoToAboutCommand}" />
                             </Label.GestureRecognizers>
                         </Label>
                     </VerticalStackLayout>

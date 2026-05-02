@@ -29,7 +29,7 @@
                 SearchCommand="{Binding SearchCommand}" />
             <Button
                 Grid.Column="1"
-                Text="＋ 添加"
+                Text="＋"
                 Style="{StaticResource PrimaryButton}"
                 Command="{Binding GoToAddCommand}"
                 WidthRequest="80"

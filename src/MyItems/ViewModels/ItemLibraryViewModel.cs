@@ -43,6 +43,18 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task GoToCategoryAsync()
+    {
+        await Shell.Current.GoToAsync("category");
+    }
+
+    [RelayCommand]
+    private async Task GoToAboutAsync()
+    {
+        await Shell.Current.GoToAsync("AboutPage");
+    }
+
+    [RelayCommand]
     private void Refresh()
     {
         IsLoading = true;

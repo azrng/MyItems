@@ -45,7 +45,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task GoToAddAsync()
     {
-        await Shell.Current.GoToAsync("//add");
+        await Shell.Current.GoToAsync("add");
     }
 
     partial void OnSearchTextChanged(string value)
