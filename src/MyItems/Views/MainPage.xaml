@@ -14,6 +14,7 @@
         <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
         <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
         <converters:InvertedBoolConverter x:Key="InvertedBool" />
+        <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*">
@@ -131,7 +132,7 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:BatchDisplayDto">
                                         <Frame Style="{StaticResource CardStyle}">
-                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                                                 <!-- Row 0: Name + status badge -->
                                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -162,16 +163,31 @@
                                                     </Label.Text>
                                                 </Label>
 
-                                                <!-- Row 2: Expiry / Warranty -->
+                                                <!-- Row 2: Holding / Expiry + Daily cost -->
                                                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                                                     <Label Grid.Column="0"
-                                                           Text="{Binding ExpiryDate, StringFormat='保质 {0:yyyy-MM-dd}'}"
-                                                           Style="{StaticResource CaptionLabel}" />
+                                                           Style="{StaticResource CaptionLabel}">
+                                                        <Label.Triggers>
+                                                            <DataTrigger TargetType="Label" Binding="{Binding ExpiryDate}" Value="{x:Null}">
+                                                                <Setter Property="Text" Value="{Binding HoldingText}" />
+                                                            </DataTrigger>
+                                                        </Label.Triggers>
+                                                        <Label.Text>
+                                                            <Binding Path="ExpiryDate" StringFormat="保质 {0:yyyy-MM-dd}" />
+                                                        </Label.Text>
+                                                    </Label>
                                                     <Label Grid.Column="1"
-                                                           Text="{Binding WarrantyStatusText}"
+                                                           Text="{Binding DailyCostText}"
                                                            Style="{StaticResource CaptionLabel}"
-                                                           TextColor="{StaticResource AppSecondaryColor}" />
+                                                           TextColor="{StaticResource AppPrimaryColor}" />
                                                 </Grid>
+
+                                                <!-- Row 3: Warranty (if any) -->
+                                                <Label Grid.Row="3"
+                                                       Text="{Binding WarrantyStatusText}"
+                                                       Style="{StaticResource CaptionLabel}"
+                                                       TextColor="{StaticResource AppSecondaryColor}"
+                                                       IsVisible="{Binding WarrantyStatusText, Converter={x:Static converters:StringNotNullOrEmptyConverter}}" />
                                             </Grid>
                                         </Frame>
                                     </DataTemplate>

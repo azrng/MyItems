@@ -27,6 +27,7 @@
     <PackageReference Include="Syncfusion.Maui.Toolkit" Version="*" />
     <PackageReference Include="sqlite-net-pcl" Version="*" />
     <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.*" />
+    <PackageReference Include="ClosedXML" Version="*" />
   </ItemGroup>
 
 </Project>

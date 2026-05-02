@@ -24,6 +24,7 @@ public static class MauiProgram
         builder.Services.AddTransient<AddItemViewModel>();
         builder.Services.AddTransient<ItemDetailViewModel>();
         builder.Services.AddTransient<CategoryViewModel>();
+        builder.Services.AddTransient<AboutViewModel>();
 
         // Register Pages
         builder.Services.AddTransient<MainPage>();
@@ -31,6 +32,7 @@ public static class MauiProgram
         builder.Services.AddTransient<AddItemPage>();
         builder.Services.AddTransient<ItemDetailPage>();
         builder.Services.AddTransient<CategoryPage>();
+        builder.Services.AddTransient<AboutPage>();
 
         return builder.Build();
     }

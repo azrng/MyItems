@@ -23,4 +23,8 @@ public class BatchDisplayDto
     public WarrantyStatus WarrantyStatus { get; set; }
     public string ExpiryStatusText { get; set; } = string.Empty;
     public string? WarrantyStatusText { get; set; }
+    public int HoldingDays { get; set; }
+    public decimal DailyCost { get; set; }
+    public string DailyCostText { get; set; } = string.Empty;
+    public string HoldingText { get; set; } = string.Empty;
 }

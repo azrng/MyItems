@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    x:Class="MyItems.Views.AboutPage"
+    x:DataType="viewmodels:AboutViewModel"
+    Title="关于"
+    Style="{StaticResource PageStyle}">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="{StaticResource PagePadding}"
+            Spacing="{StaticResource SpacingLg}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center">
+
+            <!-- App icon / name -->
+            <VerticalStackLayout Spacing="{StaticResource SpacingSm}" HorizontalOptions="Center">
+                <Label Text="📦"
+                       FontSize="64"
+                       HorizontalOptions="Center" />
+                <Label Text="{Binding AppName}"
+                       FontSize="{StaticResource FontSizeHeadline}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource AppTextColor}" />
+                <Label Text="{Binding Version, StringFormat='版本 {0}'}"
+                       Style="{StaticResource CaptionLabel}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- Description -->
+            <Frame Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
+                    <Label Text="简介" Style="{StaticResource SubheadLabel}" />
+                    <Label Text="{Binding Description}"
+                           Style="{StaticResource BodyLabel}"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Author info -->
+            <Frame Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
+                    <Label Text="作者" Style="{StaticResource SubheadLabel}" />
+                    <Grid ColumnDefinitions="Auto,*" RowSpacing="{StaticResource SpacingXs}">
+                        <Label Grid.Row="0" Grid.Column="0" Text="开发者" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Author}" Style="{StaticResource SubheadLabel}" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="技术栈" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TechStack}" Style="{StaticResource SubheadLabel}" />
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="项目地址" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding ProjectUrl}"
+                               TextColor="{StaticResource AppTextLinkColor}"
+                               Style="{StaticResource SubheadLabel}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

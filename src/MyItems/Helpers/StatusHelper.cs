@@ -70,4 +70,39 @@ public static class StatusHelper
         ExpiryStatus.NoExpiry => "\U0001F535",
         _ => string.Empty
     };
+
+    public static int GetHoldingDays(DateTime? purchaseDate)
+    {
+        if (purchaseDate is null)
+            return 0;
+
+        var days = (DateTime.Today - purchaseDate.Value.Date).Days;
+        return days > 0 ? days : 0;
+    }
+
+    public static decimal CalculateDailyCost(decimal? price, int quantity, DateTime? purchaseDate)
+    {
+        if (price is null || purchaseDate is null)
+            return 0;
+
+        var days = GetHoldingDays(purchaseDate);
+        if (days <= 0)
+            return price.Value * quantity;
+
+        return price.Value * quantity / days;
+    }
+
+    public static string GetHoldingText(DateTime? purchaseDate)
+    {
+        var days = GetHoldingDays(purchaseDate);
+        if (days == 0)
+            return "今天购入";
+        return $"持有 {days} 天";
+    }
+
+    public static string GetDailyCostText(decimal? price, int quantity, DateTime? purchaseDate)
+    {
+        var dailyCost = CalculateDailyCost(price, quantity, purchaseDate);
+        return $"¥{dailyCost:F2}/天";
+    }
 }

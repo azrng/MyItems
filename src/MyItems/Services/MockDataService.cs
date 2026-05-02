@@ -91,6 +91,10 @@ public static class MockDataService
                 WarrantyStatus = warrantyStatus,
                 ExpiryStatusText = StatusHelper.GetExpiryStatusText(expiryStatus, b.ExpiryDate),
                 WarrantyStatusText = StatusHelper.GetWarrantyStatusText(warrantyStatus, b.WarrantyDate),
+                HoldingDays = StatusHelper.GetHoldingDays(b.PurchaseDate),
+                DailyCost = StatusHelper.CalculateDailyCost(b.PurchasePrice, b.Quantity, b.PurchaseDate),
+                DailyCostText = StatusHelper.GetDailyCostText(b.PurchasePrice, b.Quantity, b.PurchaseDate),
+                HoldingText = StatusHelper.GetHoldingText(b.PurchaseDate),
             };
         }).ToList();
     }
