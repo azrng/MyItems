@@ -41,7 +41,6 @@ public partial class CategoryViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(NewCategoryName))
             return;
 
-        // Phase 2: persist to database
         IsAdding = true;
         await Task.Delay(300);
 
@@ -52,6 +51,7 @@ public partial class CategoryViewModel : ObservableObject
             Icon = string.IsNullOrWhiteSpace(NewCategoryIcon) ? "\U0001F3F7" : NewCategoryIcon,
             SortOrder = Categories.Count + 1,
             IsPreset = false,
+            IsActive = true,
             ItemCount = 0,
         });
 
@@ -80,6 +80,44 @@ public partial class CategoryViewModel : ObservableObject
         {
             Categories.Remove(category);
         }
+    }
+
+    [RelayCommand]
+    private void ToggleActive(CategoryDto category)
+    {
+        category.IsActive = !category.IsActive;
+    }
+
+    [RelayCommand]
+    private void SortUp(CategoryDto category)
+    {
+        var index = Categories.IndexOf(category);
+        if (index > 0)
+        {
+            var prev = Categories[index - 1];
+            (category.SortOrder, prev.SortOrder) = (prev.SortOrder, category.SortOrder);
+            ReorderCollection();
+        }
+    }
+
+    [RelayCommand]
+    private void SortDown(CategoryDto category)
+    {
+        var index = Categories.IndexOf(category);
+        if (index < Categories.Count - 1)
+        {
+            var next = Categories[index + 1];
+            (category.SortOrder, next.SortOrder) = (next.SortOrder, category.SortOrder);
+            ReorderCollection();
+        }
+    }
+
+    private void ReorderCollection()
+    {
+        var sorted = Categories.OrderBy(c => c.SortOrder).ToList();
+        Categories.Clear();
+        foreach (var cat in sorted)
+            Categories.Add(cat);
     }
 
     private void LoadData()

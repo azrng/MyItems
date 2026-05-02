@@ -76,7 +76,7 @@ public partial class ItemLibraryViewModel : ObservableObject
     {
         Categories.Clear();
         Categories.Add(new Category { Id = Guid.Empty, Name = "全部" });
-        foreach (var cat in MockDataService.GetPresetCategories().OrderBy(c => c.SortOrder))
+        foreach (var cat in MockDataService.GetPresetCategories().Where(c => c.IsActive).OrderBy(c => c.SortOrder))
             Categories.Add(cat);
         SelectedCategory = Categories[0];
     }

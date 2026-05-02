@@ -246,6 +246,7 @@ public static class MockDataService
             Icon = c.Icon,
             SortOrder = c.SortOrder,
             IsPreset = c.IsPreset,
+            IsActive = c.IsActive,
             ItemCount = items.Count(i => i.CategoryId == c.Id),
         }).ToList();
     }

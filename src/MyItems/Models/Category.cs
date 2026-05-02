@@ -7,4 +7,5 @@ public class Category
     public string? Icon { get; set; }
     public int SortOrder { get; set; }
     public bool IsPreset { get; set; }
+    public bool IsActive { get; set; } = true;
 }

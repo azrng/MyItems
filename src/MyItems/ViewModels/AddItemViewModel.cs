@@ -119,7 +119,7 @@ public partial class AddItemViewModel : ObservableObject
     private void LoadCategories()
     {
         Categories.Clear();
-        foreach (var cat in MockDataService.GetPresetCategories().OrderBy(c => c.SortOrder))
+        foreach (var cat in MockDataService.GetPresetCategories().Where(c => c.IsActive).OrderBy(c => c.SortOrder))
             Categories.Add(cat);
     }
 }

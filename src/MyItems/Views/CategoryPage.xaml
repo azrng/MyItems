@@ -5,6 +5,7 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
     x:Class="MyItems.Views.CategoryPage"
     x:DataType="viewmodels:CategoryViewModel"
     Title="分类管理"
@@ -42,7 +43,7 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:CategoryDto">
                     <Frame Style="{StaticResource ListCardStyle}">
-                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
 
                             <Label Grid.Column="0"
                                    Text="{Binding Icon}"
@@ -52,27 +53,57 @@
 
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="{Binding Name}" Style="{StaticResource SubheadLabel}" />
-                                <Label Style="{StaticResource CaptionLabel}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="True">
-                                            <Setter Property="Text" Value="预置" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="False">
-                                            <Setter Property="Text" Value="{Binding ItemCount, StringFormat='{}{0} 个物品'}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
+                                <HorizontalStackLayout Spacing="4">
+                                    <Label Style="{StaticResource CaptionLabel}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="True">
+                                                <Setter Property="Text" Value="预置" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsPreset}" Value="False">
+                                                <Setter Property="Text" Value="{Binding ItemCount, StringFormat='{}{0} 个物品'}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Label Text="{Binding SortOrder, StringFormat='排序 {0}'}"
+                                           Style="{StaticResource CaptionLabel}"
+                                           TextColor="{StaticResource AppTextMutedColor}" />
+                                </HorizontalStackLayout>
                             </VerticalStackLayout>
 
-                            <!-- Edit / Delete buttons for custom categories -->
-                            <Button Grid.Column="2"
-                                    Text="编辑"
-                                    Style="{StaticResource SecondaryButton}"
-                                    WidthRequest="64"
-                                    FontSize="{StaticResource FontSizeCaption}"
-                                    IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}" />
+                            <!-- Sort buttons -->
+                            <VerticalStackLayout Grid.Column="2" Spacing="2" VerticalOptions="Center"
+                                                  IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}">
+                                <Button Text="↑"
+                                        FontSize="12"
+                                        HeightRequest="28"
+                                        WidthRequest="28"
+                                        Padding="0"
+                                        CornerRadius="4"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource AppPrimaryColor}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortUpCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="↓"
+                                        FontSize="12"
+                                        HeightRequest="28"
+                                        WidthRequest="28"
+                                        Padding="0"
+                                        CornerRadius="4"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource AppPrimaryColor}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoryViewModel}}, Path=SortDownCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
 
-                            <Button Grid.Column="3"
+                            <!-- Active toggle -->
+                            <toolkit:SfSwitch Grid.Column="3"
+                                              IsOn="{Binding IsActive}"
+                                              VerticalOptions="Center"
+                                              WidthRequest="44"
+                                              HeightRequest="24" />
+
+                            <!-- Delete button -->
+                            <Button Grid.Column="4"
                                     Text="删除"
                                     Style="{StaticResource DangerSoftButton}"
                                     IsVisible="{Binding IsPreset, Converter={StaticResource InvertedBool}}"
