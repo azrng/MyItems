@@ -9,8 +9,6 @@ namespace MyItems;
 
 public static class MauiProgram
 {
-    public static string DatabasePath { get; private set; } = string.Empty;
-
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -23,14 +21,12 @@ public static class MauiProgram
             {
             });
 
-#if ANDROID
-        DatabasePath = GetAndroidDatabasePath();
-#else
-        DatabasePath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-#endif
-
         // Register database service as singleton (lazy init on first use)
-        builder.Services.AddSingleton<IDataService>(_ => new SqliteDataService(DatabasePath));
+        builder.Services.AddSingleton<IDataService>(_ =>
+        {
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
+            return new SqliteDataService(dbPath);
+        });
 
         // Register ViewModels
         builder.Services.AddTransient<MainViewModel>();
@@ -55,26 +51,4 @@ public static class MauiProgram
 
         return builder.Build();
     }
-
-#if ANDROID
-    private static string GetAndroidDatabasePath()
-    {
-        // Use app-specific external storage: /sdcard/Android/data/com.myitems.app/files/
-        var dbDir = Platform.AppContext.GetExternalFilesDir(null)?.AbsolutePath;
-        if (dbDir is null)
-            return Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-
-        if (!Directory.Exists(dbDir))
-            Directory.CreateDirectory(dbDir);
-
-        var newPath = Path.Combine(dbDir, "myitems.db");
-
-        // Migrate from internal storage if needed
-        var oldPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-        if (File.Exists(oldPath) && !File.Exists(newPath))
-            File.Move(oldPath, newPath);
-
-        return newPath;
-    }
-#endif
 }
