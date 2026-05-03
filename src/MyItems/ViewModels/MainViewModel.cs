@@ -64,6 +64,18 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task DeleteWithConfirmAsync(Guid itemId)
+    {
+        var item = _allItems.FirstOrDefault(i => i.ItemId == itemId);
+        var name = item?.ItemName ?? "这个物品";
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{name}」吗？", "删除", "取消");
+        if (!confirm) return;
+
+        await _dataService.DeleteItemAsync(itemId);
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
     private async Task ViewItemDetailAsync(Guid itemId)
     {
         await Shell.Current.GoToAsync($"itemdetail?itemId={itemId}");

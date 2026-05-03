@@ -126,8 +126,8 @@
                     <Frame Style="{StaticResource ListCardStyle}">
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
 
-                            <!-- Row 0: Icon + Name + Category -->
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <!-- Row 0: Icon + Name + Daily cost + Category -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto">
                                 <Label Grid.Column="0"
                                        Text="{Binding ItemIcon}"
                                        FontSize="16"
@@ -139,6 +139,13 @@
                                        FontSize="16"
                                        LineBreakMode="TailTruncation" />
                                 <Label Grid.Column="2"
+                                       Text="{Binding DailyCostText}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource AppPrimaryColor}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
+                                <Label Grid.Column="3"
                                        Text="{Binding CategoryName}"
                                        Style="{StaticResource CaptionLabel}"
                                        FontSize="11"
@@ -158,19 +165,17 @@
                                 </Label.Text>
                             </Label>
 
-                            <!-- Row 2: Expiry status + daily cost -->
+                            <!-- Row 2: Expiry status + Delete button -->
                             <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                                 <Label Grid.Column="0"
                                        Style="{StaticResource BodyLabel}"
                                        Text="{Binding ExpiryStatusText}"
                                        LineBreakMode="TailTruncation" />
-                                <Label Grid.Column="1"
-                                       Text="{Binding DailyCostText}"
-                                       Style="{StaticResource CaptionLabel}"
-                                       FontSize="11"
-                                       TextColor="{StaticResource AppPrimaryColor}"
-                                       VerticalOptions="Center"
-                                       IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
+                                <Button Grid.Column="1"
+                                        Text="删除"
+                                        Style="{StaticResource DangerSoftButton}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=DeleteItemCommand}"
+                                        CommandParameter="{Binding ItemId}" />
                             </Grid>
                         </Grid>
 

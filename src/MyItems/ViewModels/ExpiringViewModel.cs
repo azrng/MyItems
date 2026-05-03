@@ -40,6 +40,18 @@ public partial class ExpiringViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task DeleteItemAsync(Guid itemId)
+    {
+        var item = ExpiringItems.Concat(ExpiredItems).FirstOrDefault(i => i.ItemId == itemId);
+        var name = item?.ItemName ?? "这个物品";
+        var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{name}」吗？", "删除", "取消");
+        if (!confirm) return;
+
+        await _dataService.DeleteItemAsync(itemId);
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
     private void Search()
     {
         _ = LoadDataAsync();

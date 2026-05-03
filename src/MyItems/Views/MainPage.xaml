@@ -62,7 +62,7 @@
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ViewItemDetailCommand}"
                                         CommandParameter="{Binding ItemId}" />
                                 </Frame.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
                                     <!-- Row 0: Name + CreatedAt + status badge -->
                                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
@@ -119,6 +119,14 @@
                                        Style="{StaticResource CaptionLabel}"
                                        Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}"
                                        IsVisible="{Binding ExpiryDate, Converter={StaticResource HasValue}}" />
+
+                                <!-- Row 3: Delete button -->
+                                <Button Grid.Row="3"
+                                        Text="删除"
+                                        Style="{StaticResource DangerSoftButton}"
+                                        HorizontalOptions="End"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteWithConfirmCommand}"
+                                        CommandParameter="{Binding ItemId}" />
                             </Grid>
                         </Frame>
                         </SwipeView>

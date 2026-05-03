@@ -100,7 +100,7 @@
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="dtos:ItemDisplayDto">
                                 <Frame Style="{StaticResource ListCardStyle}">
-                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
                                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                             <Label Grid.Column="0"
                                                    Text="{Binding ItemName}"
@@ -136,14 +136,18 @@
                                                    TextColor="{StaticResource AppPrimaryColor}"
                                                    IsVisible="{Binding TrackDailyCost}" />
                                         </Grid>
+                                        <Button Grid.Row="3"
+                                                Text="删除"
+                                                Style="{StaticResource DangerSoftButton}"
+                                                HorizontalOptions="End"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ExpiringViewModel}}, Path=DeleteItemCommand}"
+                                                CommandParameter="{Binding ItemId}" />
                                     </Grid>
                                 </Frame>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </VerticalStackLayout>
-
-                <!-- Empty state -->
                 <StackLayout
                     IsVisible="{Binding IsEmpty}"
                     HorizontalOptions="Center"
