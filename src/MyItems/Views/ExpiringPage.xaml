@@ -63,8 +63,8 @@
                                                LineBreakMode="TailTruncation"
                                                Style="{StaticResource BodyLabel}">
                                             <Label.Text>
-                                                <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
-                                                    <Binding Path="CreatedAtLabel" />
+                                                <MultiBinding StringFormat="{}购买 {0:yyyy-MM-dd} · {1} · {2} · {3}">
+                                                    <Binding Path="PurchaseDate" />
                                                     <Binding Path="Brand" TargetNullValue="" />
                                                     <Binding Path="CategoryName" />
                                                     <Binding Path="Location" />
@@ -118,8 +118,8 @@
                                                LineBreakMode="TailTruncation"
                                                Style="{StaticResource BodyLabel}">
                                             <Label.Text>
-                                                <MultiBinding StringFormat="{}{0} · {1} · {2} · {3}">
-                                                    <Binding Path="CreatedAtLabel" />
+                                                <MultiBinding StringFormat="{}购买 {0:yyyy-MM-dd} · {1} · {2} · {3}">
+                                                    <Binding Path="PurchaseDate" />
                                                     <Binding Path="Brand" TargetNullValue="" />
                                                     <Binding Path="CategoryName" />
                                                     <Binding Path="Location" />

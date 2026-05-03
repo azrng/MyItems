@@ -124,7 +124,7 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:ItemDisplayDto">
                     <Frame Style="{StaticResource ListCardStyle}">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
 
                             <!-- Row 0: Icon + Name + Category -->
                             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
@@ -146,8 +146,20 @@
                                        Margin="8,0,0,0" />
                             </Grid>
 
-                            <!-- Row 1: Expiry status + daily cost -->
-                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                            <!-- Row 1: Purchase date + price -->
+                            <Label Grid.Row="1"
+                                   Style="{StaticResource BodyLabel}"
+                                   LineBreakMode="TailTruncation">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}购买 {0:yyyy-MM-dd}    ¥{1:F1}">
+                                        <Binding Path="PurchaseDate" />
+                                        <Binding Path="PurchasePrice" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+
+                            <!-- Row 2: Expiry status + daily cost -->
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                                 <Label Grid.Column="0"
                                        Style="{StaticResource BodyLabel}"
                                        Text="{Binding ExpiryStatusText}"
