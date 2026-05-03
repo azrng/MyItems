@@ -60,17 +60,29 @@ public static class MauiProgram
     private static string GetAndroidDatabasePath()
     {
         var dbDir = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "MyItems");
-        if (!Directory.Exists(dbDir))
-            Directory.CreateDirectory(dbDir);
-
         var newPath = Path.Combine(dbDir, "myitems.db");
-
-        // Migrate from old location if needed
         var oldPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-        if (File.Exists(oldPath) && !File.Exists(newPath))
-            File.Copy(oldPath, newPath);
 
-        return newPath;
+        // If external DB already exists, use it directly
+        if (File.Exists(newPath))
+            return newPath;
+
+        try
+        {
+            if (!Directory.Exists(dbDir))
+                Directory.CreateDirectory(dbDir);
+
+            // Migrate from old location if needed
+            if (File.Exists(oldPath))
+                File.Copy(oldPath, newPath);
+
+            return newPath;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Permission not granted yet, fall back to internal storage
+            return oldPath;
+        }
     }
 #endif
 }
