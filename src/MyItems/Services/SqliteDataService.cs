@@ -14,8 +14,6 @@ public class SqliteDataService : IDataService
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized;
 
-    private const int CurrentSchemaVersion = 1;
-
     public SqliteDataService(string dbPath)
     {
         _dbPath = dbPath;
@@ -30,26 +28,14 @@ public class SqliteDataService : IDataService
         {
             if (_initialized) return;
 
-            await _db.CreateTableAsync<Category>();
-            await _db.CreateTableAsync<Item>();
-            await _db.CreateTableAsync<VersionLog>();
-
-            var count = await _db.Table<Category>().CountAsync();
-            if (count == 0)
-            {
-                var presets = MockDataService.GetPresetCategories();
-                await _db.InsertAllAsync(presets);
-            }
-
-            // Version tracking & migration
             var version = await GetDbVersionInternalAsync();
-            if (version == 0)
-            {
-                await _db.InsertAsync(new VersionLog { Version = 1, Description = "初始版本" });
-            }
-            else
+            try
             {
                 await RunMigrationsAsync(version);
+            }
+            catch
+            {
+                // 迁移失败仍允许进入系统，用户可在存储管理清空数据
             }
 
             _initialized = true;
@@ -99,10 +85,25 @@ public class SqliteDataService : IDataService
             using var reader = new StreamReader(stream!);
             var sql = await reader.ReadToEndAsync();
 
-            if (!string.IsNullOrWhiteSpace(sql.Trim()))
-                await _db.ExecuteAsync(sql);
+            var statements = sql.Split(';')
+                .Select(s =>
+                {
+                    var lines = s.Split('\n')
+                        .Where(line => !line.TrimStart().StartsWith("--"));
+                    return string.Join('\n', lines).Trim();
+                })
+                .Where(s => !string.IsNullOrWhiteSpace(s)
+                    && !s.TrimStart().StartsWith("--"))
+                .ToList();
 
-            await _db.InsertAsync(new VersionLog { Version = version, Description = desc });
+            if (statements.Count == 0) continue;
+
+            await _db.RunInTransactionAsync(tran =>
+            {
+                foreach (var statement in statements)
+                    tran.Execute(statement);
+                tran.Insert(new VersionLog { Version = version, Description = desc });
+            });
         }
     }
 

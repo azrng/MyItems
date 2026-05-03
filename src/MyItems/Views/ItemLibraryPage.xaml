@@ -114,13 +114,15 @@
         </ScrollView>
 
         <!-- Item list -->
-        <CollectionView
+        <RefreshView
             Grid.Row="3"
-            ItemsSource="{Binding Items}"
-            Margin="16,0"
-            ItemSizingStrategy="MeasureFirstItem"
-            RemainingItemsThreshold="3"
-            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            Command="{Binding RefreshCommand}"
+            Margin="16,0">
+            <CollectionView
+                ItemsSource="{Binding Items}"
+                ItemSizingStrategy="MeasureFirstItem"
+                RemainingItemsThreshold="3"
+                RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dtos:ItemDisplayDto">
                     <SwipeView>
@@ -188,7 +190,8 @@
                     </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
-        </CollectionView>
+            </CollectionView>
+        </RefreshView>
 
         <!-- Load more indicator -->
         <ActivityIndicator
