@@ -29,7 +29,7 @@
                        FontSize="{StaticResource FontSizeHeadline}"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
-                       TextColor="{StaticResource AppTextColor}" />
+                       TextColor="{DynamicResource AppTextColor}" />
                 <Label Text="{Binding Version, StringFormat='版本 {0}'}"
                        Style="{StaticResource CaptionLabel}"
                        HorizontalOptions="Center" />
@@ -56,7 +56,7 @@
                         <Label Grid.Row="1" Grid.Column="0" Text="项目地址" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
                         <Label Grid.Row="1" Grid.Column="1"
                                Text="{Binding ProjectUrl}"
-                               TextColor="{StaticResource AppTextLinkColor}"
+                               TextColor="{DynamicResource AppTextLinkColor}"
                                Style="{StaticResource SubheadLabel}"
                                TextDecorations="Underline">
                             <Label.GestureRecognizers>

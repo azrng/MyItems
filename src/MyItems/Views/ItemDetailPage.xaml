@@ -24,7 +24,7 @@
                 IsVisible="{Binding IsLoading}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                Color="{StaticResource AppPrimaryColor}" />
+                Color="{DynamicResource AppPrimaryColor}" />
 
             <!-- Detail card -->
             <Frame Style="{StaticResource CardStyle}"
@@ -78,7 +78,7 @@
                            Text="{Binding Item.CreatedAtLabel, StringFormat='标识：{0}'}" />
 
                     <!-- Row 4: Purchase info -->
-                    <BoxView Grid.Row="4" HeightRequest="1" Color="{StaticResource AppBorderColor}" />
+                    <BoxView Grid.Row="4" HeightRequest="1" Color="{DynamicResource AppBorderColor}" />
 
                     <Label Grid.Row="5" Style="{StaticResource BodyLabel}">
                         <Label.Text>

@@ -23,6 +23,7 @@
               ColumnSpacing="{StaticResource SpacingSm}">
             <SearchBar
                 Grid.Column="0"
+                Style="{StaticResource SearchBarStyle}"
                 Placeholder="搜索物品..."
                 Text="{Binding SearchText}"
                 SearchCommand="{Binding RefreshCommand}" />
@@ -39,7 +40,7 @@
             Grid.Row="1"
             IsRefreshing="{Binding IsRefreshing}"
             Command="{Binding RefreshCommand}"
-            RefreshColor="{StaticResource AppPrimaryColor}">
+            RefreshColor="{DynamicResource AppPrimaryColor}">
             <CollectionView
                 ItemsSource="{Binding RecentItems}"
                 Margin="16,0"
@@ -52,7 +53,7 @@
                             <SwipeView.RightItems>
                                 <SwipeItem
                                     Text="删除"
-                                    BackgroundColor="#EF4444"
+                                    BackgroundColor="{DynamicResource AppErrorColor}"
                                     Invoked="OnDeleteItemSwipe"
                                     CommandParameter="{Binding ItemId}" />
                             </SwipeView.RightItems>
@@ -129,7 +130,7 @@
             HorizontalOptions="Center"
             VerticalOptions="End"
             Margin="0,0,0,16"
-            Color="{StaticResource AppPrimaryColor}" />
+            Color="{DynamicResource AppPrimaryColor}" />
 
         <!-- Empty state -->
         <StackLayout
@@ -153,6 +154,6 @@
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Color="{StaticResource AppPrimaryColor}" />
+            Color="{DynamicResource AppPrimaryColor}" />
     </Grid>
 </ContentPage>

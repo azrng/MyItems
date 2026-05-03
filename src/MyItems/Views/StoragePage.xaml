@@ -48,7 +48,7 @@
                 IsRunning="{Binding IsBusy}"
                 IsVisible="{Binding IsBusy}"
                 HorizontalOptions="Center"
-                Color="{StaticResource AppPrimaryColor}" />
+                Color="{DynamicResource AppPrimaryColor}" />
 
         </VerticalStackLayout>
     </ScrollView>

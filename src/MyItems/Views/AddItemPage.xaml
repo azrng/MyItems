@@ -38,7 +38,7 @@
                         <!-- Scanned barcode display -->
                         <Border
                             IsVisible="{Binding Barcode, Converter={StaticResource NotNullOrEmpty}}"
-                            BackgroundColor="{StaticResource AppSurfaceColor}"
+                            BackgroundColor="{DynamicResource AppSurfaceColor}"
                             Padding="12,8"
                             StrokeShape="RoundRectangle 6">
                             <Grid ColumnDefinitions="*,Auto"
@@ -51,7 +51,7 @@
                             <Button Grid.Column="1"
                                     Text="&#x2715;"
                                     FontSize="14"
-                                    TextColor="{StaticResource AppTextMutedColor}"
+                                    TextColor="{DynamicResource AppTextMutedColor}"
                                     BackgroundColor="Transparent"
                                     WidthRequest="32"
                                     HeightRequest="32"
@@ -208,7 +208,7 @@
         <Frame Grid.Row="1" Style="{StaticResource BottomActionFrameStyle}">
             <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
                 <Label Text="{Binding ErrorMessage}"
-                       TextColor="{StaticResource AppErrorColor}"
+                       TextColor="{DynamicResource AppErrorColor}"
                        IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNullOrEmpty}}"
                        FontSize="{StaticResource FontSizeCaption}" />
                 <Button

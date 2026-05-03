@@ -5,8 +5,6 @@ namespace MyItems.Converters;
 
 public class ExpiryStatusToTextColorConverter : IValueConverter
 {
-    private static Color? _expired, _expiring, _safe, _noExpiry;
-
     private static Color GetColor(string key, Color fallback)
     {
         return Application.Current?.Resources.TryGetValue(key, out var c) == true ? (Color)c : fallback;
@@ -18,10 +16,10 @@ public class ExpiryStatusToTextColorConverter : IValueConverter
         {
             return status switch
             {
-                ExpiryStatus.Expired => _expired ??= GetColor("AppExpiredColor", Colors.Red),
-                ExpiryStatus.Expiring => _expiring ??= GetColor("AppExpiringColor", Colors.Orange),
-                ExpiryStatus.Safe => _safe ??= GetColor("AppSafeColor", Colors.Green),
-                ExpiryStatus.NoExpiry => _noExpiry ??= GetColor("AppNoExpiryColor", Colors.Blue),
+                ExpiryStatus.Expired => GetColor("AppExpiredColor", Colors.Red),
+                ExpiryStatus.Expiring => GetColor("AppExpiringColor", Colors.Orange),
+                ExpiryStatus.Safe => GetColor("AppSafeColor", Colors.Green),
+                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryColor", Colors.Blue),
                 _ => Colors.Gray
             };
         }
@@ -34,8 +32,6 @@ public class ExpiryStatusToTextColorConverter : IValueConverter
 
 public class ExpiryStatusToBgColorConverter : IValueConverter
 {
-    private static Color? _expired, _expiring, _safe, _noExpiry;
-
     private static Color GetColor(string key, string fallback)
     {
         return Application.Current?.Resources.TryGetValue(key, out var c) == true ? (Color)c : Color.FromArgb(fallback);
@@ -47,10 +43,10 @@ public class ExpiryStatusToBgColorConverter : IValueConverter
         {
             return status switch
             {
-                ExpiryStatus.Expired => _expired ??= GetColor("AppExpiredBgColor", "#FFE0E4"),
-                ExpiryStatus.Expiring => _expiring ??= GetColor("AppExpiringBgColor", "#FEEFC8"),
-                ExpiryStatus.Safe => _safe ??= GetColor("AppSafeBgColor", "#DCFBE6"),
-                ExpiryStatus.NoExpiry => _noExpiry ??= GetColor("AppNoExpiryBgColor", "#D9EEFF"),
+                ExpiryStatus.Expired => GetColor("AppExpiredBgColor", "#FFE0E4"),
+                ExpiryStatus.Expiring => GetColor("AppExpiringBgColor", "#FEEFC8"),
+                ExpiryStatus.Safe => GetColor("AppSafeBgColor", "#DCFBE6"),
+                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryBgColor", "#D9EEFF"),
                 _ => Colors.Transparent
             };
         }

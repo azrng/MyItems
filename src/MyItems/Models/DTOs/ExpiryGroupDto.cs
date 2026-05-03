@@ -12,5 +12,5 @@ public partial class ExpiryGroupDto : ObservableObject
     public string HeaderText => $"{Title} ({Items.Count})";
 
     [ObservableProperty]
-    private bool isExpanded;
+    public partial bool IsExpanded { get; set; }
 }

@@ -11,28 +11,28 @@ public partial class AboutViewModel : ObservableObject
     private const string VersionsUrl = "https://github.com/azrng/MyItems/releases/latest/download/versions.json";
 
     [ObservableProperty]
-    private string appName = "我的物品";
+    private partial string AppName { get; set; } = "我的物品";
 
     [ObservableProperty]
-    private string version = AppInfo.Current.VersionString;
+    private partial string Version { get; set; } = AppInfo.Current.VersionString;
 
     [ObservableProperty]
-    private string author = "azrng";
+    private partial string Author { get; set; } = "azrng";
 
     [ObservableProperty]
-    private string description = "个人/家庭自用的物品管理 App，核心功能是跟踪物品的保质期，同时管理物品的购入、存放等信息。";
+    private partial string Description { get; set; } = "个人/家庭自用的物品管理 App，核心功能是跟踪物品的保质期，同时管理物品的购入、存放等信息。";
 
     [ObservableProperty]
-    private string techStack = ".NET MAUI + SQLite";
+    private partial string TechStack { get; set; } = ".NET MAUI + SQLite";
 
     [ObservableProperty]
-    private string projectUrl = RepoUrl;
+    private partial string ProjectUrl { get; set; } = RepoUrl;
 
     [ObservableProperty]
-    private bool isCheckingUpdate;
+    private partial bool IsCheckingUpdate { get; set; }
 
     [ObservableProperty]
-    private string updateStatusText = string.Empty;
+    private partial string UpdateStatusText { get; set; } = string.Empty;
 
     [RelayCommand]
     private async Task CheckUpdateAsync()
@@ -55,7 +55,7 @@ public partial class AboutViewModel : ObservableObject
                 if (IsNewerVersion(latest.Version, current))
                 {
                     UpdateStatusText = $"发现新版本 v{latest.Version}";
-                    var open = await Application.Current!.MainPage!.DisplayAlert(
+                    var open = await Shell.Current.DisplayAlertAsync(
                         "发现新版本",
                         $"当前版本: v{current}\n最新版本: v{latest.Version}\n发布时间: {latest.PubTime:yyyy-MM-dd HH:mm}",
                         "前往下载",

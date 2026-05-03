@@ -19,6 +19,7 @@
         <!-- Search bar -->
         <SearchBar
             Grid.Row="0"
+            Style="{StaticResource SearchBarStyle}"
             Margin="16,8"
             Placeholder="搜索物品..."
             Text="{Binding SearchText}"
@@ -29,7 +30,7 @@
             Grid.Row="1"
             IsRefreshing="{Binding IsRefreshing}"
             Command="{Binding RefreshCommand}"
-            RefreshColor="{StaticResource AppPrimaryColor}">
+            RefreshColor="{DynamicResource AppPrimaryColor}">
         <ScrollView>
             <VerticalStackLayout Padding="{StaticResource PagePadding}" Spacing="16">
 
@@ -78,7 +79,7 @@
                                             <Label Grid.Column="1"
                                                    Text="{Binding DailyCostText}"
                                                    Style="{StaticResource CaptionLabel}"
-                                                   TextColor="{StaticResource AppPrimaryColor}"
+                                                   TextColor="{DynamicResource AppPrimaryColor}"
                                                    IsVisible="{Binding TrackDailyCost}" />
                                         </Grid>
                                     </Grid>
@@ -103,7 +104,7 @@
                                     <SwipeView.RightItems>
                                         <SwipeItem
                                             Text="删除"
-                                            BackgroundColor="#EF4444"
+                                            BackgroundColor="{DynamicResource AppErrorColor}"
                                             Invoked="OnDeleteItemSwipe"
                                             CommandParameter="{Binding ItemId}" />
                                     </SwipeView.RightItems>
@@ -141,7 +142,7 @@
                                                 <Label Grid.Column="1"
                                                        Text="{Binding DailyCostText}"
                                                        Style="{StaticResource CaptionLabel}"
-                                                       TextColor="{StaticResource AppPrimaryColor}"
+                                                       TextColor="{DynamicResource AppPrimaryColor}"
                                                        IsVisible="{Binding TrackDailyCost}" />
                                             </Grid>
                                         </Grid>
@@ -176,6 +177,6 @@
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Color="{StaticResource AppPrimaryColor}" />
+            Color="{DynamicResource AppPrimaryColor}" />
     </Grid>
 </ContentPage>

@@ -18,49 +18,49 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     public string SaveButtonText => IsEditMode ? "更新" : "保存";
 
     [ObservableProperty]
-    private bool isEditMode;
+    private partial bool IsEditMode { get; set; }
 
     [ObservableProperty]
-    private string itemName = string.Empty;
+    private partial string ItemName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private Category? selectedCategory;
+    private partial Category? SelectedCategory { get; set; }
 
     [ObservableProperty]
-    private string? barcode;
+    private partial string? Barcode { get; set; }
 
     [ObservableProperty]
-    private string? brand;
+    private partial string? Brand { get; set; }
 
     [ObservableProperty]
-    private string? location;
+    private partial string? Location { get; set; }
 
     [ObservableProperty]
-    private DateTime? purchaseDate = DateTime.Today;
+    private partial DateTime? PurchaseDate { get; set; } = DateTime.Today;
 
     [ObservableProperty]
-    private decimal? purchasePrice;
+    private partial decimal? PurchasePrice { get; set; }
 
     [ObservableProperty]
-    private DateTime? expiryDate = DateTime.Today.AddDays(7);
+    private partial DateTime? ExpiryDate { get; set; } = DateTime.Today.AddDays(7);
 
     [ObservableProperty]
-    private bool noExpiry;
+    private partial bool NoExpiry { get; set; }
 
     [ObservableProperty]
-    private bool trackDailyCost = true;
+    private partial bool TrackDailyCost { get; set; } = true;
 
     [ObservableProperty]
-    private int quantity = 1;
+    private partial int Quantity { get; set; } = 1;
 
     [ObservableProperty]
-    private string? notes;
+    private partial string? Notes { get; set; }
 
     [ObservableProperty]
-    private bool isSaving;
+    private partial bool IsSaving { get; set; }
 
     [ObservableProperty]
-    private string? errorMessage;
+    private partial string? ErrorMessage { get; set; }
 
     public AddItemViewModel(IDataService dataService)
     {

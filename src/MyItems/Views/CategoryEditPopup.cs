@@ -126,7 +126,7 @@ public class CategoryEditPopup : Popup<CategoryEditResult>
             HeightRequest = 44,
             CornerRadius = 10,
         };
-        cancelBtn.Clicked += async (_, _) => await CloseAsync(null);
+        cancelBtn.Clicked += async (_, _) => await CloseAsync(default!);
         Grid.SetColumn(cancelBtn, 0);
 
         var saveBtn = new Button
@@ -174,7 +174,7 @@ public class CategoryEditPopup : Popup<CategoryEditResult>
     }
 
     private static Color GetColor(string key) =>
-        (Color)Application.Current.Resources[key];
+        (Color)(Application.Current?.Resources[key] ?? Colors.Transparent);
 }
 
 public record CategoryEditResult(string Name, string? Icon);

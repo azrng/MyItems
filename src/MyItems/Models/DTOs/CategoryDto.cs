@@ -7,16 +7,16 @@ public partial class CategoryDto : ObservableObject
     public Guid Id { get; set; }
 
     [ObservableProperty]
-    private string name = string.Empty;
+    public partial string Name { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string? icon;
+    public partial string? Icon { get; set; }
 
     public int SortOrder { get; set; }
     public bool IsPreset { get; set; }
 
     [ObservableProperty]
-    private bool isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     public int ItemCount { get; set; }
     public string SubtitleText => IsPreset ? "预置" : $"{ItemCount} 个物品";

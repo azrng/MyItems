@@ -32,7 +32,7 @@
                 Text="物品库"
                 FontSize="{StaticResource FontSizeTitle}"
                 FontAttributes="Bold"
-                TextColor="{StaticResource AppTextInverseColor}"
+                TextColor="{DynamicResource AppTextInverseColor}"
                 VerticalOptions="Center" />
         </Grid>
     </Shell.TitleView>
@@ -41,6 +41,7 @@
 
         <SearchBar
             Grid.Row="0"
+            Style="{StaticResource SearchBarStyle}"
             Margin="16,8"
             Placeholder="搜索物品..."
             Text="{Binding SearchText}"
@@ -61,7 +62,7 @@
                        Text="{Binding TotalSpentText}"
                        FontSize="18"
                        FontAttributes="Bold"
-                       TextColor="{StaticResource AppPrimaryColor}"
+                       TextColor="{DynamicResource AppPrimaryColor}"
                        HorizontalOptions="Center" />
 
                 <Label Grid.Row="0" Grid.Column="1"
@@ -72,7 +73,7 @@
                        Text="{Binding ValidCountText}"
                        FontSize="18"
                        FontAttributes="Bold"
-                       TextColor="{StaticResource AppSafeColor}"
+                       TextColor="{DynamicResource AppSafeColor}"
                        HorizontalOptions="Center" />
 
                 <Label Grid.Row="0" Grid.Column="2"
@@ -83,7 +84,7 @@
                        Text="{Binding TotalItemsText}"
                        FontSize="18"
                        FontAttributes="Bold"
-                       TextColor="{StaticResource AppTextSecondaryColor}"
+                       TextColor="{DynamicResource AppTextSecondaryColor}"
                        HorizontalOptions="Center" />
             </Grid>
         </Frame>
@@ -104,13 +105,13 @@
                 ItemHeight="32"
                 ChipCornerRadius="16"
                 ChipPadding="4,4"
-                ChipBackground="{StaticResource AppCardBackgroundColor}"
-                ChipTextColor="{StaticResource AppTextSecondaryColor}"
-                ChipStroke="{StaticResource AppBorderColor}"
+                ChipBackground="{DynamicResource AppCardBackgroundColor}"
+                ChipTextColor="{DynamicResource AppTextSecondaryColor}"
+                ChipStroke="{DynamicResource AppBorderColor}"
                 ChipStrokeThickness="1"
-                SelectedChipBackground="{StaticResource AppActiveBackgroundColor}"
-                SelectedChipTextColor="{StaticResource AppPrimaryColor}"
-                SelectionIndicatorColor="{StaticResource AppPrimaryColor}" />
+                SelectedChipBackground="{DynamicResource AppActiveBackgroundColor}"
+                SelectedChipTextColor="{DynamicResource AppPrimaryColor}"
+                SelectionIndicatorColor="{DynamicResource AppPrimaryColor}" />
         </ScrollView>
 
         <!-- Item list -->
@@ -129,7 +130,7 @@
                         <SwipeView.RightItems>
                             <SwipeItem
                                 Text="删除"
-                                BackgroundColor="#EF4444"
+                                BackgroundColor="{DynamicResource AppErrorColor}"
                                 Invoked="OnDeleteItemSwipe"
                                 CommandParameter="{Binding ItemId}" />
                         </SwipeView.RightItems>
@@ -157,7 +158,7 @@
                                            Text="{Binding DailyCostText}"
                                            Style="{StaticResource CaptionLabel}"
                                            FontSize="11"
-                                           TextColor="{StaticResource AppPrimaryColor}"
+                                           TextColor="{DynamicResource AppPrimaryColor}"
                                            VerticalOptions="Center"
                                            IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
                                     <Label Grid.Column="3"
@@ -201,7 +202,7 @@
             HorizontalOptions="Center"
             VerticalOptions="End"
             Margin="0,0,0,16"
-            Color="{StaticResource AppPrimaryColor}" />
+            Color="{DynamicResource AppPrimaryColor}" />
 
         <!-- Empty state -->
         <StackLayout
@@ -228,7 +229,7 @@
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Color="{StaticResource AppPrimaryColor}" />
+            Color="{DynamicResource AppPrimaryColor}" />
 
         <!-- Settings overlay (dimmed background) -->
         <BoxView
@@ -245,7 +246,7 @@
         <!-- Settings panel (slides from right) -->
         <Frame
             Grid.RowSpan="4"
-            BackgroundColor="{StaticResource AppCardBackgroundColor}"
+            BackgroundColor="{DynamicResource AppCardBackgroundColor}"
             CornerRadius="0"
             Padding="20,32,20,24"
             HasShadow="True"
@@ -256,19 +257,19 @@
                 <Button Text="📂 分类管理"
                         FontSize="18"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource AppTextColor}"
+                        TextColor="{DynamicResource AppTextColor}"
                         HorizontalOptions="Fill"
                         Command="{Binding GoToCategoryCommand}" />
                 <Button Text="💾 存储管理"
                         FontSize="18"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource AppTextColor}"
+                        TextColor="{DynamicResource AppTextColor}"
                         HorizontalOptions="Fill"
                         Command="{Binding GoToStorageCommand}" />
                 <Button Text="ℹ 关于"
                         FontSize="18"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource AppTextColor}"
+                        TextColor="{DynamicResource AppTextColor}"
                         HorizontalOptions="Fill"
                         Command="{Binding GoToAboutCommand}" />
             </VerticalStackLayout>

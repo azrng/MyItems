@@ -480,7 +480,11 @@ public class SqliteDataService : IDataService
 
         var header = new byte[16];
         using (var fs = File.OpenRead(sourcePath))
-            await fs.ReadAsync(header, 0, 16);
+        {
+            var bytesRead = await fs.ReadAsync(header, 0, 16);
+            if (bytesRead < 16)
+                throw new InvalidOperationException("所选文件不是有效的 SQLite 数据库");
+        }
 
         var sqliteHeader = "SQLite format 3\0"u8;
         for (var i = 0; i < 16; i++)

@@ -11,13 +11,13 @@
 
     <!-- Page -->
     <Style x:Key="PageStyle" TargetType="ContentPage">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppBackgroundColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppBackgroundColor}" />
     </Style>
 
     <!-- Card -->
     <Style x:Key="CardStyle" TargetType="Frame">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
-        <Setter Property="BorderColor" Value="{StaticResource AppBorderColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
+        <Setter Property="BorderColor" Value="{DynamicResource AppBorderColor}" />
         <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
         <Setter Property="Padding" Value="{StaticResource CardPadding}" />
         <Setter Property="HasShadow" Value="False" />
@@ -34,8 +34,8 @@
     </Style>
 
     <Style x:Key="BottomActionFrameStyle" TargetType="Frame">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
-        <Setter Property="BorderColor" Value="{StaticResource AppBorderColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
+        <Setter Property="BorderColor" Value="{DynamicResource AppBorderColor}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusLg}" />
         <Setter Property="Padding" Value="{StaticResource BottomActionPadding}" />
         <Setter Property="HasShadow" Value="False" />
@@ -46,34 +46,34 @@
     <Style x:Key="HeadlineLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeHeadline}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
     </Style>
 
     <Style x:Key="TitleLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
     </Style>
 
     <Style x:Key="SubheadLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
     </Style>
 
     <Style x:Key="BodyLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextSecondaryColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextSecondaryColor}" />
     </Style>
 
     <Style x:Key="CaptionLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextMutedColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextMutedColor}" />
     </Style>
 
     <!-- Buttons -->
     <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppPrimaryColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppPrimaryColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextInverseColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HeightRequest" Value="{StaticResource ButtonHeight}" />
@@ -82,8 +82,8 @@
     </Style>
 
     <Style x:Key="IconButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppActiveBackgroundColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppPrimaryColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppActiveBackgroundColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppPrimaryColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="WidthRequest" Value="{StaticResource TouchTargetMinHeight}" />
@@ -93,8 +93,8 @@
     </Style>
 
     <Style x:Key="TitleIconButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppGray800Color}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppGray800Color}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextInverseColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="WidthRequest" Value="{StaticResource TouchTargetMinHeight}" />
@@ -105,8 +105,8 @@
     </Style>
 
     <Style x:Key="SecondaryButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppSurfaceColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppSurfaceColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
         <Setter Property="HeightRequest" Value="{StaticResource ButtonHeight}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
@@ -119,8 +119,8 @@
     </Style>
 
     <Style x:Key="DangerButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppErrorColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppErrorColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextInverseColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
         <Setter Property="HeightRequest" Value="{StaticResource ButtonHeight}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
@@ -128,8 +128,8 @@
     </Style>
 
     <Style x:Key="DangerSoftButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppErrorBgColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppErrorColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppErrorBgColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppErrorColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HeightRequest" Value="36" />
@@ -138,8 +138,8 @@
     </Style>
 
     <Style x:Key="SuccessSoftButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AppSuccessBgColor}" />
-        <Setter Property="TextColor" Value="{StaticResource AppSuccessColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppSuccessBgColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppSuccessColor}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HeightRequest" Value="36" />
@@ -148,41 +148,48 @@
     </Style>
 
     <!-- Input -->
+    <Style x:Key="SearchBarStyle" TargetType="SearchBar">
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource AppTextDisabledColor}" />
+        <Setter Property="CancelButtonColor" Value="{DynamicResource AppTextSecondaryColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
+    </Style>
+
     <Style x:Key="EntryStyle" TargetType="Entry">
         <Setter Property="HeightRequest" Value="{StaticResource InputHeight}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
-        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextDisabledColor}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource AppTextDisabledColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
     </Style>
 
     <Style x:Key="PickerStyle" TargetType="Picker">
         <Setter Property="HeightRequest" Value="{StaticResource InputHeight}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
-        <Setter Property="TitleColor" Value="{StaticResource AppTextSecondaryColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
+        <Setter Property="TitleColor" Value="{DynamicResource AppTextSecondaryColor}" />
     </Style>
 
     <Style x:Key="DatePickerStyle" TargetType="DatePicker">
         <Setter Property="HeightRequest" Value="{StaticResource InputHeight}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
     </Style>
 
     <Style x:Key="EditorStyle" TargetType="Editor">
         <Setter Property="HeightRequest" Value="{StaticResource EditorHeight}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
-        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextDisabledColor}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource AppTextDisabledColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AppCardBackgroundColor}" />
     </Style>
 
     <!-- Section header -->
     <Style x:Key="SectionHeaderLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeSubhead}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource AppTextColor}" />
     </Style>
 
     <!-- Status badge -->

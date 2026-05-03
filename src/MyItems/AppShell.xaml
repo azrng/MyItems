@@ -6,13 +6,13 @@
     x:Class="MyItems.AppShell"
     Title="我的物品"
     FlyoutBehavior="Disabled"
-    BackgroundColor="{StaticResource AppGray800Color}"
-    ForegroundColor="{StaticResource AppTextInverseColor}"
-    TitleColor="{StaticResource AppTextInverseColor}"
-    TabBarBackgroundColor="{StaticResource AppCardBackgroundColor}"
-    TabBarForegroundColor="{StaticResource AppTextMutedColor}"
-    TabBarTitleColor="{StaticResource AppTextColor}"
-    TabBarUnselectedColor="{StaticResource AppTextDisabledColor}">
+    BackgroundColor="{DynamicResource AppGray800Color}"
+    ForegroundColor="{DynamicResource AppTextInverseColor}"
+    TitleColor="{DynamicResource AppTextInverseColor}"
+    TabBarBackgroundColor="{DynamicResource AppCardBackgroundColor}"
+    TabBarForegroundColor="{DynamicResource AppTextMutedColor}"
+    TabBarTitleColor="{DynamicResource AppTextColor}"
+    TabBarUnselectedColor="{DynamicResource AppTextDisabledColor}">
 
     <TabBar>
         <Tab Title="主页">
