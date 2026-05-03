@@ -22,17 +22,22 @@
 
             <Frame Style="{StaticResource CardStyle}">
                 <VerticalStackLayout Spacing="16">
-                    <Button Text="📊 导出 Excel"
+                    <Button Text="导出 Excel"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding ExportExcelCommand}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
 
-                    <Button Text="🧪 初始化测试数据"
+                    <Button Text="导入数据库"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding ImportDbCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+
+                    <Button Text="初始化测试数据"
                             Style="{StaticResource SecondaryButton}"
                             Command="{Binding SeedTestDataCommand}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
 
-                    <Button Text="🗑 清空所有数据"
+                    <Button Text="清空所有数据"
                             Style="{StaticResource DangerButton}"
                             Command="{Binding ClearAllDataCommand}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />

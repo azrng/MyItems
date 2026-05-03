@@ -36,4 +36,8 @@ public interface IDataService
 
     // Data management
     Task ClearAllDataAsync();
+
+    // Database
+    Task<int> GetDbVersionAsync();
+    Task ImportDatabaseAsync(string sourcePath);
 }

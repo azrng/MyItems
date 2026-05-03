@@ -9,12 +9,16 @@ namespace MyItems.Services;
 
 public class SqliteDataService : IDataService
 {
+    private readonly string _dbPath;
     private readonly SQLiteAsyncConnection _db;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized;
 
+    private const int CurrentSchemaVersion = 1;
+
     public SqliteDataService(string dbPath)
     {
+        _dbPath = dbPath;
         _db = new SQLiteAsyncConnection(dbPath);
     }
 
@@ -28,6 +32,7 @@ public class SqliteDataService : IDataService
 
             await _db.CreateTableAsync<Category>();
             await _db.CreateTableAsync<Item>();
+            await _db.CreateTableAsync<VersionLog>();
 
             var count = await _db.Table<Category>().CountAsync();
             if (count == 0)
@@ -36,11 +41,51 @@ public class SqliteDataService : IDataService
                 await _db.InsertAllAsync(presets);
             }
 
+            // Version tracking & migration
+            var version = await GetDbVersionInternalAsync();
+            if (version == 0)
+            {
+                await _db.InsertAsync(new VersionLog { Version = 1, Description = "初始版本" });
+            }
+            else
+            {
+                await RunMigrationsAsync(version);
+            }
+
             _initialized = true;
         }
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    private async Task<int> GetDbVersionInternalAsync()
+    {
+        try
+        {
+            var logs = await _db.Table<VersionLog>().OrderByDescending(v => v.Version).ToListAsync();
+            return logs.Count > 0 ? logs[0].Version : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private async Task RunMigrationsAsync(int currentVersion)
+    {
+        var migrations = new Dictionary<int, (string desc, string sql)>
+        {
+            // 示例：未来新增列时在此添加
+            // { 2, ("Items 增加 Tag 列", "ALTER TABLE Items ADD COLUMN Tag TEXT") },
+        };
+
+        foreach (var (version, (desc, sql)) in migrations.OrderBy(x => x.Key))
+        {
+            if (version <= currentVersion) continue;
+            await _db.ExecuteAsync(sql);
+            await _db.InsertAsync(new VersionLog { Version = version, Description = desc });
         }
     }
 
@@ -395,6 +440,63 @@ public class SqliteDataService : IDataService
     {
         await EnsureInitializedAsync();
         await _db.DeleteAllAsync<Item>();
+    }
+
+    #endregion
+
+    #region Database
+
+    public async Task<int> GetDbVersionAsync()
+    {
+        await EnsureInitializedAsync();
+        return await GetDbVersionInternalAsync();
+    }
+
+    public async Task ImportDatabaseAsync(string sourcePath)
+    {
+        await EnsureInitializedAsync();
+
+        // Validate source file
+        if (!File.Exists(sourcePath))
+            throw new FileNotFoundException("数据库文件不存在");
+
+        var header = new byte[16];
+        using (var fs = File.OpenRead(sourcePath))
+            await fs.ReadAsync(header, 0, 16);
+
+        var sqliteHeader = "SQLite format 3\0"u8;
+        for (var i = 0; i < 16; i++)
+            if (header[i] != sqliteHeader[i])
+                throw new InvalidOperationException("所选文件不是有效的 SQLite 数据库");
+
+        // Close current connection
+        await _db.CloseAsync();
+
+        // Backup current database
+        var backupPath = _dbPath + ".bak";
+        if (File.Exists(_dbPath))
+            File.Move(_dbPath, backupPath, overwrite: true);
+
+        try
+        {
+            // Copy imported file to database path
+            File.Copy(sourcePath, _dbPath, overwrite: true);
+
+            // Reset and reinitialize (creates missing tables, runs migrations)
+            _initialized = false;
+            await InitializeAsync();
+
+            // Delete backup on success
+            if (File.Exists(backupPath))
+                File.Delete(backupPath);
+        }
+        catch
+        {
+            // Restore backup on failure
+            if (File.Exists(backupPath))
+                File.Move(backupPath, _dbPath, overwrite: true);
+            throw;
+        }
     }
 
     #endregion

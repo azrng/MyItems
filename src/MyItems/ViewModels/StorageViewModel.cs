@@ -62,4 +62,38 @@ public partial class StorageViewModel : ObservableObject
         IsBusy = false;
         await Shell.Current.DisplayAlertAsync("完成", "所有数据已清空", "确定");
     }
+
+    [RelayCommand]
+    private async Task ImportDbAsync()
+    {
+        var result = await FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "选择数据库文件",
+            FileTypes = new FilePickerFileType(
+                new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.Android, new[] { "application/octet-stream" } },
+                    { DevicePlatform.WinUI, new[] { ".db", ".sqlite", ".sqlite3" } },
+                })
+        });
+
+        if (result is null) return;
+
+        var confirm = await Shell.Current.DisplayAlertAsync("导入数据库",
+            $"将用所选文件替换当前数据库，当前数据将被覆盖。\n\n确定要继续吗？", "导入", "取消");
+        if (!confirm) return;
+
+        IsBusy = true;
+        try
+        {
+            await _dataService.ImportDatabaseAsync(result.FullPath);
+            await Shell.Current.DisplayAlertAsync("导入成功",
+                "数据库已导入，请重启应用以加载新数据。", "确定");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("导入失败", ex.Message, "确定");
+        }
+        IsBusy = false;
+    }
 }
