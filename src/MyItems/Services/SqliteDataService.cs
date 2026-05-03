@@ -279,38 +279,41 @@ public class SqliteDataService : IDataService
 
     public async Task<string> ExportToExcelAsync()
     {
-        var dtos = await GetItemDisplayDtosAsync();
+        await EnsureInitializedAsync();
+        var items = await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
+        var categories = await _db.Table<Category>().ToListAsync();
+        var catLookup = categories.ToDictionary(c => c.Id);
+
         var filePath = Path.Combine(FileSystem.CacheDirectory, $"MyItems_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("物品清单");
 
-        ws.Cell(1, 1).Value = "物品名称";
+        ws.Cell(1, 1).Value = "物品名字";
         ws.Cell(1, 2).Value = "品牌";
         ws.Cell(1, 3).Value = "分类";
-        ws.Cell(1, 4).Value = "创建时间";
-        ws.Cell(1, 5).Value = "购买日期";
-        ws.Cell(1, 6).Value = "购入价格";
+        ws.Cell(1, 4).Value = "购买日期";
+        ws.Cell(1, 5).Value = "购买价格";
+        ws.Cell(1, 6).Value = "创建时间";
         ws.Cell(1, 7).Value = "保质期";
-        ws.Cell(1, 8).Value = "状态";
-        ws.Cell(1, 9).Value = "存放位置";
-        ws.Cell(1, 10).Value = "数量";
-        ws.Cell(1, 11).Value = "日均成本";
+        ws.Cell(1, 8).Value = "是否显示日均成本";
+        ws.Cell(1, 9).Value = "备注";
 
-        for (var i = 0; i < dtos.Count; i++)
+        for (var i = 0; i < items.Count; i++)
         {
-            var d = dtos[i];
-            ws.Cell(i + 2, 1).Value = d.ItemName;
-            ws.Cell(i + 2, 2).Value = d.Brand ?? string.Empty;
-            ws.Cell(i + 2, 3).Value = d.CategoryName;
-            ws.Cell(i + 2, 4).Value = d.CreatedAtLabel;
-            ws.Cell(i + 2, 5).Value = d.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-            ws.Cell(i + 2, 6).Value = (double)(d.PurchasePrice ?? 0);
-            ws.Cell(i + 2, 7).Value = d.ExpiryDate?.ToString("yyyy-MM-dd") ?? "无";
-            ws.Cell(i + 2, 8).Value = d.ExpiryStatusText;
-            ws.Cell(i + 2, 9).Value = d.Location ?? string.Empty;
-            ws.Cell(i + 2, 10).Value = d.Quantity;
-            ws.Cell(i + 2, 11).Value = d.DailyCostText ?? string.Empty;
+            var item = items[i];
+            catLookup.TryGetValue(item.CategoryId, out var cat);
+            var row = i + 2;
+
+            ws.Cell(row, 1).Value = item.Name;
+            ws.Cell(row, 2).Value = item.Brand ?? string.Empty;
+            ws.Cell(row, 3).Value = cat?.Name ?? string.Empty;
+            ws.Cell(row, 4).Value = item.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            ws.Cell(row, 5).Value = item.PurchasePrice != null ? (double)item.PurchasePrice.Value : 0;
+            ws.Cell(row, 6).Value = item.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+            ws.Cell(row, 7).Value = item.ExpiryDate?.ToString("yyyy-MM-dd") ?? "无";
+            ws.Cell(row, 8).Value = item.TrackDailyCost ? "是" : "否";
+            ws.Cell(row, 9).Value = item.Notes ?? string.Empty;
         }
 
         ws.Columns().AdjustToContents();
