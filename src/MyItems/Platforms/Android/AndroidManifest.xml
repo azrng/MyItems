@@ -5,12 +5,8 @@
         android:icon="@mipmap/appicon"
         android:roundIcon="@mipmap/appicon_round"
         android:supportsRtl="true"
-        android:label="我的物品"
-        android:requestLegacyExternalStorage="true">
+        android:label="我的物品">
     </application>
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 </manifest>

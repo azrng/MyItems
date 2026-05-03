@@ -1,8 +1,6 @@
 using Android.App;
-using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using Android.Provider;
 
 namespace MyItems;
 
@@ -21,25 +19,5 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnCreate(savedInstanceState);
         SQLitePCL.Batteries_V2.Init();
-        RequestStoragePermission();
-    }
-
-    private void RequestStoragePermission()
-    {
-        // Android 11+ needs MANAGE_EXTERNAL_STORAGE for public directory access
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
-        {
-            if (!Android.OS.Environment.IsExternalStorageManager)
-            {
-                var intent = new Intent(Settings.ActionManageAppAllFilesAccessPermission);
-                intent.SetData(Android.Net.Uri.Parse($"package:{PackageName}"));
-                StartActivity(intent);
-            }
-        }
-        else
-        {
-            if (CheckSelfPermission(Android.Manifest.Permission.WriteExternalStorage) != Permission.Granted)
-                RequestPermissions(new[] { Android.Manifest.Permission.WriteExternalStorage }, 100);
-        }
     }
 }
