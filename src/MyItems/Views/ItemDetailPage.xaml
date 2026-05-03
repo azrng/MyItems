@@ -28,7 +28,7 @@
 
             <!-- Detail card -->
             <Frame Style="{StaticResource CardStyle}"
-                   IsVisible="{Binding Item, Converter={StaticResource NotNullOrEmpty}}">
+                   IsVisible="{Binding Item, Converter={StaticResource HasValue}}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingSm}">
 
                     <!-- Row 0: Name + Status badge -->
