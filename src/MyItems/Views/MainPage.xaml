@@ -102,14 +102,13 @@
                                         </Frame>
                                     </Grid>
 
-                                <!-- Row 1: Brand · Location · Purchase date -->
+                                <!-- Row 1: Brand · Purchase date -->
                                 <Label Grid.Row="1"
                                        LineBreakMode="TailTruncation"
                                        Style="{StaticResource BodyLabel}">
                                     <Label.Text>
-                                        <MultiBinding StringFormat="{}{0} · {1} · 购买 {2:yyyy-MM-dd}">
+                                        <MultiBinding StringFormat="{}{0} · 购买日期 {1:yyyy-MM-dd}">
                                             <Binding Path="Brand" TargetNullValue="" />
-                                            <Binding Path="Location" />
                                             <Binding Path="PurchaseDate" />
                                         </MultiBinding>
                                     </Label.Text>
