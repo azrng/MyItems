@@ -19,7 +19,7 @@ public class Item
     public decimal? PurchasePrice { get; set; }
     [Indexed] public DateTime? ExpiryDate { get; set; }
     public int Quantity { get; set; } = 1;
-    public bool TrackDailyCost { get; set; } = true;
+    public bool TrackDailyCost { get; set; } = false;
     public string? Notes { get; set; }
     public string? ImagePath { get; set; }
 
