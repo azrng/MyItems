@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     x:Class="MyItems.Views.ExpiringPage"
     x:DataType="viewmodels:ExpiringViewModel"
@@ -100,51 +99,54 @@
                         ItemSizingStrategy="MeasureFirstItem">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                                <Frame Style="{StaticResource ListCardStyle}">
-                                    <Frame.Behaviors>
-                                        <toolkit:TouchBehavior
-                                            LongPressDuration="500"
-                                            LongPressCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ExpiringViewModel}}, Path=DeleteItemCommand}"
-                                            LongPressCommandParameter="{Binding ItemId}" />
-                                    </Frame.Behaviors>
-                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
-                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                            <Label Grid.Column="0"
-                                                   Text="{Binding ItemName}"
-                                                   Style="{StaticResource TitleLabel}"
-                                                   LineBreakMode="TailTruncation" />
-                                            <Frame Grid.Column="1"
-                                                   Style="{StaticResource StatusBadgeFrame}"
-                                                   BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
-                                                <Label Text="{Binding ExpiryStatusText}"
-                                                       Style="{StaticResource StatusBadgeLabel}"
-                                                       TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
-                                            </Frame>
+                                <SwipeView>
+                                    <SwipeView.RightItems>
+                                        <SwipeItem
+                                            Text="删除"
+                                            BackgroundColor="#EF4444"
+                                            Invoked="OnDeleteItemSwipe"
+                                            CommandParameter="{Binding ItemId}" />
+                                    </SwipeView.RightItems>
+                                    <Frame Style="{StaticResource ListCardStyle}">
+                                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                                <Label Grid.Column="0"
+                                                       Text="{Binding ItemName}"
+                                                       Style="{StaticResource TitleLabel}"
+                                                       LineBreakMode="TailTruncation" />
+                                                <Frame Grid.Column="1"
+                                                       Style="{StaticResource StatusBadgeFrame}"
+                                                       BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                                    <Label Text="{Binding ExpiryStatusText}"
+                                                           Style="{StaticResource StatusBadgeLabel}"
+                                                           TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                                </Frame>
+                                            </Grid>
+                                            <Label Grid.Row="1"
+                                                   LineBreakMode="TailTruncation"
+                                                   Style="{StaticResource BodyLabel}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}购买日期 {0:yyyy-MM-dd}  {1}  {2}  {3}">
+                                                        <Binding Path="PurchaseDate" />
+                                                        <Binding Path="Brand" TargetNullValue="" />
+                                                        <Binding Path="CategoryName" />
+                                                        <Binding Path="Location" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                                <Label Grid.Column="0"
+                                                       Style="{StaticResource CaptionLabel}"
+                                                       Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}" />
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding DailyCostText}"
+                                                       Style="{StaticResource CaptionLabel}"
+                                                       TextColor="{StaticResource AppPrimaryColor}"
+                                                       IsVisible="{Binding TrackDailyCost}" />
+                                            </Grid>
                                         </Grid>
-                                        <Label Grid.Row="1"
-                                               LineBreakMode="TailTruncation"
-                                               Style="{StaticResource BodyLabel}">
-                                            <Label.Text>
-                                                <MultiBinding StringFormat="{}购买日期 {0:yyyy-MM-dd}  {1}  {2}  {3}">
-                                                    <Binding Path="PurchaseDate" />
-                                                    <Binding Path="Brand" TargetNullValue="" />
-                                                    <Binding Path="CategoryName" />
-                                                    <Binding Path="Location" />
-                                                </MultiBinding>
-                                            </Label.Text>
-                                        </Label>
-                                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                            <Label Grid.Column="0"
-                                                   Style="{StaticResource CaptionLabel}"
-                                                   Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}" />
-                                            <Label Grid.Column="1"
-                                                   Text="{Binding DailyCostText}"
-                                                   Style="{StaticResource CaptionLabel}"
-                                                   TextColor="{StaticResource AppPrimaryColor}"
-                                                   IsVisible="{Binding TrackDailyCost}" />
-                                        </Grid>
-                                    </Grid>
-                                </Frame>
+                                    </Frame>
+                                </SwipeView>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>

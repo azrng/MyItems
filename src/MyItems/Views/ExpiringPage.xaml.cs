@@ -17,4 +17,13 @@ public partial class ExpiringPage : ContentPage
         if (BindingContext is ExpiringViewModel viewModel)
             viewModel.RefreshCommand.Execute(null);
     }
+
+    private void OnDeleteItemSwipe(object? sender, EventArgs e)
+    {
+        if (sender is SwipeItem { CommandParameter: Guid itemId } &&
+            BindingContext is ExpiringViewModel viewModel)
+        {
+            viewModel.DeleteItemCommand.Execute(itemId);
+        }
+    }
 }

@@ -17,4 +17,13 @@ public partial class ItemLibraryPage : ContentPage
         if (BindingContext is ItemLibraryViewModel viewModel)
             viewModel.RefreshCommand.Execute(null);
     }
+
+    private void OnDeleteItemSwipe(object? sender, EventArgs e)
+    {
+        if (sender is SwipeItem { CommandParameter: Guid itemId } &&
+            BindingContext is ItemLibraryViewModel viewModel)
+        {
+            viewModel.DeleteItemCommand.Execute(itemId);
+        }
+    }
 }
