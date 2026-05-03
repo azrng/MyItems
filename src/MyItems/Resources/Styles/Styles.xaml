@@ -28,6 +28,20 @@
         <Setter Property="Padding" Value="14" />
     </Style>
 
+    <Style x:Key="FormSectionCardStyle" TargetType="Frame" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Padding" Value="{StaticResource CardPadding}" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
+    <Style x:Key="BottomActionFrameStyle" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
+        <Setter Property="BorderColor" Value="{StaticResource AppBorderColor}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLg}" />
+        <Setter Property="Padding" Value="{StaticResource BottomActionPadding}" />
+        <Setter Property="HasShadow" Value="False" />
+        <Setter Property="Margin" Value="{StaticResource PagePadding}" />
+    </Style>
+
     <!-- Typography -->
     <Style x:Key="HeadlineLabel" TargetType="Label">
         <Setter Property="FontSize" Value="{StaticResource FontSizeHeadline}" />
@@ -99,6 +113,11 @@
         <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
+    <Style x:Key="CompactSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+        <Setter Property="WidthRequest" Value="{StaticResource CompactButtonWidth}" />
+        <Setter Property="HorizontalOptions" Value="End" />
+    </Style>
+
     <Style x:Key="DangerButton" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource AppErrorColor}" />
         <Setter Property="TextColor" Value="{StaticResource AppTextInverseColor}" />
@@ -142,6 +161,21 @@
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
         <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
         <Setter Property="TitleColor" Value="{StaticResource AppTextSecondaryColor}" />
+    </Style>
+
+    <Style x:Key="DatePickerStyle" TargetType="DatePicker">
+        <Setter Property="HeightRequest" Value="{StaticResource InputHeight}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
+    </Style>
+
+    <Style x:Key="EditorStyle" TargetType="Editor">
+        <Setter Property="HeightRequest" Value="{StaticResource EditorHeight}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="TextColor" Value="{StaticResource AppTextColor}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextDisabledColor}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource AppCardBackgroundColor}" />
     </Style>
 
     <!-- Section header -->
