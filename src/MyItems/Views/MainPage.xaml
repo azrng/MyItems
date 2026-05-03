@@ -107,7 +107,7 @@
                                        LineBreakMode="TailTruncation"
                                        Style="{StaticResource BodyLabel}">
                                     <Label.Text>
-                                        <MultiBinding StringFormat="{}{0} · 购买日期 {1:yyyy-MM-dd}">
+                                        <MultiBinding StringFormat="{}{0} 购买日期 {1:yyyy-MM-dd}">
                                             <Binding Path="Brand" TargetNullValue="" />
                                             <Binding Path="PurchaseDate" />
                                         </MultiBinding>
