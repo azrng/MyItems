@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     x:Class="MyItems.Views.ExpiringPage"
     x:DataType="viewmodels:ExpiringViewModel"
@@ -100,7 +101,13 @@
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="dtos:ItemDisplayDto">
                                 <Frame Style="{StaticResource ListCardStyle}">
-                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                    <Frame.Behaviors>
+                                        <toolkit:TouchBehavior
+                                            LongPressDuration="500"
+                                            LongPressCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ExpiringViewModel}}, Path=DeleteItemCommand}"
+                                            LongPressCommandParameter="{Binding ItemId}" />
+                                    </Frame.Behaviors>
+                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
                                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                             <Label Grid.Column="0"
                                                    Text="{Binding ItemName}"
@@ -136,12 +143,6 @@
                                                    TextColor="{StaticResource AppPrimaryColor}"
                                                    IsVisible="{Binding TrackDailyCost}" />
                                         </Grid>
-                                        <Button Grid.Row="3"
-                                                Text="删除"
-                                                Style="{StaticResource DangerSoftButton}"
-                                                HorizontalOptions="End"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ExpiringViewModel}}, Path=DeleteItemCommand}"
-                                                CommandParameter="{Binding ItemId}" />
                                     </Grid>
                                 </Frame>
                             </DataTemplate>

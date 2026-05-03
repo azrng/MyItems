@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
     x:Class="MyItems.Views.MainPage"
     x:DataType="viewmodels:MainViewModel"
@@ -48,61 +49,53 @@
                 RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                        <SwipeView>
-                            <SwipeView.RightItems>
-                                <SwipeItem
-                                    Text="删除"
-                                    BackgroundColor="#EF4444"
-                                    Invoked="OnDeleteItemSwipe"
+                        <Frame Style="{StaticResource ListCardStyle}">
+                            <Frame.Behaviors>
+                                <toolkit:TouchBehavior
+                                    LongPressDuration="500"
+                                    LongPressCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteWithConfirmCommand}"
+                                    LongPressCommandParameter="{Binding ItemId}" />
+                            </Frame.Behaviors>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ViewItemDetailCommand}"
                                     CommandParameter="{Binding ItemId}" />
-                            </SwipeView.RightItems>
-                            <Frame Style="{StaticResource ListCardStyle}">
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ViewItemDetailCommand}"
-                                        CommandParameter="{Binding ItemId}" />
-                                </Frame.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                            </Frame.GestureRecognizers>
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
 
-                                    <!-- Row 0: Name + CreatedAt + status badge -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
-                                        <Label Grid.Column="0"
-                                               Style="{StaticResource TitleLabel}"
-                                               LineBreakMode="TailTruncation">
-                                            <Label.Text>
-                                                <MultiBinding StringFormat="{}{0} · {1}">
-                                                    <Binding Path="ItemName" />
-                                                    <Binding Path="CategoryName" TargetNullValue="" />
-                                                </MultiBinding>
-                                            </Label.Text>
-                                        </Label>
-                                        <Label Grid.Column="1"
-                                               Text="{Binding CreatedAtLabel, StringFormat='  {0}'}"
-                                               FontSize="10"
-                                               TextColor="{StaticResource AppTextSecondaryColor}"
-                                               LineBreakMode="TailTruncation"
-                                               VerticalOptions="Center" />
-                                        <Frame Grid.Column="2"
-                                               Style="{StaticResource StatusBadgeFrame}"
-                                               BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
-                                            <Frame.Triggers>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Expired">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Safe">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="NoExpiry">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                            </Frame.Triggers>
-                                            <Label Text="临期"
-                                                   Style="{StaticResource StatusBadgeLabel}"
-                                                   TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
-                                        </Frame>
-                                    </Grid>
+                                <!-- Row 0: Name + Category + status badge -->
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                                    <Label Grid.Column="0"
+                                           Style="{StaticResource TitleLabel}"
+                                           LineBreakMode="TailTruncation">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0} · {1}">
+                                                <Binding Path="ItemName" />
+                                                <Binding Path="CategoryName" TargetNullValue="" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Frame Grid.Column="2"
+                                           Style="{StaticResource StatusBadgeFrame}"
+                                           BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
+                                        <Frame.Triggers>
+                                            <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Expired">
+                                                <Setter Property="IsVisible" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Safe">
+                                                <Setter Property="IsVisible" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="NoExpiry">
+                                                <Setter Property="IsVisible" Value="False" />
+                                            </DataTrigger>
+                                        </Frame.Triggers>
+                                        <Label Text="临期"
+                                               Style="{StaticResource StatusBadgeLabel}"
+                                               TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                    </Frame>
+                                </Grid>
 
-                                <!-- Row 1: Brand · Purchase date -->
+                                <!-- Row 1: Purchase date + Brand -->
                                 <Label Grid.Row="1"
                                        LineBreakMode="TailTruncation"
                                        Style="{StaticResource BodyLabel}">
@@ -114,22 +107,13 @@
                                     </Label.Text>
                                 </Label>
 
-                                <!-- Row 2: Expiry date only (hidden when no expiry) -->
+                                <!-- Row 2: Expiry date (hidden when no expiry) -->
                                 <Label Grid.Row="2"
                                        Style="{StaticResource CaptionLabel}"
                                        Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}"
                                        IsVisible="{Binding ExpiryDate, Converter={StaticResource HasValue}}" />
-
-                                <!-- Row 3: Delete button -->
-                                <Button Grid.Row="3"
-                                        Text="删除"
-                                        Style="{StaticResource DangerSoftButton}"
-                                        HorizontalOptions="End"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteWithConfirmCommand}"
-                                        CommandParameter="{Binding ItemId}" />
                             </Grid>
                         </Frame>
-                        </SwipeView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
