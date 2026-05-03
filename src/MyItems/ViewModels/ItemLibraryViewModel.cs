@@ -192,12 +192,13 @@ public partial class ItemLibraryViewModel : ObservableObject
 
         try
         {
-            var stats = await _dataService.GetStatisticsAsync();
-            TotalSpentText = $"¥{stats.TotalSpent:F1}";
-            ValidCountText = $"{stats.ValidItems} 件有效";
-            TotalItemsText = $"共 {stats.TotalItems} 件";
+            var result = await _dataService.GetItemsWithStatisticsAsync();
 
-            var items = (await _dataService.GetItemDisplayDtosAsync()).AsEnumerable();
+            TotalSpentText = $"¥{result.TotalSpent:F1}";
+            ValidCountText = $"{result.ValidItems} 件有效";
+            TotalItemsText = $"共 {result.TotalItems} 件";
+
+            var items = result.Items.AsEnumerable();
 
             if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
                 items = items.Where(i => i.CategoryId == categoryId);

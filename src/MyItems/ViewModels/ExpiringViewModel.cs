@@ -76,10 +76,8 @@ public partial class ExpiringViewModel : ObservableObject
 
         var list = filtered.OrderBy(i => i.ExpiryDate).ToList();
 
-        ExpiringItems = new ObservableCollection<ItemDisplayDto>(
-            list.Where(i => i.ExpiryStatus == ExpiryStatus.Expiring));
-        ExpiredItems = new ObservableCollection<ItemDisplayDto>(
-            list.Where(i => i.ExpiryStatus == ExpiryStatus.Expired));
+        UpdateCollection(ExpiringItems, list.Where(i => i.ExpiryStatus == ExpiryStatus.Expiring));
+        UpdateCollection(ExpiredItems, list.Where(i => i.ExpiryStatus == ExpiryStatus.Expired));
 
         OnPropertyChanged(nameof(ExpiringItems));
         OnPropertyChanged(nameof(ExpiredItems));
@@ -92,4 +90,18 @@ public partial class ExpiringViewModel : ObservableObject
     public bool HasExpiring => ExpiringItems.Count > 0;
     public bool HasExpired => ExpiredItems.Count > 0;
     public bool IsEmpty => !IsLoading && !HasExpiring && !HasExpired;
+
+    private static void UpdateCollection(ObservableCollection<ItemDisplayDto> collection, IEnumerable<ItemDisplayDto> newItems)
+    {
+        var newList = newItems.ToList();
+        for (var i = 0; i < newList.Count; i++)
+        {
+            if (i < collection.Count)
+                collection[i] = newList[i];
+            else
+                collection.Add(newList[i]);
+        }
+        while (collection.Count > newList.Count)
+            collection.RemoveAt(collection.Count - 1);
+    }
 }

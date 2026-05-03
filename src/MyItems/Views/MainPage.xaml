@@ -43,7 +43,7 @@
             <CollectionView
                 ItemsSource="{Binding RecentItems}"
                 Margin="16,0"
-                ItemSizingStrategy="MeasureAllItems"
+                ItemSizingStrategy="MeasureFirstItem"
                 RemainingItemsThreshold="3"
                 RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
                 <CollectionView.ItemTemplate>

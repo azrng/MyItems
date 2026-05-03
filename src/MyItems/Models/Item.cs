@@ -12,12 +12,12 @@ public class Item
     public string? Brand { get; set; }
     public string? Icon { get; set; }
     public string? DefaultLocation { get; set; }
-    public bool IsArchived { get; set; }
+    [Indexed] public bool IsArchived { get; set; }
 
     // 从 Batch 合并的字段
     public DateTime? PurchaseDate { get; set; }
     public decimal? PurchasePrice { get; set; }
-    public DateTime? ExpiryDate { get; set; }
+    [Indexed] public DateTime? ExpiryDate { get; set; }
     public int Quantity { get; set; } = 1;
     public bool TrackDailyCost { get; set; } = true;
     public string? Notes { get; set; }

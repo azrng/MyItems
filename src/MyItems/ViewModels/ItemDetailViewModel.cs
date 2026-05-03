@@ -59,8 +59,7 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     {
         IsLoading = true;
 
-        var items = await _dataService.GetItemDisplayDtosAsync();
-        Item = items.FirstOrDefault(i => i.ItemId == itemId);
+        Item = await _dataService.GetItemDisplayDtoByIdAsync(itemId);
 
         IsLoading = false;
     }

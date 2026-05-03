@@ -89,8 +89,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
     private async Task LoadExistingDataAsync(Guid itemId)
     {
-        var items = await _dataService.GetItemsAsync();
-        var item = items.FirstOrDefault(i => i.Id == itemId);
+        var item = await _dataService.GetItemByIdAsync(itemId);
         if (item is null) return;
 
         _editingItemId = item.Id;
@@ -134,17 +133,16 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         IsSaving = true;
         ErrorMessage = null;
 
-        var category = await _dataService.GetCategoriesAsync()
-            .ContinueWith(t => t.Result.FirstOrDefault(c => c.Id == SelectedCategory.Id));
+        var category = SelectedCategory;
 
         var item = new Item
         {
             Id = IsEditMode ? _editingItemId : Guid.NewGuid(),
             Name = ItemName.Trim(),
-            CategoryId = SelectedCategory.Id,
+            CategoryId = category.Id,
             Barcode = Barcode,
             Brand = Brand,
-            Icon = category?.Icon ?? "\U0001F4E6",
+            Icon = category.Icon ?? "\U0001F4E6",
             DefaultLocation = Location,
             PurchaseDate = PurchaseDate,
             PurchasePrice = PurchasePrice,

@@ -84,29 +84,23 @@ public class SqliteDataService : IDataService
         return await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
     }
 
+    public async Task<Item?> GetItemByIdAsync(Guid itemId)
+    {
+        await EnsureInitializedAsync();
+        return await _db.Table<Item>().Where(i => i.Id == itemId).FirstOrDefaultAsync();
+    }
+
     public async Task<Guid> SaveItemAsync(Item item)
     {
         await EnsureInitializedAsync();
-        var existing = await _db.Table<Item>().Where(i => i.Id == item.Id).FirstOrDefaultAsync();
-        if (existing is not null)
-        {
-            await _db.UpdateAsync(item);
-        }
-        else
-        {
-            await _db.InsertAsync(item);
-        }
+        await _db.InsertOrReplaceAsync(item);
         return item.Id;
     }
 
     public async Task<int> DeleteItemAsync(Guid itemId)
     {
         await EnsureInitializedAsync();
-        var item = await _db.Table<Item>().Where(i => i.Id == itemId).FirstOrDefaultAsync();
-        if (item is null)
-            return 0;
-
-        return await _db.DeleteAsync(item);
+        return await _db.ExecuteAsync("DELETE FROM Items WHERE Id = ?", itemId);
     }
 
     #endregion
@@ -165,6 +159,16 @@ public class SqliteDataService : IDataService
             catLookup.TryGetValue(item.CategoryId, out var category);
             return ToItemDisplayDto(item, category);
         }).ToList();
+    }
+
+    public async Task<ItemDisplayDto?> GetItemDisplayDtoByIdAsync(Guid itemId)
+    {
+        await EnsureInitializedAsync();
+        var item = await _db.Table<Item>().Where(i => i.Id == itemId).FirstOrDefaultAsync();
+        if (item is null) return null;
+
+        var category = await _db.Table<Category>().Where(c => c.Id == item.CategoryId).FirstOrDefaultAsync();
+        return ToItemDisplayDto(item, category);
     }
 
     public async Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync()
@@ -242,6 +246,31 @@ public class SqliteDataService : IDataService
         }
 
         return (totalSpent, totalItems, validCount);
+    }
+
+    public async Task<(List<ItemDisplayDto> Items, decimal TotalSpent, int TotalItems, int ValidItems)> GetItemsWithStatisticsAsync()
+    {
+        var (items, catLookup) = await LoadCoreDataAsync();
+
+        var dtos = items.Select(item =>
+        {
+            catLookup.TryGetValue(item.CategoryId, out var category);
+            return ToItemDisplayDto(item, category);
+        }).ToList();
+
+        decimal totalSpent = 0;
+        var validCount = 0;
+        foreach (var item in items)
+        {
+            var status = StatusHelper.CalculateExpiryStatus(item.ExpiryDate);
+            if (status != ExpiryStatus.Expired)
+            {
+                totalSpent += (item.PurchasePrice ?? 0) * item.Quantity;
+                validCount++;
+            }
+        }
+
+        return (dtos, totalSpent, items.Count, validCount);
     }
 
     #endregion
