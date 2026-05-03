@@ -27,5 +27,6 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
         Routing.RegisterRoute("category", typeof(CategoryPage));
         Routing.RegisterRoute("storage", typeof(StoragePage));
+        Routing.RegisterRoute("scanner", typeof(ScannerPage));
     }
 }

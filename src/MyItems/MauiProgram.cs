@@ -3,6 +3,7 @@ using MyItems.Services;
 using MyItems.ViewModels;
 using MyItems.Views;
 using Syncfusion.Maui.Toolkit.Hosting;
+using ZXing.Net.Maui.Controls;
 
 namespace MyItems;
 
@@ -15,6 +16,7 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .ConfigureSyncfusionToolkit()
+            .UseBarcodeReader()
             .ConfigureFonts(fonts =>
             {
             });
@@ -45,6 +47,7 @@ public static class MauiProgram
         builder.Services.AddTransient<CategoryPage>();
         builder.Services.AddTransient<AboutPage>();
         builder.Services.AddTransient<StoragePage>();
+        builder.Services.AddTransient<ScannerPage>();
 
         return builder.Build();
     }

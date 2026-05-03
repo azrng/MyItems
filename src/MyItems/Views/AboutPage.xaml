@@ -49,15 +49,12 @@
             <Frame Style="{StaticResource CardStyle}">
                 <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
                     <Label Text="作者" Style="{StaticResource SubheadLabel}" />
-                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
                         <Label Grid.Row="0" Grid.Column="0" Text="开发者" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
                         <Label Grid.Row="0" Grid.Column="1" Text="{Binding Author}" Style="{StaticResource SubheadLabel}" />
 
-                        <Label Grid.Row="1" Grid.Column="0" Text="技术栈" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TechStack}" Style="{StaticResource SubheadLabel}" />
-
-                        <Label Grid.Row="2" Grid.Column="0" Text="项目地址" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
-                        <Label Grid.Row="2" Grid.Column="1"
+                        <Label Grid.Row="1" Grid.Column="0" Text="项目地址" Style="{StaticResource BodyLabel}" Margin="0,0,16,0" />
+                        <Label Grid.Row="1" Grid.Column="1"
                                Text="{Binding ProjectUrl}"
                                TextColor="{StaticResource AppTextLinkColor}"
                                Style="{StaticResource SubheadLabel}"

@@ -17,145 +17,206 @@
     <Grid RowDefinitions="*,Auto">
         <ScrollView Grid.Row="0">
             <VerticalStackLayout
-                Padding="{StaticResource PagePadding}"
-                Spacing="{StaticResource SpacingMd}">
+                Padding="{StaticResource PageContentPadding}"
+                Spacing="{StaticResource SectionGap}">
 
-                <!-- Scan barcode -->
-                <Button
-                    Text="📷 扫码录入"
-                    Style="{StaticResource SecondaryButton}"
-                    Command="{Binding ScanBarcodeCommand}" />
+                <!-- Basic info -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="{StaticResource SpacingBase}">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource SpacingBase}">
+                            <Label Grid.Column="0"
+                                   Text="基础信息"
+                                   Style="{StaticResource SectionHeaderLabel}"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Text="扫码"
+                                    Style="{StaticResource CompactSecondaryButton}"
+                                    Command="{Binding ScanBarcodeCommand}" />
+                        </Grid>
 
-                <!-- Item name -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="物品名称" Style="{StaticResource SubheadLabel}" />
-                    <Entry
-                        Text="{Binding ItemName}"
-                        Placeholder="输入物品名称"
-                        Style="{StaticResource EntryStyle}" />
-                </VerticalStackLayout>
+                        <!-- Scanned barcode display -->
+                        <Border
+                            IsVisible="{Binding Barcode, Converter={StaticResource NotNullOrEmpty}}"
+                            BackgroundColor="{StaticResource AppSurfaceColor}"
+                            Padding="12,8"
+                            StrokeShape="RoundRectangle 6">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="{StaticResource SpacingSm}">
+                            <Label Grid.Column="0"
+                                   Text="{Binding Barcode, StringFormat='条码: {0}'}"
+                                   Style="{StaticResource BodyLabel}"
+                                   VerticalOptions="Center"
+                                   LineBreakMode="TailTruncation" />
+                            <Button Grid.Column="1"
+                                    Text="&#x2715;"
+                                    FontSize="14"
+                                    TextColor="{StaticResource AppTextMutedColor}"
+                                    BackgroundColor="Transparent"
+                                    WidthRequest="32"
+                                    HeightRequest="32"
+                                    MinimumWidthRequest="32"
+                                    MinimumHeightRequest="32"
+                                    Padding="0"
+                                    Command="{Binding ClearBarcodeCommand}" />
+                            </Grid>
+                        </Border>
 
-                <!-- Category -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="分类" Style="{StaticResource SubheadLabel}" />
-                    <Picker
-                        ItemsSource="{Binding Categories}"
-                        SelectedItem="{Binding SelectedCategory}"
-                        ItemDisplayBinding="{Binding Name}"
-                        Style="{StaticResource PickerStyle}" />
-                </VerticalStackLayout>
-
-                <!-- Brand -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="品牌" Style="{StaticResource SubheadLabel}" />
-                    <Entry
-                        Text="{Binding Brand}"
-                        Placeholder="如：蒙牛、三九、戴尔"
-                        Style="{StaticResource EntryStyle}" />
-                </VerticalStackLayout>
-
-                <!-- Section: Purchase info -->
-                <Label Text="── 购买信息 ──" Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center"
-                       Margin="0,8,0,8" />
-
-                <!-- Purchase date -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="购买日期" Style="{StaticResource SubheadLabel}" />
-                    <DatePicker Date="{Binding PurchaseDate}" Format="yyyy-MM-dd" />
-                </VerticalStackLayout>
-
-                <!-- Purchase price -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="购入价格" Style="{StaticResource SubheadLabel}" />
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Entry Grid.Column="0"
-                               Text="{Binding PurchasePrice}"
-                               Placeholder="0.00"
-                               Keyboard="Numeric"
-                               Style="{StaticResource EntryStyle}" />
-                        <Label Grid.Column="1" Text="元" VerticalOptions="Center"
-                               Margin="8,0,0,0"
-                               Style="{StaticResource BodyLabel}" />
-                    </Grid>
-                </VerticalStackLayout>
-
-                <!-- Location -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="存放位置" Style="{StaticResource SubheadLabel}" />
-                    <Entry
-                        Text="{Binding Location}"
-                        Placeholder="如：冰箱上层、药箱"
-                        Style="{StaticResource EntryStyle}" />
-                </VerticalStackLayout>
-
-                <!-- Expiry date + no expiry checkbox -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="保质期" Style="{StaticResource SubheadLabel}" />
-                    <DatePicker Date="{Binding ExpiryDate}" Format="yyyy-MM-dd"
-                                IsVisible="{Binding NoExpiry, Converter={StaticResource InvertedBool}}" />
-                    <HorizontalStackLayout Spacing="{StaticResource SpacingSm}">
-                        <CheckBox IsChecked="{Binding NoExpiry}" VerticalOptions="Center" />
-                        <Label Text="无保质期" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
-
-                <!-- Track daily cost -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Grid ColumnDefinitions="*,Auto"
-                          MinimumHeightRequest="{StaticResource TouchTargetMinHeight}"
-                          ColumnSpacing="{StaticResource SpacingBase}">
-                        <VerticalStackLayout Grid.Column="0"
-                                             Spacing="{StaticResource SpacingXs}"
-                                             VerticalOptions="Center">
-                            <Label Text="记录日均成本" Style="{StaticResource SubheadLabel}" />
-                            <Label Text="开启后在首页显示日均成本"
-                                   Style="{StaticResource CaptionLabel}" />
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="物品名称" Style="{StaticResource SubheadLabel}" />
+                            <Entry
+                                Text="{Binding ItemName}"
+                                Placeholder="输入物品名称"
+                                ReturnType="Next"
+                                Style="{StaticResource EntryStyle}" />
                         </VerticalStackLayout>
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding TrackDailyCost}"
-                                VerticalOptions="Center"
-                                HorizontalOptions="End" />
-                    </Grid>
-                </VerticalStackLayout>
 
-                <!-- Quantity -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="数量" Style="{StaticResource SubheadLabel}" />
-                    <HorizontalStackLayout Spacing="{StaticResource SpacingMd}">
-                        <Stepper Value="{Binding Quantity}" Minimum="1" Maximum="999"
-                                 HorizontalOptions="Start" />
-                        <Label Text="{Binding Quantity, StringFormat='{0} 个'}" Style="{StaticResource BodyLabel}"
-                               VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="分类" Style="{StaticResource SubheadLabel}" />
+                            <Picker
+                                ItemsSource="{Binding Categories}"
+                                SelectedItem="{Binding SelectedCategory}"
+                                ItemDisplayBinding="{Binding Name}"
+                                Title="选择分类"
+                                Style="{StaticResource PickerStyle}" />
+                        </VerticalStackLayout>
 
-                <!-- Notes -->
-                <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
-                    <Label Text="备注" Style="{StaticResource SubheadLabel}" />
-                    <Editor
-                        Text="{Binding Notes}"
-                        Placeholder="可选备注信息"
-                        AutoSize="TextChanges"
-                        HeightRequest="80" />
-                </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="品牌" Style="{StaticResource SubheadLabel}" />
+                            <Entry
+                                Text="{Binding Brand}"
+                                Placeholder="如：蒙牛、三九、戴尔"
+                                ReturnType="Next"
+                                Style="{StaticResource EntryStyle}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
 
-                <!-- Error message -->
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="{StaticResource AppErrorColor}"
-                       IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNullOrEmpty}}"
-                       FontSize="{StaticResource FontSizeCaption}" />
+                <!-- Purchase and storage -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="{StaticResource SpacingBase}">
+                        <Label Text="购买与存放" Style="{StaticResource SectionHeaderLabel}" />
+
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="{StaticResource SpacingMd}">
+                            <VerticalStackLayout Grid.Column="0"
+                                                 Spacing="{StaticResource SpacingXs}">
+                                <Label Text="购买日期" Style="{StaticResource SubheadLabel}" />
+                                <DatePicker
+                                    Date="{Binding PurchaseDate}"
+                                    Format="yyyy-MM-dd"
+                                    Style="{StaticResource DatePickerStyle}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="{StaticResource SpacingXs}">
+                                <Label Text="购入价格" Style="{StaticResource SubheadLabel}" />
+                                <Entry
+                                    Text="{Binding PurchasePrice}"
+                                    Placeholder="0.00 元"
+                                    Keyboard="Numeric"
+                                    ReturnType="Next"
+                                    Style="{StaticResource EntryStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="存放位置" Style="{StaticResource SubheadLabel}" />
+                            <Entry
+                                Text="{Binding Location}"
+                                Placeholder="如：冰箱上层、药箱"
+                                ReturnType="Next"
+                                Style="{StaticResource EntryStyle}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Usage settings -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="{StaticResource SpacingBase}">
+                        <Label Text="期限与数量" Style="{StaticResource SectionHeaderLabel}" />
+
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="保质期" Style="{StaticResource SubheadLabel}" />
+                            <DatePicker
+                                Date="{Binding ExpiryDate}"
+                                Format="yyyy-MM-dd"
+                                IsVisible="{Binding NoExpiry, Converter={StaticResource InvertedBool}}"
+                                Style="{StaticResource DatePickerStyle}" />
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="{StaticResource SpacingBase}"
+                                  MinimumHeightRequest="{StaticResource TouchTargetMinHeight}">
+                                <Label Grid.Column="0"
+                                       Text="无保质期"
+                                       Style="{StaticResource BodyLabel}"
+                                       VerticalOptions="Center" />
+                                <CheckBox Grid.Column="1"
+                                          IsChecked="{Binding NoExpiry}"
+                                          VerticalOptions="Center"
+                                          HorizontalOptions="End" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource SpacingBase}"
+                              MinimumHeightRequest="{StaticResource TouchTargetMinHeight}">
+                            <VerticalStackLayout Grid.Column="0"
+                                                 Spacing="{StaticResource SpacingXs}"
+                                                 VerticalOptions="Center">
+                                <Label Text="记录日均成本" Style="{StaticResource SubheadLabel}" />
+                                <Label Text="首页成本统计"
+                                       Style="{StaticResource CaptionLabel}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding TrackDailyCost}"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource SpacingBase}">
+                            <VerticalStackLayout Grid.Column="0"
+                                                 Spacing="{StaticResource SpacingXs}"
+                                                 VerticalOptions="Center">
+                                <Label Text="数量" Style="{StaticResource SubheadLabel}" />
+                                <Label Text="{Binding Quantity, StringFormat='{0} 个'}"
+                                       Style="{StaticResource BodyLabel}" />
+                            </VerticalStackLayout>
+                            <Stepper Grid.Column="1"
+                                     Value="{Binding Quantity}"
+                                     Minimum="1"
+                                     Maximum="999"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="End" />
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="{StaticResource SpacingXs}">
+                            <Label Text="备注" Style="{StaticResource SubheadLabel}" />
+                            <Editor
+                                Text="{Binding Notes}"
+                                Placeholder="可选备注信息"
+                                AutoSize="TextChanges"
+                                Style="{StaticResource EditorStyle}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
 
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Save button -->
-        <Button
-            Grid.Row="1"
-            Text="{Binding SaveButtonText}"
-            Style="{StaticResource PrimaryButton}"
-            Command="{Binding SaveCommand}"
-            IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBool}}"
-            Margin="{StaticResource PagePadding}" />
+        <!-- Save action -->
+        <Frame Grid.Row="1" Style="{StaticResource BottomActionFrameStyle}">
+            <VerticalStackLayout Spacing="{StaticResource SpacingSm}">
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="{StaticResource AppErrorColor}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNullOrEmpty}}"
+                       FontSize="{StaticResource FontSizeCaption}" />
+                <Button
+                    Text="{Binding SaveButtonText}"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBool}}" />
+            </VerticalStackLayout>
+        </Frame>
     </Grid>
 </ContentPage>

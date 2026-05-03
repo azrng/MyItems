@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+    x:Class="MyItems.Views.ScannerPage"
+    Title="扫一扫"
+    NavigationPage.HasNavigationBar="False">
+
+    <Grid>
+        <!-- Camera view (full screen) -->
+        <zxing:CameraBarcodeReaderView
+            x:Name="CameraView"
+            BarcodesDetected="OnBarcodesDetected" />
+
+        <!-- Overlay -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Top bar -->
+            <Grid
+                Grid.Row="0"
+                ColumnDefinitions="Auto,*"
+                Padding="16,48,16,16">
+                <Button
+                    Grid.Column="0"
+                    Text="&#x2715;"
+                    FontSize="20"
+                    TextColor="White"
+                    BackgroundColor="#80000000"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    CornerRadius="20"
+                    Clicked="OnCloseClicked" />
+                <Label
+                    Grid.Column="1"
+                    Text="扫一扫"
+                    TextColor="White"
+                    FontSize="{StaticResource FontSizeTitle}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Margin="0,0,40,0" />
+            </Grid>
+
+            <!-- Center scan frame area -->
+            <Grid Grid.Row="1" VerticalOptions="Center" HorizontalOptions="Center">
+                <BoxView
+                    WidthRequest="250"
+                    HeightRequest="250"
+                    Color="#40000000"
+                    CornerRadius="0" />
+                <!-- Scan frame border (4 corners) -->
+                <AbsoluteLayout WidthRequest="250" HeightRequest="250">
+                    <!-- Top-left corner -->
+                    <BoxView AbsoluteLayout.LayoutBounds="0,0,30,3" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,0,3,30" Color="White" />
+                    <!-- Top-right corner -->
+                    <BoxView AbsoluteLayout.LayoutBounds="220,0,30,3" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="247,0,3,30" Color="White" />
+                    <!-- Bottom-left corner -->
+                    <BoxView AbsoluteLayout.LayoutBounds="0,247,30,3" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,220,3,30" Color="White" />
+                    <!-- Bottom-right corner -->
+                    <BoxView AbsoluteLayout.LayoutBounds="220,247,30,3" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="247,220,3,30" Color="White" />
+                </AbsoluteLayout>
+            </Grid>
+
+            <!-- Bottom controls -->
+            <VerticalStackLayout
+                Grid.Row="2"
+                Padding="16,0,16,48"
+                Spacing="{StaticResource SpacingMd}"
+                HorizontalOptions="Center">
+                <Button
+                    x:Name="TorchButton"
+                    Text="&#x1F4A1; 手电筒"
+                    TextColor="White"
+                    BackgroundColor="#80000000"
+                    CornerRadius="20"
+                    Clicked="OnTorchClicked"
+                    WidthRequest="140"
+                    HeightRequest="44" />
+                <Label
+                    Text="将条码/二维码放入框内扫描"
+                    TextColor="#B0FFFFFF"
+                    FontSize="{StaticResource FontSizeBody}"
+                    HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Unsupported platform message -->
+        <VerticalStackLayout
+            x:Name="UnsupportedPanel"
+            IsVisible="False"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Spacing="{StaticResource SpacingMd}"
+            Padding="{StaticResource PagePadding}">
+            <Label
+                Text="&#x1F4F7;"
+                FontSize="48"
+                HorizontalOptions="Center" />
+            <Label
+                Text="当前平台不支持相机扫码"
+                FontSize="{StaticResource FontSizeSubhead}"
+                TextColor="{StaticResource AppTextSecondaryColor}"
+                HorizontalOptions="Center" />
+            <Label
+                Text="请在 Android 或 iOS 设备上使用此功能"
+                FontSize="{StaticResource FontSizeCaption}"
+                TextColor="{StaticResource AppTextMutedColor}"
+                HorizontalOptions="Center" />
+            <Button
+                Text="返回"
+                Style="{StaticResource PrimaryButton}"
+                Clicked="OnCloseClicked"
+                WidthRequest="120"
+                Margin="0,16,0,0" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

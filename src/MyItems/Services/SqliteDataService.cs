@@ -29,11 +29,6 @@ public class SqliteDataService : IDataService
             await _db.CreateTableAsync<Category>();
             await _db.CreateTableAsync<Item>();
 
-            // Migration: clear items with null PurchasePrice (from old Batch-based schema)
-            var staleItems = await _db.Table<Item>().Where(i => i.PurchasePrice == null).CountAsync();
-            if (staleItems > 0)
-                await _db.ExecuteAsync("DELETE FROM Items WHERE PurchasePrice IS NULL");
-
             var count = await _db.Table<Category>().CountAsync();
             if (count == 0)
             {

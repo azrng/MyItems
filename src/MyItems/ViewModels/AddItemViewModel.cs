@@ -42,7 +42,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     private decimal? purchasePrice;
 
     [ObservableProperty]
-    private DateTime? expiryDate = DateTime.Today.AddMonths(1);
+    private DateTime? expiryDate = DateTime.Today.AddDays(7);
 
     [ObservableProperty]
     private bool noExpiry;
@@ -74,6 +74,11 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         {
             _editingItemId = itemId;
             _ = LoadExistingDataAsync(itemId);
+        }
+
+        if (query.TryGetValue("barcode", out var barcodeObj) && barcodeObj?.ToString() is string barcodeValue)
+        {
+            Barcode = barcodeValue;
         }
     }
 
@@ -160,7 +165,13 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private async Task ScanBarcodeAsync()
     {
-        await Shell.Current.DisplayAlertAsync("扫码", "扫码功能将在后续版本实现", "确定");
+        await Shell.Current.GoToAsync("scanner");
+    }
+
+    [RelayCommand]
+    private void ClearBarcode()
+    {
+        Barcode = null;
     }
 
     partial void OnNoExpiryChanged(bool value)
@@ -168,7 +179,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         if (value)
             ExpiryDate = null;
         else
-            ExpiryDate = DateTime.Today.AddMonths(1);
+            ExpiryDate = DateTime.Today.AddDays(7);
     }
 
     private async Task LoadCategoriesAsync()
