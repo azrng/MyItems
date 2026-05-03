@@ -1,0 +1,2 @@
+-- 初始版本：Categories、Items 表由 CreateTableAsync 创建
+-- 此文件仅作为版本记录占位

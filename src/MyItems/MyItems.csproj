@@ -36,4 +36,8 @@
     <PackageReference Include="ClosedXML" Version="*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
 </Project>

@@ -75,16 +75,33 @@ public class SqliteDataService : IDataService
 
     private async Task RunMigrationsAsync(int currentVersion)
     {
-        var migrations = new Dictionary<int, (string desc, string sql)>
-        {
-            // 示例：未来新增列时在此添加
-            // { 2, ("Items 增加 Tag 列", "ALTER TABLE Items ADD COLUMN Tag TEXT") },
-        };
+        var assembly = typeof(SqliteDataService).Assembly;
+        var resourcePrefix = $"{assembly.GetName().Name}.Migrations.";
 
-        foreach (var (version, (desc, sql)) in migrations.OrderBy(x => x.Key))
+        var resources = assembly.GetManifestResourceNames()
+            .Where(r => r.StartsWith(resourcePrefix) && r.EndsWith(".sql"))
+            .Select(r =>
+            {
+                var fileName = r.Substring(resourcePrefix.Length);
+                // Format: V{version}__{description}.sql
+                var parts = Path.GetFileNameWithoutExtension(fileName).Split("__", 2);
+                var version = int.Parse(parts[0].TrimStart('V', 'v'));
+                var desc = parts.Length > 1 ? parts[1].Replace('_', ' ') : string.Empty;
+                return (version, desc, resource: r);
+            })
+            .Where(m => m.version > currentVersion)
+            .OrderBy(m => m.version)
+            .ToList();
+
+        foreach (var (version, desc, resource) in resources)
         {
-            if (version <= currentVersion) continue;
-            await _db.ExecuteAsync(sql);
+            using var stream = assembly.GetManifestResourceStream(resource);
+            using var reader = new StreamReader(stream!);
+            var sql = await reader.ReadToEndAsync();
+
+            if (!string.IsNullOrWhiteSpace(sql.Trim()))
+                await _db.ExecuteAsync(sql);
+
             await _db.InsertAsync(new VersionLog { Version = version, Description = desc });
         }
     }
