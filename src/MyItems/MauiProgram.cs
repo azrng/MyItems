@@ -9,6 +9,8 @@ namespace MyItems;
 
 public static class MauiProgram
 {
+    public static string DatabasePath { get; private set; } = string.Empty;
+
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -21,12 +23,14 @@ public static class MauiProgram
             {
             });
 
+#if ANDROID
+        DatabasePath = GetAndroidDatabasePath();
+#else
+        DatabasePath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
+#endif
+
         // Register database service as singleton (lazy init on first use)
-        builder.Services.AddSingleton<IDataService>(_ =>
-        {
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
-            return new SqliteDataService(dbPath);
-        });
+        builder.Services.AddSingleton<IDataService>(_ => new SqliteDataService(DatabasePath));
 
         // Register ViewModels
         builder.Services.AddTransient<MainViewModel>();
@@ -51,4 +55,22 @@ public static class MauiProgram
 
         return builder.Build();
     }
+
+#if ANDROID
+    private static string GetAndroidDatabasePath()
+    {
+        var dbDir = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "MyItems");
+        if (!Directory.Exists(dbDir))
+            Directory.CreateDirectory(dbDir);
+
+        var newPath = Path.Combine(dbDir, "myitems.db");
+
+        // Migrate from old location if needed
+        var oldPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
+        if (File.Exists(oldPath) && !File.Exists(newPath))
+            File.Copy(oldPath, newPath);
+
+        return newPath;
+    }
+#endif
 }
