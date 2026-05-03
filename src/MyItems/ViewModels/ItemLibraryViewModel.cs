@@ -206,7 +206,7 @@ public partial class ItemLibraryViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(SearchText))
                 items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-            _allItems = items.OrderBy(i => i.ItemName).ToList();
+            _allItems = items.OrderByDescending(i => i.PurchaseDate).ToList();
             _loadedCount = 0;
             Items.Clear();
 

@@ -104,7 +104,7 @@ public partial class MainViewModel : ObservableObject
         var items = await _dataService.GetItemDisplayDtosAsync();
 
         var filtered = items
-            .OrderByDescending(i => i.CreatedAt)
+            .OrderByDescending(i => i.PurchaseDate)
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(SearchText))
