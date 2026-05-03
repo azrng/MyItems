@@ -151,7 +151,7 @@
                                    Style="{StaticResource BodyLabel}"
                                    LineBreakMode="TailTruncation">
                                 <Label.Text>
-                                    <MultiBinding StringFormat="{}购买 {0:yyyy-MM-dd}    ¥{1:F1}">
+                                    <MultiBinding StringFormat="{}购买日期 {0:yyyy-MM-dd}    ¥{1:F1}">
                                         <Binding Path="PurchaseDate" />
                                         <Binding Path="PurchasePrice" />
                                     </MultiBinding>
