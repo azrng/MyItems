@@ -1,4 +1,3 @@
-using ClosedXML.Excel;
 using MyItems.Enums;
 using MyItems.Helpers;
 using MyItems.Models;
@@ -137,6 +136,15 @@ public class SqliteDataService : IDataService
         return await _db.DeleteAsync(category);
     }
 
+    public async Task<bool> CategoryHasItemsAsync(Guid categoryId)
+    {
+        await EnsureInitializedAsync();
+        var count = await _db.Table<Item>()
+            .Where(i => i.CategoryId == categoryId && !i.IsArchived)
+            .CountAsync();
+        return count > 0;
+    }
+
     #endregion
 
     #region Item
@@ -268,7 +276,6 @@ public class SqliteDataService : IDataService
     {
         await EnsureInitializedAsync();
         var categories = await _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
-        var itemCounts = await GetCategoryItemCountsAsync();
 
         return categories.Select(c => new CategoryDto
         {
@@ -278,16 +285,7 @@ public class SqliteDataService : IDataService
             SortOrder = c.SortOrder,
             IsPreset = c.IsPreset,
             IsActive = c.IsActive,
-            ItemCount = itemCounts.GetValueOrDefault(c.Id),
         }).ToList();
-    }
-
-    private async Task<Dictionary<Guid, int>> GetCategoryItemCountsAsync()
-    {
-        var rows = await _db.QueryAsync<CategoryItemCount>(
-            "SELECT CategoryId, COUNT(*) AS Count FROM Items WHERE IsArchived = 0 GROUP BY CategoryId");
-
-        return rows.ToDictionary(r => r.CategoryId, r => r.Count);
     }
 
     public async Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync()
@@ -338,50 +336,187 @@ public class SqliteDataService : IDataService
 
     #endregion
 
-    #region Excel Export
+    #region CSV Import/Export
 
-    public async Task<string> ExportToExcelAsync()
+    public async Task<string> ExportToCsvAsync()
     {
         await EnsureInitializedAsync();
         var items = await _db.Table<Item>().Where(i => !i.IsArchived).ToListAsync();
         var categories = await _db.Table<Category>().ToListAsync();
         var catLookup = categories.ToDictionary(c => c.Id);
 
-        var filePath = Path.Combine(FileSystem.CacheDirectory, $"MyItems_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        var filePath = Path.Combine(FileSystem.CacheDirectory, $"MyItems_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
 
-        using var workbook = new XLWorkbook();
-        var ws = workbook.Worksheets.Add("物品清单");
+        using var writer = new StreamWriter(filePath, false, System.Text.Encoding.UTF8);
 
-        ws.Cell(1, 1).Value = "物品名字";
-        ws.Cell(1, 2).Value = "品牌";
-        ws.Cell(1, 3).Value = "分类";
-        ws.Cell(1, 4).Value = "购买日期";
-        ws.Cell(1, 5).Value = "购买价格";
-        ws.Cell(1, 6).Value = "创建时间";
-        ws.Cell(1, 7).Value = "保质期";
-        ws.Cell(1, 8).Value = "是否显示日均成本";
-        ws.Cell(1, 9).Value = "备注";
+        // 写入CSV头
+        await writer.WriteLineAsync("物品名字,品牌,分类,购买日期,购买价格,保质期,是否显示日均成本,备注,存放位置,数量");
 
-        for (var i = 0; i < items.Count; i++)
+        // 写入数据
+        foreach (var item in items)
         {
-            var item = items[i];
             catLookup.TryGetValue(item.CategoryId, out var cat);
-            var row = i + 2;
 
-            ws.Cell(row, 1).Value = item.Name;
-            ws.Cell(row, 2).Value = item.Brand ?? string.Empty;
-            ws.Cell(row, 3).Value = cat?.Name ?? string.Empty;
-            ws.Cell(row, 4).Value = item.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-            ws.Cell(row, 5).Value = item.PurchasePrice != null ? (double)item.PurchasePrice.Value : 0;
-            ws.Cell(row, 6).Value = item.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
-            ws.Cell(row, 7).Value = item.ExpiryDate?.ToString("yyyy-MM-dd") ?? "无";
-            ws.Cell(row, 8).Value = item.TrackDailyCost ? "是" : "否";
-            ws.Cell(row, 9).Value = item.Notes ?? string.Empty;
+            // CSV字段转义，处理包含逗号、引号、换行的字段
+            var escapeCsv = (string s) =>
+            {
+                if (string.IsNullOrEmpty(s)) return string.Empty;
+                if (s.Contains(',') || s.Contains('"') || s.Contains('\n') || s.Contains('\r'))
+                {
+                    return $"\"{s.Replace("\"", "\"\"")}\"";
+                }
+                return s;
+            };
+
+            var line = string.Join(",",
+                escapeCsv(item.Name),
+                escapeCsv(item.Brand ?? string.Empty),
+                escapeCsv(cat?.Name ?? string.Empty),
+                escapeCsv(item.PurchaseDate?.ToString("yyyy-MM-dd") ?? string.Empty),
+                escapeCsv(item.PurchasePrice?.ToString("F2") ?? string.Empty),
+                escapeCsv(item.ExpiryDate?.ToString("yyyy-MM-dd") ?? string.Empty),
+                escapeCsv(item.TrackDailyCost ? "是" : "否"),
+                escapeCsv(item.Notes ?? string.Empty),
+                escapeCsv(item.DefaultLocation ?? string.Empty),
+                escapeCsv(item.Quantity.ToString())
+            );
+
+            await writer.WriteLineAsync(line);
         }
 
-        ws.Columns().AdjustToContents();
-        workbook.SaveAs(filePath);
         return filePath;
+    }
+
+    public async Task<(int SuccessCount, int FailureCount, List<string> Errors)> ImportFromCsvAsync(string filePath)
+    {
+        await EnsureInitializedAsync();
+        var categories = await _db.Table<Category>().ToListAsync();
+        var catLookup = categories.ToDictionary(c => c.Name, c => c.Id);
+
+        var successCount = 0;
+        var failureCount = 0;
+        var errors = new List<string>();
+
+        try
+        {
+            using var reader = new StreamReader(filePath, System.Text.Encoding.UTF8);
+            var headerLine = await reader.ReadLineAsync();
+
+            if (string.IsNullOrWhiteSpace(headerLine))
+            {
+                return (0, 0, new List<string> { "CSV文件为空" });
+            }
+
+            var headers = headerLine.Split(',');
+            var expectedHeaders = new[] { "物品名字", "品牌", "分类", "购买日期", "购买价格", "保质期", "是否显示日均成本", "备注", "存放位置", "数量" };
+
+            // 验证CSV头
+            if (!headers.SequenceEqual(expectedHeaders))
+            {
+                return (0, 0, new List<string> { "CSV格式不正确，请确保包含正确的列头" });
+            }
+
+            var lineNumber = 1;
+            string? line;
+
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                lineNumber++;
+                try
+                {
+                    var fields = ParseCsvLine(line);
+
+                    if (fields.Length < 10)
+                    {
+                        errors.Add($"第{lineNumber}行：字段数量不足");
+                        failureCount++;
+                        continue;
+                    }
+
+                    var itemName = fields[0]?.Trim();
+                    if (string.IsNullOrEmpty(itemName))
+                    {
+                        errors.Add($"第{lineNumber}行：物品名字不能为空");
+                        failureCount++;
+                        continue;
+                    }
+
+                    var categoryName = fields[2]?.Trim();
+                    if (string.IsNullOrEmpty(categoryName) || !catLookup.TryGetValue(categoryName, out var categoryId))
+                    {
+                        errors.Add($"第{lineNumber}行：分类「{categoryName}」不存在，跳过此物品");
+                        failureCount++;
+                        continue;
+                    }
+
+                    var item = new Item
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = itemName,
+                        Brand = string.IsNullOrWhiteSpace(fields[1]) ? null : fields[1].Trim(),
+                        CategoryId = categoryId,
+                        PurchaseDate = DateTime.TryParse(fields[3], out var purchaseDate) ? purchaseDate : null,
+                        PurchasePrice = decimal.TryParse(fields[4], out var price) ? price : null,
+                        ExpiryDate = DateTime.TryParse(fields[5], out var expiryDate) ? expiryDate : null,
+                        TrackDailyCost = fields[6] == "是",
+                        Notes = string.IsNullOrWhiteSpace(fields[7]) ? null : fields[7].Trim(),
+                        DefaultLocation = string.IsNullOrWhiteSpace(fields[8]) ? null : fields[8].Trim(),
+                        Quantity = int.TryParse(fields[9], out var qty) && qty > 0 ? qty : 1,
+                        IsArchived = false,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    await _db.InsertAsync(item);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"第{lineNumber}行：{ex.Message}");
+                    failureCount++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"读取文件失败：{ex.Message}");
+        }
+
+        return (successCount, failureCount, errors);
+    }
+
+    private string[] ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var current = new System.Text.StringBuilder();
+        var inQuotes = false;
+
+        foreach (var ch in line)
+        {
+            if (ch == '"')
+            {
+                if (inQuotes && current.Length > 0 && current[^1] == '"')
+                {
+                    current.Append('"');
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+            }
+            else if (ch == ',' && !inQuotes)
+            {
+                fields.Add(current.ToString());
+                current.Clear();
+            }
+            else
+            {
+                current.Append(ch);
+            }
+        }
+
+        fields.Add(current.ToString());
+        return fields.ToArray();
     }
 
     #endregion
@@ -522,11 +657,4 @@ public class SqliteDataService : IDataService
     }
 
     #endregion
-}
-
-public class CategoryItemCount
-{
-    public Guid CategoryId { get; set; }
-
-    public int Count { get; set; }
 }

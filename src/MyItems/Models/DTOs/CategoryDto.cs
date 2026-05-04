@@ -19,5 +19,5 @@ public partial class CategoryDto : ObservableObject
     public partial bool IsActive { get; set; } = true;
 
     public int ItemCount { get; set; }
-    public string SubtitleText => IsPreset ? "预置" : $"{ItemCount} 个物品";
+    public string SubtitleText => IsPreset ? "预置" : "自定义";
 }

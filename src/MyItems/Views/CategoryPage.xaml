@@ -4,78 +4,249 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    xmlns:converters="clr-namespace:MyItems.Converters"
     x:Class="MyItems.Views.CategoryPage"
+    x:Name="PageRoot"
     x:DataType="viewmodels:CategoryViewModel"
     Title="分类管理"
     Style="{StaticResource PageStyle}">
 
-    <Grid RowDefinitions="Auto,*">
-        <Grid
-            Grid.Row="0"
-            ColumnDefinitions="*,Auto"
-            Padding="{StaticResource PagePadding}"
-            ColumnSpacing="{StaticResource SpacingSm}">
-            <Entry
-                Grid.Column="0"
-                Text="{Binding NewCategoryName}"
-                Placeholder="新分类名称"
-                Style="{StaticResource EntryStyle}" />
-            <Button
-                Grid.Column="1"
-                Text="新增"
-                Style="{StaticResource PrimaryButton}"
-                Command="{Binding AddCategoryCommand}"
-                WidthRequest="80" />
-        </Grid>
+    <ContentPage.Resources>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
 
-        <Grid Grid.Row="1">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Compact add category toolbar -->
+        <Frame Grid.Row="0"
+               Style="{StaticResource ModernCardStyle}"
+               Margin="16,10,16,6"
+               Padding="12">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="10"
+                      VerticalOptions="Center">
+                    <Frame Grid.Column="0"
+                           WidthRequest="42"
+                           HeightRequest="42"
+                           CornerRadius="21"
+                           Padding="0"
+                           HasShadow="False"
+                           BackgroundColor="{DynamicResource ModernSurfaceContainer}">
+                        <Label Text="{Binding NewCategoryIcon}"
+                               FontSize="22"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Frame>
+
+                    <Entry Grid.Column="1"
+                           Text="{Binding NewCategoryName}"
+                           Placeholder="输入分类名称"
+                           ReturnType="Done"
+                           Style="{StaticResource EntryStyle}"
+                           HeightRequest="44" />
+
+                    <Button Grid.Column="2"
+                            Text="添加"
+                            BackgroundColor="{DynamicResource ModernPrimary}"
+                            TextColor="{DynamicResource ModernTextInverse}"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            CornerRadius="14"
+                            WidthRequest="72"
+                            HeightRequest="44"
+                            Padding="0"
+                            Command="{Binding AddCategoryCommand}"
+                            IsEnabled="{Binding IsAdding, Converter={StaticResource InvertedBoolConverter}}"/>
+                </Grid>
+
+                <ScrollView
+                    Orientation="Horizontal"
+                    HeightRequest="42"
+                    HorizontalScrollBarVisibility="Never">
+                    <FlexLayout
+                        ItemsSource="{Binding AvailableIcons}"
+                        BindableLayout.ItemsSource="{Binding AvailableIcons}"
+                        JustifyContent="Start"
+                        AlignItems="Center"
+                        Wrap="NoWrap">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:SelectableIcon">
+                                <Frame
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    CornerRadius="19"
+                                    Padding="0"
+                                    Margin="0,0,8,0"
+                                    HasShadow="False"
+                                    BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.SelectNewIconCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Frame.GestureRecognizers>
+                                    <Label
+                                        Text="{Binding Icon}"
+                                        FontSize="20"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"/>
+                                </Frame>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </ScrollView>
+            </VerticalStackLayout>
+        </Frame>
+
+        <Label Grid.Row="1"
+               Text="我的分类"
+               Style="{StaticResource ModernTitleLabel}"
+               FontSize="17"
+               Margin="20,8,20,8"
+               VerticalOptions="Center"/>
+
+        <!-- Category list -->
+        <Grid Grid.Row="2">
             <CollectionView
                 ItemsSource="{Binding Categories}"
-                Margin="{StaticResource PagePadding}">
+                Margin="16,0">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dtos:CategoryDto">
-                        <Frame Style="{StaticResource ListCardStyle}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" HeightRequest="{StaticResource TouchTargetMinHeight}">
-                                <Label
-                                    Grid.Column="0"
-                                    Text="{Binding Icon}"
-                                    FontSize="{StaticResource FontSizeTitle}"
-                                    VerticalOptions="Center"
-                                    Margin="0,0,12,0" />
+                        <Frame Style="{StaticResource ModernCardStyle}"
+                               Margin="0,0,0,8"
+                               Padding="12">
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  HeightRequest="54"
+                                  ColumnSpacing="12">
+                                <!-- Icon container -->
+                                <Frame Grid.Column="0"
+                                       WidthRequest="40"
+                                       HeightRequest="40"
+                                       CornerRadius="20"
+                                       BackgroundColor="{DynamicResource ModernPrimary}"
+                                       HasShadow="False"
+                                       Padding="0"
+                                       VerticalOptions="Center">
+                                    <Label Text="{Binding Icon}"
+                                           FontSize="24"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Frame>
 
-                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                    <Label Text="{Binding Name}" Style="{StaticResource SubheadLabel}" />
-                                    <Label Text="{Binding SubtitleText}" Style="{StaticResource CaptionLabel}" />
+                                <!-- Category info -->
+                                <VerticalStackLayout Grid.Column="1"
+                                                     VerticalOptions="Center"
+                                                     Spacing="4">
+                                    <Label Text="{Binding Name}"
+                                           Style="{StaticResource ModernTitleLabel}"
+                                           FontSize="16"/>
+                                    <Label Text="{Binding SubtitleText}"
+                                           Style="{StaticResource ModernCaptionLabel}"/>
                                 </VerticalStackLayout>
 
-                                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
-                                    <Button Text="↑"
-                                            Style="{StaticResource IconButton}"
-                                            WidthRequest="36"
-                                            HeightRequest="36"
-                                            FontSize="14"
-                                            Clicked="OnSortUpClicked" />
-                                    <Button Text="↓"
-                                            Style="{StaticResource IconButton}"
-                                            WidthRequest="36"
-                                            HeightRequest="36"
-                                            FontSize="14"
-                                            Clicked="OnSortDownClicked" />
-                                    <Button Text="删除"
-                                            Style="{StaticResource DangerSoftButton}"
-                                            Clicked="OnDeleteCategoryClicked" />
+                                <!-- Action buttons -->
+                                <HorizontalStackLayout Grid.Column="2"
+                                                       Spacing="6"
+                                                       VerticalOptions="Center">
+                                    <Button Text="上"
+                                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                            TextColor="{DynamicResource ModernTextPrimary}"
+                                            CornerRadius="10"
+                                            WidthRequest="34"
+                                            HeightRequest="34"
+                                            FontSize="12"
+                                            Padding="0"
+                                            Clicked="OnSortUpClicked">
+                                        <Button.VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroupList>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="1" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="0.7" />
+                                                            <Setter Property="Scale" Value="0.95" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateGroupList>
+                                        </Button.VisualStateManager.VisualStateGroups>
+                                    </Button>
+                                    <Button Text="下"
+                                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                            TextColor="{DynamicResource ModernTextPrimary}"
+                                            CornerRadius="10"
+                                            WidthRequest="34"
+                                            HeightRequest="34"
+                                            FontSize="12"
+                                            Padding="0"
+                                            Clicked="OnSortDownClicked">
+                                        <Button.VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroupList>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="1" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="0.7" />
+                                                            <Setter Property="Scale" Value="0.95" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateGroupList>
+                                        </Button.VisualStateManager.VisualStateGroups>
+                                    </Button>
+                                    <Button Text="删"
+                                            BackgroundColor="{DynamicResource ModernError}"
+                                            TextColor="White"
+                                            CornerRadius="10"
+                                            WidthRequest="34"
+                                            HeightRequest="34"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            Padding="0"
+                                            Clicked="OnDeleteCategoryClicked">
+                                        <Button.VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroupList>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="1" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="Opacity" Value="0.8" />
+                                                            <Setter Property="Scale" Value="0.95" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateGroupList>
+                                        </Button.VisualStateManager.VisualStateGroups>
+                                    </Button>
                                 </HorizontalStackLayout>
                             </Grid>
                         </Frame>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="80" IsVisible="True"/>
+                </CollectionView.Footer>
             </CollectionView>
 
+            <!-- Loading indicator -->
             <ActivityIndicator
                 IsRunning="{Binding IsLoading}"
                 IsVisible="{Binding IsLoading}"
                 VerticalOptions="Center"
-                HorizontalOptions="Center" />
+                HorizontalOptions="Center"
+                Color="{DynamicResource ModernPrimary}" />
         </Grid>
     </Grid>
 </ContentPage>

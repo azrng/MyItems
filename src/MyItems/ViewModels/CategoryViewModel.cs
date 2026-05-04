@@ -172,9 +172,11 @@ public partial class CategoryViewModel : ObservableObject
             return;
         }
 
-        if (category.ItemCount > 0)
+        // 检查是否有物品关联
+        var hasItems = await _dataService.CategoryHasItemsAsync(category.Id);
+        if (hasItems)
         {
-            await Shell.Current.DisplayAlertAsync("提示", $"分类「{category.Name}」下有 {category.ItemCount} 个物品，无法删除", "确定");
+            await Shell.Current.DisplayAlertAsync("提示", $"分类「{category.Name}」下有物品，无法删除", "确定");
             return;
         }
 

@@ -11,6 +11,7 @@ public interface IDataService
     Task<List<Category>> GetCategoriesAsync();
     Task<int> SaveCategoryAsync(Category category);
     Task<int> DeleteCategoryAsync(Category category);
+    Task<bool> CategoryHasItemsAsync(Guid categoryId);
 
     // Item
     Task<List<Item>> GetItemsAsync();
@@ -28,8 +29,9 @@ public interface IDataService
     // Combined query (avoids duplicate DB loads)
     Task<(List<ItemDisplayDto> Items, decimal TotalSpent, int TotalItems, int ValidItems)> GetItemsWithStatisticsAsync();
 
-    // Excel export
-    Task<string> ExportToExcelAsync();
+    // CSV import/export
+    Task<string> ExportToCsvAsync();
+    Task<(int SuccessCount, int FailureCount, List<string> Errors)> ImportFromCsvAsync(string filePath);
 
     // Testing
     Task SeedSampleDataAsync();
