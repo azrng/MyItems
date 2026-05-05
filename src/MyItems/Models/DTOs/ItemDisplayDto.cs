@@ -17,6 +17,7 @@ public class ItemDisplayDto
     public DateTime? ExpiryDate { get; set; }
     public string? Location { get; set; }
     public int Quantity { get; set; }
+    public bool TrackDailyCost { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 

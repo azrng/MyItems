@@ -29,7 +29,6 @@ public static class MauiProgram
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "myitems.db");
             return new SqliteDataService(dbPath);
         });
-
         // Register preferences service
         builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
 

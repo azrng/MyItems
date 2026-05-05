@@ -1,13 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using MyItems.Models.DTOs;
 using MyItems.Services;
+using MyItems.Views;
 
 namespace MyItems.ViewModels;
 
 public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
+    private readonly IServiceProvider _serviceProvider;
 
     [ObservableProperty]
     private ItemDisplayDto? item;
@@ -18,9 +22,10 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private string? errorMessage;
 
-    public ItemDetailViewModel(IDataService dataService)
+    public ItemDetailViewModel(IDataService dataService, IServiceProvider serviceProvider)
     {
         _dataService = dataService;
+        _serviceProvider = serviceProvider;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -43,11 +48,10 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (Item is null) return;
 
-        var parameters = new ShellNavigationQueryParameters
-        {
-            ["itemId"] = Item.ItemId.ToString()
-        };
-        await Shell.Current.GoToAsync("add", parameters);
+        Debug.WriteLine($"[ItemDetail] EditItem itemId={Item.ItemId}, name={Item.ItemName}, categoryId={Item.CategoryId}");
+        var page = _serviceProvider.GetRequiredService<AddItemPage>();
+        page.ViewModel.PrepareForEdit(Item);
+        await Shell.Current.Navigation.PushAsync(page);
     }
 
     [RelayCommand]

@@ -110,6 +110,7 @@ src/AppName/
 - 命令执行后的成功、失败、空状态必须显式反馈到界面状态
 - 异常在 ViewModel 层转换为用户友好的提示信息，不把底层异常原样暴露给用户
 - 跨 ViewModel 协作优先使用 `IMessenger` 或显式服务，不依赖静态全局状态
+- 同一个编辑页的数据初始化只保留一条主链路；若导航时已传入完整 DTO，则直接用该 DTO 回填，不再并行叠加静态草稿、JSON 字符串和二次数据库回填去重置同一批表单字段
 - 禁止在 ViewModel、Service、Repository、Model、DTO 等 C# 类中使用主构造函数（Primary Constructor），统一使用显式构造函数
 
 ### Service 层规则

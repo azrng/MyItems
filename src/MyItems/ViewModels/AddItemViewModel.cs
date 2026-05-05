@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MyItems.Models;
+using MyItems.Models.DTOs;
 using MyItems.Services;
 
 namespace MyItems.ViewModels;
@@ -10,9 +13,15 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
     private readonly SemaphoreSlim _categoryLoadLock = new(1, 1);
+    private readonly SemaphoreSlim _itemLoadLock = new(1, 1);
     private Guid _editingItemId;
     private DateTime _originalCreatedAt;
     private bool _categoriesLoaded;
+    private bool _hasLoadedEditingItem;
+    private bool _isPopulatingExistingItem;
+    private Guid? _pendingSelectedCategoryId;
+    private ItemDisplayDto? _pendingDraft;
+    private ItemDisplayDto? _uiHydrationDraft;
 
     public ObservableCollection<Category> Categories { get; } = [];
 
@@ -86,46 +95,168 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     public AddItemViewModel(IDataService dataService)
     {
         _dataService = dataService;
-        _ = EnsureCategoriesLoadedAsync();
+    }
+
+    public void PrepareForEdit(ItemDisplayDto draft)
+    {
+        Debug.WriteLine($"[AddItem] PrepareForEdit itemId={draft.ItemId}, name={draft.ItemName}, categoryId={draft.CategoryId}");
+        ErrorMessage = null;
+        ItemNameError = null;
+        CategoryError = null;
+        _pendingDraft = draft;
+        _uiHydrationDraft = draft;
+        _hasLoadedEditingItem = false;
+        SetEditMode();
+        IsLoadingItem = true;
+    }
+
+    public void ApplyItemIdQuery(string? itemIdText)
+    {
+        if (!Guid.TryParse(itemIdText, out var itemId))
+            return;
+
+        if (_hasLoadedEditingItem && _editingItemId == itemId)
+            return;
+
+        SetEditMode();
+        _editingItemId = itemId;
+        _hasLoadedEditingItem = false;
+        IsLoadingItem = true;
+        _ = EnsureEditingItemLoadedAsync();
+    }
+
+    public void ApplyBarcodeQuery(string? barcodeValue)
+    {
+        Barcode = string.IsNullOrWhiteSpace(barcodeValue) ? null : barcodeValue.Trim();
+    }
+
+    public void ApplyEditDraftJson(string? editDraftJson)
+    {
+        if (string.IsNullOrWhiteSpace(editDraftJson))
+            return;
+
+        try
+        {
+            var json = Uri.UnescapeDataString(editDraftJson);
+            var draft = JsonSerializer.Deserialize<ItemDisplayDto>(json);
+            if (draft is null)
+                return;
+
+            _pendingDraft = draft;
+            SetEditMode();
+            _editingItemId = draft.ItemId;
+            _hasLoadedEditingItem = false;
+            IsLoadingItem = true;
+            _ = EnsureEditingItemLoadedAsync();
+        }
+        catch
+        {
+            // ignore malformed route payload and fallback to db query
+        }
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("itemId", out var itemIdObj) && TryGetItemId(itemIdObj, out var itemId))
-        {
-            SetEditMode();
-            _editingItemId = itemId;
-            _ = LoadExistingDataAsync(itemId);
-        }
+            ApplyItemIdQuery(itemId.ToString());
 
         if (query.TryGetValue("barcode", out var barcodeObj) && barcodeObj?.ToString() is string barcodeValue)
+            ApplyBarcodeQuery(barcodeValue);
+
+        if (query.TryGetValue("editDraft", out var editDraftObj))
         {
-            Barcode = string.IsNullOrWhiteSpace(barcodeValue) ? null : barcodeValue.Trim();
+            if (editDraftObj is ItemDisplayDto draft)
+                PrepareForEdit(draft);
+            else if (editDraftObj?.ToString() is string editDraftJson)
+                ApplyEditDraftJson(editDraftJson);
         }
     }
 
-    private async Task InitializeAsync()
+    public async Task OnAppearingAsync()
     {
+        Debug.WriteLine($"[AddItem] OnAppearing isEdit={IsEditMode}, itemId={_editingItemId}, loaded={_hasLoadedEditingItem}, itemName={ItemName}");
         await EnsureCategoriesLoadedAsync();
+
+        if (_uiHydrationDraft is not null)
+        {
+            await ApplyUiHydrationDraftAsync();
+            return;
+        }
+
+        ApplyPendingSelectedCategory();
+        await EnsureEditingItemLoadedAsync();
+    }
+
+    private async Task ApplyUiHydrationDraftAsync()
+    {
+        var draft = _uiHydrationDraft;
+        if (draft is null)
+            return;
+
+        await Task.Yield();
+
+        _uiHydrationDraft = null;
+        PrimeFromDraft(draft);
+        ApplyPendingSelectedCategory();
+
+        if (SelectedCategory is null)
+            ErrorMessage = "原分类不存在，请重新选择分类";
+
+        IsLoadingItem = false;
+        Debug.WriteLine($"[AddItem] ApplyUiHydrationDraftAsync itemId={draft.ItemId}, itemName={ItemName}, category={(SelectedCategory?.Name ?? "null")}");
+    }
+
+    private async Task EnsureEditingItemLoadedAsync()
+    {
+        if (_editingItemId == Guid.Empty || _hasLoadedEditingItem)
+            return;
+
+        await _itemLoadLock.WaitAsync();
+        try
+        {
+            if (_editingItemId == Guid.Empty || _hasLoadedEditingItem)
+                return;
+
+            await LoadExistingDataAsync(_editingItemId);
+        }
+        finally
+        {
+            _itemLoadLock.Release();
+        }
     }
 
     private async Task LoadExistingDataAsync(Guid itemId)
     {
+        if (_hasLoadedEditingItem)
+            return;
+
         IsLoadingItem = true;
         ErrorMessage = null;
+        ItemNameError = null;
+        CategoryError = null;
 
         try
         {
+            Debug.WriteLine($"[AddItem] LoadExistingDataAsync start itemId={itemId}");
+            if (_pendingDraft is not null && _pendingDraft.ItemId == itemId)
+            {
+                var routeDraft = _pendingDraft;
+                _pendingDraft = null;
+                await PopulateFromDraftAsync(routeDraft);
+                return;
+            }
+
             var item = await _dataService.GetItemByIdAsync(itemId);
             if (item is null)
             {
+                Debug.WriteLine($"[AddItem] LoadExistingDataAsync item not found itemId={itemId}");
                 ErrorMessage = "没有找到要编辑的物品";
                 return;
             }
 
             _editingItemId = item.Id;
             _originalCreatedAt = item.CreatedAt;
-
+            _isPopulatingExistingItem = true;
             SetEditMode();
             ItemName = item.Name;
             Brand = item.Brand;
@@ -133,17 +264,22 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
             Barcode = string.IsNullOrWhiteSpace(item.Barcode) ? null : item.Barcode.Trim();
             PurchaseDate = item.PurchaseDate;
             PurchasePrice = item.PurchasePrice;
-            ExpiryDate = item.ExpiryDate;
             NoExpiry = item.ExpiryDate is null;
+            ExpiryDate = item.ExpiryDate;
             TrackDailyCost = item.TrackDailyCost;
             Quantity = item.Quantity;
             Notes = item.Notes;
+            Debug.WriteLine($"[AddItem] LoadExistingDataAsync loaded itemId={item.Id}, name={item.Name}, categoryId={item.CategoryId}");
+            _isPopulatingExistingItem = false;
 
             await EnsureCategoriesLoadedAsync();
-            SelectedCategory = Categories.FirstOrDefault(c => c.Id == item.CategoryId);
+            _pendingSelectedCategoryId = item.CategoryId;
+            ApplyPendingSelectedCategory();
 
             if (SelectedCategory is null)
                 ErrorMessage = "原分类不存在，请重新选择分类";
+
+            _hasLoadedEditingItem = true;
         }
         catch
         {
@@ -151,8 +287,46 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         }
         finally
         {
+            _isPopulatingExistingItem = false;
             IsLoadingItem = false;
         }
+    }
+
+    private async Task PopulateFromDraftAsync(Models.DTOs.ItemDisplayDto draft)
+    {
+        PrimeFromDraft(draft);
+
+        await EnsureCategoriesLoadedAsync();
+        ApplyPendingSelectedCategory();
+
+        if (SelectedCategory is null)
+            ErrorMessage = "原分类不存在，请重新选择分类";
+
+        _hasLoadedEditingItem = true;
+    }
+
+    private void PrimeFromDraft(ItemDisplayDto draft)
+    {
+        Debug.WriteLine($"[AddItem] PrimeFromDraft itemId={draft.ItemId}, name={draft.ItemName}, categoryId={draft.CategoryId}");
+        _editingItemId = draft.ItemId;
+        _originalCreatedAt = draft.CreatedAt;
+        _pendingSelectedCategoryId = draft.CategoryId;
+        _pendingDraft = draft;
+        _hasLoadedEditingItem = true;
+        _isPopulatingExistingItem = true;
+        SetEditMode();
+        ItemName = draft.ItemName;
+        Brand = draft.Brand;
+        Location = draft.Location;
+        Barcode = string.IsNullOrWhiteSpace(draft.Barcode) ? null : draft.Barcode.Trim();
+        PurchaseDate = draft.PurchaseDate;
+        PurchasePrice = draft.PurchasePrice;
+        NoExpiry = draft.ExpiryDate is null;
+        ExpiryDate = draft.ExpiryDate;
+        TrackDailyCost = draft.TrackDailyCost;
+        Quantity = draft.Quantity;
+        Notes = draft.Notes;
+        _isPopulatingExistingItem = false;
     }
 
     [RelayCommand]
@@ -188,7 +362,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
             };
 
             await _dataService.SaveItemAsync(item);
-            await Shell.Current.GoToAsync("..");
+            await Shell.Current.Navigation.PopAsync();
         }
         catch
         {
@@ -214,6 +388,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
     partial void OnItemNameChanged(string value)
     {
+        Debug.WriteLine($"[AddItem] OnItemNameChanged value={value}");
         if (!string.IsNullOrWhiteSpace(value))
             ItemNameError = null;
 
@@ -236,6 +411,9 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
     partial void OnNoExpiryChanged(bool value)
     {
+        if (_isPopulatingExistingItem)
+            return;
+
         if (value)
             ExpiryDate = null;
         else
@@ -259,6 +437,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
                 Categories.Add(cat);
 
             _categoriesLoaded = true;
+            ApplyPendingSelectedCategory();
         }
         finally
         {
@@ -286,6 +465,21 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     {
         if (!IsEditMode)
             IsEditMode = true;
+    }
+
+    [RelayCommand]
+    private async Task GoBackAsync()
+    {
+        await Shell.Current.Navigation.PopAsync();
+    }
+
+    private void ApplyPendingSelectedCategory()
+    {
+        if (!_pendingSelectedCategoryId.HasValue || Categories.Count == 0)
+            return;
+
+        SelectedCategory = Categories.FirstOrDefault(c => c.Id == _pendingSelectedCategoryId.Value);
+        _pendingSelectedCategoryId = null;
     }
 
     private static bool TryGetItemId(object? value, out Guid itemId)

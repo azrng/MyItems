@@ -225,6 +225,7 @@ public class SqliteDataService : IDataService
             ExpiryDate = item.ExpiryDate,
             Location = item.DefaultLocation,
             Quantity = item.Quantity,
+            TrackDailyCost = item.TrackDailyCost,
             Notes = item.Notes,
             CreatedAt = item.CreatedAt,
             ExpiryStatus = expiryStatus,
