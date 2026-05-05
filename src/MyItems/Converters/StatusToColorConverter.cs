@@ -16,10 +16,10 @@ public class ExpiryStatusToTextColorConverter : IValueConverter
         {
             return status switch
             {
-                ExpiryStatus.Expired => GetColor("AppExpiredColor", Colors.Red),
-                ExpiryStatus.Expiring => GetColor("AppExpiringColor", Colors.Orange),
-                ExpiryStatus.Safe => GetColor("AppSafeColor", Colors.Green),
-                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryColor", Colors.Blue),
+                ExpiryStatus.Expired => GetColor("ModernErrorText", Color.FromArgb("#B42318")),
+                ExpiryStatus.Expiring => GetColor("ModernWarningText", Colors.Orange),
+                ExpiryStatus.Safe => GetColor("AppSafeColor", Color.FromArgb("#22A97E")),
+                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryColor", Color.FromArgb("#4D9DE0")),
                 _ => Colors.Gray
             };
         }
@@ -43,7 +43,7 @@ public class ExpiryStatusToBgColorConverter : IValueConverter
         {
             return status switch
             {
-                ExpiryStatus.Expired => GetColor("AppExpiredBgColor", "#FFE0E4"),
+                ExpiryStatus.Expired => GetColor("AppExpiredBgColor", "#FFE4E8"),
                 ExpiryStatus.Expiring => GetColor("AppExpiringBgColor", "#FEEFC8"),
                 ExpiryStatus.Safe => GetColor("AppSafeBgColor", "#DCFBE6"),
                 ExpiryStatus.NoExpiry => GetColor("AppNoExpiryBgColor", "#D9EEFF"),
@@ -79,6 +79,26 @@ public class HasValueConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         => value is not null && (value is not DateTime dt || dt != default);
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public class BoolToColorConverter : IValueConverter
+{
+    private static Color GetColor(string key, Color fallback)
+    {
+        return Application.Current?.Resources.TryGetValue(key, out var c) == true ? (Color)c : fallback;
+    }
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool isSelected && isSelected)
+        {
+            return GetColor("ModernPrimary", Colors.Pink);
+        }
+        return GetColor("ModernSurfaceContainer", Color.FromArgb("#F1F3F5"));
+    }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

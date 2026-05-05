@@ -204,4 +204,100 @@
         <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
+    <!-- Modern Styles - UraniumUI兼容样式 -->
+    <Style x:Key="ModernCardStyle" TargetType="Frame">
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernSurface}" />
+        <Setter Property="HasShadow" Value="False" />
+        <Setter Property="Margin" Value="16,6" />
+    </Style>
+
+    <Style x:Key="ModernPrimaryButton" TargetType="Button">
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextInverse}" />
+        <Setter Property="FontFamily" Value="{DynamicResource ModernBodyFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="52" />
+    </Style>
+
+    <Style x:Key="ModernSecondaryButton" TargetType="Button">
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernSurfaceContainer}" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource ModernBodyFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="52" />
+    </Style>
+
+    <Style x:Key="ModernBadgeStyle" TargetType="Frame">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernPrimary}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="ModernWarningBadgeStyle" TargetType="Frame">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="MinimumWidthRequest" Value="72" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernWarningContainer}" />
+        <Setter Property="BorderColor" Value="{DynamicResource ModernWarning}" />
+        <Setter Property="HasShadow" Value="False" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="End" />
+    </Style>
+
+    <Style x:Key="ModernErrorBadgeStyle" TargetType="Frame">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="MinimumWidthRequest" Value="72" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource ModernErrorContainer}" />
+        <Setter Property="BorderColor" Value="{DynamicResource ModernError}" />
+        <Setter Property="HasShadow" Value="False" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="End" />
+    </Style>
+
+    <Style x:Key="ModernHeadlineLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource ModernDisplayFont}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <Style x:Key="ModernTitleLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource ModernDisplayFont}" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+    </Style>
+
+    <Style x:Key="ModernSubheadLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource ModernBodyFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+    </Style>
+
+    <Style x:Key="ModernBodyLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource ModernBodyFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextSecondary}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <Style x:Key="ModernCaptionLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource ModernBodyFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{DynamicResource ModernTextHint}" />
+    </Style>
+
 </ResourceDictionary>

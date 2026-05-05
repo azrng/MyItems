@@ -21,52 +21,70 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Top bar -->
+            <!-- Modern top bar with gradient -->
             <Grid
                 Grid.Row="0"
                 ColumnDefinitions="Auto,*"
                 Padding="16,48,16,16">
                 <Button
                     Grid.Column="0"
-                    Text="&#x2715;"
-                    FontSize="20"
-                    TextColor="White"
-                    BackgroundColor="#80000000"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    CornerRadius="20"
+                    Text="✕"
+                    FontSize="24"
+                    TextColor="{DynamicResource ModernTextInverse}"
+                    BackgroundColor="#CC000000"
+                    WidthRequest="48"
+                    HeightRequest="48"
+                    CornerRadius="24"
                     Clicked="OnCloseClicked" />
                 <Label
                     Grid.Column="1"
-                    Text="扫一扫"
-                    TextColor="White"
-                    FontSize="{StaticResource FontSizeTitle}"
+                    Text="📱 扫一扫"
+                    TextColor="{DynamicResource ModernTextInverse}"
+                    FontSize="20"
+                    FontAttributes="Bold"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    Margin="0,0,40,0" />
+                    Margin="0,0,48,0" />
             </Grid>
 
-            <!-- Center scan frame area -->
+            <!-- Center scan frame area - Modern design -->
             <Grid Grid.Row="1" VerticalOptions="Center" HorizontalOptions="Center">
+                <!-- Semi-transparent background -->
                 <BoxView
-                    WidthRequest="250"
-                    HeightRequest="250"
+                    WidthRequest="280"
+                    HeightRequest="280"
                     Color="#40000000"
-                    CornerRadius="0" />
-                <!-- Scan frame border (4 corners) -->
-                <AbsoluteLayout WidthRequest="250" HeightRequest="250">
+                    CornerRadius="24" />
+                <!-- Modern scan frame border (4 corners with brand color) -->
+                <AbsoluteLayout WidthRequest="280" HeightRequest="280">
                     <!-- Top-left corner -->
-                    <BoxView AbsoluteLayout.LayoutBounds="0,0,30,3" Color="White" />
-                    <BoxView AbsoluteLayout.LayoutBounds="0,0,3,30" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,0,40,4" Color="{DynamicResource ModernPrimary}" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,0,4,40" Color="{DynamicResource ModernPrimary}" />
                     <!-- Top-right corner -->
-                    <BoxView AbsoluteLayout.LayoutBounds="220,0,30,3" Color="White" />
-                    <BoxView AbsoluteLayout.LayoutBounds="247,0,3,30" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="240,0,40,4" Color="{DynamicResource ModernPrimary}" />
+                    <BoxView AbsoluteLayout.LayoutBounds="276,0,4,40" Color="{DynamicResource ModernPrimary}" />
                     <!-- Bottom-left corner -->
-                    <BoxView AbsoluteLayout.LayoutBounds="0,247,30,3" Color="White" />
-                    <BoxView AbsoluteLayout.LayoutBounds="0,220,3,30" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,276,40,4" Color="{DynamicResource ModernPrimary}" />
+                    <BoxView AbsoluteLayout.LayoutBounds="0,240,4,40" Color="{DynamicResource ModernPrimary}" />
                     <!-- Bottom-right corner -->
-                    <BoxView AbsoluteLayout.LayoutBounds="220,247,30,3" Color="White" />
-                    <BoxView AbsoluteLayout.LayoutBounds="247,220,3,30" Color="White" />
+                    <BoxView AbsoluteLayout.LayoutBounds="240,276,40,4" Color="{DynamicResource ModernPrimary}" />
+                    <BoxView AbsoluteLayout.LayoutBounds="276,240,4,40" Color="{DynamicResource ModernPrimary}" />
+
+                    <!-- Scan line animation -->
+                    <BoxView
+                        AbsoluteLayout.LayoutBounds="10,70,260,2"
+                        Color="{DynamicResource ModernPrimary}"
+                        Opacity="0.8">
+                        <BoxView.Animations>
+                            <Animation>
+                                <SizeAnimator
+                                    Duration="0:0:2"
+                                    Easing="Linear"
+                                    RepeatCount="Infinite"
+                                    AutoReverse="True" />
+                            </Animation>
+                        </BoxView.Animations>
+                    </BoxView>
                 </AbsoluteLayout>
             </Grid>
 
@@ -74,53 +92,79 @@
             <VerticalStackLayout
                 Grid.Row="2"
                 Padding="16,0,16,48"
-                Spacing="{StaticResource SpacingMd}"
+                Spacing="12"
                 HorizontalOptions="Center">
+                <!-- Modern torch button -->
                 <Button
                     x:Name="TorchButton"
-                    Text="&#x1F4A1; 手电筒"
-                    TextColor="White"
-                    BackgroundColor="#80000000"
-                    CornerRadius="20"
+                    Text="💡 手电筒"
+                    TextColor="{DynamicResource ModernTextInverse}"
+                    BackgroundColor="#CC000000"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    CornerRadius="24"
                     Clicked="OnTorchClicked"
-                    WidthRequest="140"
-                    HeightRequest="44" />
+                    WidthRequest="160"
+                    HeightRequest="52" />
                 <Label
-                    Text="将条码/二维码放入框内扫描"
-                    TextColor="#B0FFFFFF"
-                    FontSize="{StaticResource FontSizeBody}"
+                    Text="将条码/二维码放入框内即可自动扫描"
+                    TextColor="#D0FFFFFF"
+                    FontSize="14"
                     HorizontalOptions="Center" />
             </VerticalStackLayout>
         </Grid>
 
-        <!-- Unsupported platform message -->
+        <!-- Modern unsupported platform message -->
         <VerticalStackLayout
             x:Name="UnsupportedPanel"
             IsVisible="False"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Spacing="{StaticResource SpacingMd}"
-            Padding="{StaticResource PagePadding}">
-            <Label
-                Text="&#x1F4F7;"
-                FontSize="48"
-                HorizontalOptions="Center" />
+            Spacing="16"
+            Padding="40">
+            <!-- Large icon container -->
+            <Frame
+                WidthRequest="100"
+                HeightRequest="100"
+                CornerRadius="50"
+                BackgroundColor="{DynamicResource ModernPrimary}"
+                HasShadow="True"
+                HorizontalOptions="Center"
+                Padding="0">
+                <Frame.Shadow>
+                    <Shadow Brush="{DynamicResource ModernPrimary}"
+                            Opacity="0.3"
+                            Radius="24"
+                            Offset="0,8"/>
+                </Frame.Shadow>
+                <Label Text="📷"
+                       FontSize="48"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Frame>
             <Label
                 Text="当前平台不支持相机扫码"
-                FontSize="{StaticResource FontSizeSubhead}"
-                TextColor="{StaticResource AppTextSecondaryColor}"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="{DynamicResource ModernTextPrimary}"
                 HorizontalOptions="Center" />
             <Label
                 Text="请在 Android 或 iOS 设备上使用此功能"
-                FontSize="{StaticResource FontSizeCaption}"
-                TextColor="{StaticResource AppTextMutedColor}"
-                HorizontalOptions="Center" />
+                FontSize="14"
+                TextColor="{DynamicResource ModernTextSecondary}"
+                HorizontalOptions="Center"
+                Margin="0,0,0,16"/>
             <Button
                 Text="返回"
-                Style="{StaticResource PrimaryButton}"
+                BackgroundColor="{DynamicResource ModernPrimary}"
+                TextColor="{DynamicResource ModernTextInverse}"
+                FontSize="16"
+                FontAttributes="Bold"
+                CornerRadius="16"
+                HeightRequest="52"
                 Clicked="OnCloseClicked"
-                WidthRequest="120"
-                Margin="0,16,0,0" />
+                WidthRequest="160"
+                HorizontalOptions="Center" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

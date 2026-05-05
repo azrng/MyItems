@@ -62,7 +62,7 @@
 
                 <ScrollView
                     Orientation="Horizontal"
-                    HeightRequest="42"
+                    HeightRequest="48"
                     HorizontalScrollBarVisibility="Never">
                     <FlexLayout
                         ItemsSource="{Binding AvailableIcons}"
@@ -73,9 +73,9 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:SelectableIcon">
                                 <Frame
-                                    WidthRequest="38"
-                                    HeightRequest="38"
-                                    CornerRadius="19"
+                                    WidthRequest="44"
+                                    HeightRequest="44"
+                                    CornerRadius="22"
                                     Padding="0"
                                     Margin="0,0,8,0"
                                     HasShadow="False"
@@ -116,7 +116,7 @@
                                Margin="0,0,0,8"
                                Padding="12">
                             <Grid ColumnDefinitions="Auto,*,Auto"
-                                  HeightRequest="54"
+                                  HeightRequest="62"
                                   ColumnSpacing="12">
                                 <!-- Icon container -->
                                 <Frame Grid.Column="0"
@@ -148,14 +148,14 @@
                                 <HorizontalStackLayout Grid.Column="2"
                                                        Spacing="6"
                                                        VerticalOptions="Center">
-                                    <Button Text="上"
-                                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
-                                            TextColor="{DynamicResource ModernTextPrimary}"
-                                            CornerRadius="10"
-                                            WidthRequest="34"
-                                            HeightRequest="34"
-                                            FontSize="12"
-                                            Padding="0"
+                                     <Button Text="上"
+                                             BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                             TextColor="{DynamicResource ModernTextPrimary}"
+                                             CornerRadius="12"
+                                             WidthRequest="44"
+                                             HeightRequest="44"
+                                             FontSize="12"
+                                             Padding="0"
                                             Clicked="OnSortUpClicked">
                                         <Button.VisualStateManager.VisualStateGroups>
                                             <VisualStateGroupList>
@@ -175,14 +175,14 @@
                                             </VisualStateGroupList>
                                         </Button.VisualStateManager.VisualStateGroups>
                                     </Button>
-                                    <Button Text="下"
-                                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
-                                            TextColor="{DynamicResource ModernTextPrimary}"
-                                            CornerRadius="10"
-                                            WidthRequest="34"
-                                            HeightRequest="34"
-                                            FontSize="12"
-                                            Padding="0"
+                                     <Button Text="下"
+                                             BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                             TextColor="{DynamicResource ModernTextPrimary}"
+                                             CornerRadius="12"
+                                             WidthRequest="44"
+                                             HeightRequest="44"
+                                             FontSize="12"
+                                             Padding="0"
                                             Clicked="OnSortDownClicked">
                                         <Button.VisualStateManager.VisualStateGroups>
                                             <VisualStateGroupList>
@@ -202,13 +202,13 @@
                                             </VisualStateGroupList>
                                         </Button.VisualStateManager.VisualStateGroups>
                                     </Button>
-                                    <Button Text="删"
-                                            BackgroundColor="{DynamicResource ModernError}"
-                                            TextColor="White"
-                                            CornerRadius="10"
-                                            WidthRequest="34"
-                                            HeightRequest="34"
-                                            FontSize="12"
+                                     <Button Text="删"
+                                             BackgroundColor="{DynamicResource ModernError}"
+                                             TextColor="{DynamicResource ModernTextInverse}"
+                                             CornerRadius="12"
+                                             WidthRequest="44"
+                                             HeightRequest="44"
+                                             FontSize="12"
                                             FontAttributes="Bold"
                                             Padding="0"
                                             Clicked="OnDeleteCategoryClicked">

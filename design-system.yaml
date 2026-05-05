@@ -48,30 +48,30 @@ product:
 tokens:
   colors:
     primary:
-      light: "#2E8BFF"
-      dark: "#5AAFFF"
-      container_light: "#D9EEFF"
-      container_dark: "#004C99"
+      light: "#FF6B6B"
+      dark: "#FF8A9A"
+      container_light: "#FFE8E8"
+      container_dark: "#4A1F27"
     secondary:
-      light: "#22A97E"
+      light: "#4ECDC4"
       dark: "#4EC89D"
       container_light: "#D9F6EE"
-      container_dark: "#005237"
+      container_dark: "#173F35"
     success:
-      light: "#1CBD5D"
-      dark: "#3DDA76"
+      light: "#22A97E"
+      dark: "#4EC89D"
       container_light: "#DCFBE6"
-      container_dark: "#005228"
+      container_dark: "#1A3D2E"
     warning:
-      light: "#EA9B12"
+      light: "#B76A00"
       dark: "#F8B72B"
-      container_light: "#FEEFC8"
-      container_dark: "#7A4500"
+      container_light: "#FFF1B8"
+      container_dark: "#3D2E0A"
     error:
-      light: "#F0445E"
-      dark: "#FF6E83"
-      container_light: "#FFE0E4"
-      container_dark: "#93001A"
+      light: "#D92D46"
+      dark: "#FF8A9A"
+      container_light: "#FFE4E8"
+      container_dark: "#3D0A10"
     gray:
       50: "#F8FAFC"
       100: "#F1F5F9"
@@ -96,7 +96,7 @@ tokens:
       page: "AppBackgroundColor（gray-50）"
       card: "AppCardBackgroundColor（white）"
       surface: "AppSurfaceColor（gray-100）"
-      active: "AppActiveBackgroundColor（primary container）"
+      active: "AppActiveBackgroundColor（primary soft container）"
       brand: "AppBrandBackgroundColor（primary）"
     border:
       default: "AppBorderColor（gray-200）"
@@ -146,7 +146,7 @@ tokens:
     section_gap: "24"
     item_gap: "12"
     card_padding: "16"
-    card_radius: "12"
+    card_radius: "16（通用 ModernCardStyle；列表内小容器可使用 12）"
 
   radius:
     sm: "6"

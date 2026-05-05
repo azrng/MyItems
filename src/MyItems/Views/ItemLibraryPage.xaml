@@ -5,7 +5,7 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
-    xmlns:toolkit="http://schemas.syncfusion.com/maui/toolkit"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
     x:Class="MyItems.Views.ItemLibraryPage"
     x:Name="PageRoot"
     x:DataType="viewmodels:ItemLibraryViewModel"
@@ -14,107 +14,166 @@
 
     <ContentPage.Resources>
         <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
+        <converters:HasValueConverter x:Key="HasValue" />
     </ContentPage.Resources>
 
     <Shell.TitleView>
         <Grid ColumnDefinitions="Auto,*"
-              ColumnSpacing="{StaticResource SpacingMd}"
+              ColumnSpacing="12"
               HorizontalOptions="Fill"
-              VerticalOptions="Center">
+              VerticalOptions="Center"
+              Padding="16,8">
             <Button
                 Grid.Column="0"
                 Text="☰"
-                Style="{StaticResource TitleIconButton}"
-                Command="{Binding ToggleSettingsCommand}"
-                Padding="0" />
+                BackgroundColor="Transparent"
+                TextColor="{DynamicResource ModernTextInverse}"
+                FontSize="22"
+                Padding="0"
+                Command="{Binding ToggleSettingsCommand}">
+                <Button.VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Setter Property="Scale" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.7" />
+                                    <Setter Property="Scale" Value="0.9" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Button.VisualStateManager.VisualStateGroups>
+            </Button>
             <Label
                 Grid.Column="1"
                 Text="物品库"
-                FontSize="{StaticResource FontSizeTitle}"
+                FontSize="20"
                 FontAttributes="Bold"
-                TextColor="{DynamicResource AppTextInverseColor}"
+                TextColor="{DynamicResource ModernTextInverse}"
                 VerticalOptions="Center" />
         </Grid>
     </Shell.TitleView>
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*">
+    <Grid>
+        <Grid RowDefinitions="Auto,Auto,Auto,*">
 
-        <SearchBar
-            Grid.Row="0"
-            Style="{StaticResource SearchBarStyle}"
-            Margin="16,8"
-            Placeholder="搜索物品..."
-            Text="{Binding SearchText}"
-            SearchCommand="{Binding RefreshCommand}" />
+        <!-- 现代化搜索栏 -->
+        <Frame Grid.Row="0"
+               Style="{StaticResource ModernCardStyle}"
+               Margin="16,10,16,6"
+               Padding="10">
+            <SearchBar
+                Placeholder="搜索物品名称、品牌..."
+                Text="{Binding SearchText}"
+                SearchCommand="{Binding RefreshCommand}"
+                Margin="0"
+                BackgroundColor="Transparent"
+                FontSize="15"
+                HeightRequest="48"/>
+        </Frame>
 
-        <!-- Statistics summary -->
-        <Frame
-            Grid.Row="1"
-            Style="{StaticResource CardStyle}"
-            Margin="16,0"
-            Padding="12,10">
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="2">
-                <Label Grid.Row="0" Grid.Column="0"
-                       Text="个人资产"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="0"
-                       Text="{Binding TotalSpentText}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource AppPrimaryColor}"
-                       HorizontalOptions="Center" />
+        <!-- 现代化统计摘要 -->
+        <Frame Grid.Row="1"
+               Style="{StaticResource ModernCardStyle}"
+               Margin="16,0,16,6"
+               Padding="12,8">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                <!-- 个人资产 -->
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="2">
+                    <Label Grid.Row="0"
+                           Text="{Binding TotalSpentText}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource ModernPrimary}"
+                           LineBreakMode="TailTruncation"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Grid.Row="1"
+                           Text="资产"
+                           Style="{StaticResource ModernCaptionLabel}"
+                           FontSize="11"
+                           HorizontalTextAlignment="Center"/>
+                </Grid>
 
-                <Label Grid.Row="0" Grid.Column="1"
-                       Text="有效商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="1"
-                       Text="{Binding ValidCountText}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource AppSafeColor}"
-                       HorizontalOptions="Center" />
+                <!-- 有效商品 -->
+                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
+                    <Label Grid.Row="0"
+                           Text="{Binding ValidCountText}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource ModernSuccess}"
+                           LineBreakMode="TailTruncation"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Grid.Row="1"
+                           Text="有效"
+                           Style="{StaticResource ModernCaptionLabel}"
+                           FontSize="11"
+                           HorizontalTextAlignment="Center"/>
+                </Grid>
 
-                <Label Grid.Row="0" Grid.Column="2"
-                       Text="全部商品"
-                       Style="{StaticResource CaptionLabel}"
-                       HorizontalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="2"
-                       Text="{Binding TotalItemsText}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource AppTextSecondaryColor}"
-                       HorizontalOptions="Center" />
+                <!-- 全部商品 -->
+                <Grid Grid.Column="2" RowDefinitions="Auto,Auto" RowSpacing="2">
+                    <Label Grid.Row="0"
+                           Text="{Binding TotalItemsText}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource ModernSecondary}"
+                           LineBreakMode="TailTruncation"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Grid.Row="1"
+                           Text="全部"
+                           Style="{StaticResource ModernCaptionLabel}"
+                           FontSize="11"
+                           HorizontalTextAlignment="Center"/>
+                </Grid>
             </Grid>
         </Frame>
 
-        <!-- Category filter chips -->
+        <!-- 现代化分类筛选 -->
         <ScrollView
             Grid.Row="2"
-            Margin="16,0"
+            Margin="16,0,16,6"
             Orientation="Horizontal"
-            HorizontalScrollBarVisibility="Never">
-            <toolkit:SfChipGroup
+            HorizontalScrollBarVisibility="Never"
+            HeightRequest="48">
+            <FlexLayout
                 ItemsSource="{Binding Categories}"
-                SelectedItem="{Binding SelectedCategory}"
-                DisplayMemberPath="Name"
-                ChipType="Choice"
-                ChoiceMode="Single"
-                ShowIcon="False"
-                ItemHeight="32"
-                ChipCornerRadius="16"
-                ChipPadding="4,4"
-                ChipBackground="{DynamicResource AppCardBackgroundColor}"
-                ChipTextColor="{DynamicResource AppTextSecondaryColor}"
-                ChipStroke="{DynamicResource AppBorderColor}"
-                ChipStrokeThickness="1"
-                SelectedChipBackground="{DynamicResource AppActiveBackgroundColor}"
-                SelectedChipTextColor="{DynamicResource AppPrimaryColor}"
-                SelectionIndicatorColor="{DynamicResource AppPrimaryColor}" />
+                BindableLayout.ItemsSource="{Binding Categories}"
+                JustifyContent="Start"
+                AlignItems="Center"
+                Wrap="NoWrap">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:SelectableCategory">
+                        <Button
+                            Text="{Binding Name}"
+                            Command="{Binding SelectCommand}"
+                            Padding="14,0"
+                            Margin="0,0,8,0"
+                            FontSize="13"
+                            CornerRadius="18"
+                            HeightRequest="44">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource ModernPrimary}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource ModernTextInverse}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource ModernSurfaceContainer}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource ModernTextSecondary}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
         </ScrollView>
 
-        <!-- Item list -->
+        <!-- 现代化物品列表 -->
         <RefreshView
             Grid.Row="3"
             Command="{Binding RefreshCommand}"
@@ -124,73 +183,93 @@
                 ItemSizingStrategy="MeasureFirstItem"
                 RemainingItemsThreshold="3"
                 RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="dtos:ItemDisplayDto">
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItem
-                                Text="删除"
-                                BackgroundColor="{DynamicResource AppErrorColor}"
-                                Invoked="OnDeleteItemSwipe"
-                                CommandParameter="{Binding ItemId}" />
-                        </SwipeView.RightItems>
-                        <Frame Style="{StaticResource ListCardStyle}">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dtos:ItemDisplayDto">
+                        <SwipeView>
+                            <SwipeView.RightItems>
+                                <SwipeItem
+                                    Text="删除"
+                                    BackgroundColor="{DynamicResource ModernError}"
+                                    Invoked="OnDeleteItemSwipe"
                                     CommandParameter="{Binding ItemId}" />
-                            </Frame.GestureRecognizers>
-                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+                            </SwipeView.RightItems>
+                            <Frame Style="{StaticResource ModernCardStyle}"
+                                   Margin="0,0,0,8"
+                                   Padding="12">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemLibraryViewModel}}, Path=ViewItemDetailCommand}"
+                                        CommandParameter="{Binding ItemId}" />
+                                </Frame.GestureRecognizers>
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
 
-                                <!-- Row 0: Icon + Name + Daily cost + Category -->
-                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto">
-                                    <Label Grid.Column="0"
-                                           Text="{Binding ItemIcon}"
-                                           FontSize="16"
-                                           VerticalOptions="Center"
-                                           Margin="0,0,6,0" />
-                                    <Label Grid.Column="1"
-                                           Text="{Binding ItemName}"
-                                           Style="{StaticResource TitleLabel}"
-                                           FontSize="16"
-                                           LineBreakMode="TailTruncation" />
-                                    <Label Grid.Column="2"
-                                           Text="{Binding DailyCostText}"
-                                           Style="{StaticResource CaptionLabel}"
-                                           FontSize="11"
-                                           TextColor="{DynamicResource AppPrimaryColor}"
-                                           VerticalOptions="Center"
-                                           IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}" />
-                                    <Label Grid.Column="3"
-                                           Text="{Binding CategoryName}"
-                                           Style="{StaticResource CaptionLabel}"
-                                           FontSize="11"
-                                           VerticalOptions="Center"
-                                           Margin="8,0,0,0" />
+                                    <!-- Row 0: Icon + Name + Daily cost + Category -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" VerticalOptions="Center">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding ItemIcon}"
+                                               FontSize="20"
+                                               VerticalOptions="Center"
+                                               Margin="0"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding ItemName}"
+                                               Style="{StaticResource ModernTitleLabel}"
+                                               FontSize="16"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Grid.Column="2"
+                                               Text="{Binding DailyCostText}"
+                                               Style="{StaticResource ModernCaptionLabel}"
+                                               FontSize="11"
+                                               TextColor="{DynamicResource ModernPrimary}"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding DailyCostText, Converter={StaticResource NotNullOrEmpty}}"
+                                               Margin="0"/>
+                                        <Frame Grid.Column="3"
+                                               Style="{StaticResource ModernBadgeStyle}"
+                                               Padding="8,4"
+                                               BackgroundColor="{DynamicResource ModernPrimary}">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding CategoryName}"
+                                                   FontSize="10"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{DynamicResource ModernTextInverse}"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="1"/>
+                                        </Frame>
+                                    </Grid>
+
+                                    <!-- Row 1: Purchase + expiry -->
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Label Grid.Column="0"
+                                               Style="{StaticResource ModernBodyLabel}"
+                                               FontSize="14"
+                                               LineBreakMode="TailTruncation">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}购买于 {0:yyyy-MM-dd}  ¥{1:F1}">
+                                                    <Binding Path="PurchaseDate" />
+                                                    <Binding Path="PurchasePrice" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Frame Grid.Column="1"
+                                               BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                               CornerRadius="12"
+                                               Padding="8,4"
+                                               HasShadow="False"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding ExpiryStatusText, Converter={StaticResource NotNullOrEmpty}}">
+                                            <Label
+                                                Text="{Binding ExpiryStatusText}"
+                                                Style="{StaticResource ModernCaptionLabel}"
+                                                FontSize="12"
+                                                LineBreakMode="TailTruncation"
+                                                MaxLines="1"/>
+                                        </Frame>
+                                    </Grid>
                                 </Grid>
-
-                                <!-- Row 1: Purchase date + price -->
-                                <Label Grid.Row="1"
-                                       Style="{StaticResource BodyLabel}"
-                                       LineBreakMode="TailTruncation">
-                                    <Label.Text>
-                                        <MultiBinding StringFormat="{}购买日期 {0:yyyy-MM-dd}    ¥{1:F1}">
-                                            <Binding Path="PurchaseDate" />
-                                            <Binding Path="PurchasePrice" />
-                                        </MultiBinding>
-                                    </Label.Text>
-                                </Label>
-
-                                <!-- Row 2: Expiry status -->
-                                <Label Grid.Row="2"
-                                       Style="{StaticResource BodyLabel}"
-                                       Text="{Binding ExpiryStatusText}"
-                                       LineBreakMode="TailTruncation" />
-                            </Grid>
-                        </Frame>
-                    </SwipeView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
+                            </Frame>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
             </CollectionView>
         </RefreshView>
 
@@ -202,24 +281,38 @@
             HorizontalOptions="Center"
             VerticalOptions="End"
             Margin="0,0,0,16"
-            Color="{DynamicResource AppPrimaryColor}" />
+            Color="{DynamicResource ModernPrimary}" />
 
-        <!-- Empty state -->
+        <!-- Modern Empty state -->
         <StackLayout
             Grid.Row="3"
             IsVisible="{Binding IsEmpty}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Spacing="8">
-            <Label Text="📦"
-                   FontSize="40"
-                   HorizontalOptions="Center" />
+            Spacing="16"
+            Padding="40">
+            <Frame WidthRequest="80" HeightRequest="80"
+                   CornerRadius="40"
+                   BackgroundColor="{DynamicResource ModernPrimary}"
+                   HasShadow="True"
+                   Padding="0">
+                <Frame.Shadow>
+                    <Shadow Brush="{DynamicResource ModernPrimary}"
+                            Opacity="0.3"
+                            Radius="24"
+                            Offset="0,8"/>
+                </Frame.Shadow>
+                <Label Text="📦"
+                       FontSize="36"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Frame>
             <Label Text="还没有物品"
-                   Style="{StaticResource BodyLabel}"
-                   HorizontalOptions="Center" />
+                   Style="{StaticResource ModernTitleLabel}"
+                   HorizontalOptions="Center"/>
             <Label Text="点击右上角 + 添加你的第一个物品"
-                   Style="{StaticResource CaptionLabel}"
-                   HorizontalOptions="Center" />
+                   Style="{StaticResource ModernBodyLabel}"
+                   HorizontalOptions="Center"/>
         </StackLayout>
 
         <!-- Loading -->
@@ -229,50 +322,96 @@
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Color="{DynamicResource AppPrimaryColor}" />
+            Color="{DynamicResource ModernPrimary}" />
+        </Grid>
 
-        <!-- Settings overlay (dimmed background) -->
-        <BoxView
-            Grid.RowSpan="4"
-            BackgroundColor="Black"
-            Opacity="0.4"
+        <!-- Modern Settings drawer overlay -->
+        <Border
+            ZIndex="101"
+            BackgroundColor="{DynamicResource ModernSurface}"
+            StrokeThickness="0"
+            Padding="16"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand"
             IsVisible="{Binding IsSettingsOpen}"
-            InputTransparent="False">
-            <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding CloseSettingsCommand}" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
+            Margin="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0" />
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="Black" Opacity="0.16" Radius="18" Offset="3,0"/>
+            </Border.Shadow>
+            <Grid RowDefinitions="Auto,Auto,*"
+                  WidthRequest="300"
+                  HorizontalOptions="Start">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <Label Text="设置"
+                           Style="{StaticResource ModernTitleLabel}"
+                           FontSize="18"
+                           VerticalOptions="Center"/>
+                    <Button Grid.Column="1"
+                            Text="×"
+                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                            TextColor="{DynamicResource ModernTextPrimary}"
+                            FontSize="18"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            CornerRadius="20"
+                            Padding="0"
+                            Command="{Binding CloseSettingsCommand}"/>
+                </Grid>
 
-        <!-- Settings panel (slides from right) -->
-        <Frame
-            Grid.RowSpan="4"
-            BackgroundColor="{DynamicResource AppCardBackgroundColor}"
-            CornerRadius="0"
-            Padding="20,32,20,24"
-            HasShadow="True"
-            WidthRequest="280"
-            HorizontalOptions="End"
-            IsVisible="{Binding IsSettingsOpen}">
-            <VerticalStackLayout Spacing="16">
-                <Button Text="📂 分类管理"
-                        FontSize="18"
-                        BackgroundColor="Transparent"
-                        TextColor="{DynamicResource AppTextColor}"
-                        HorizontalOptions="Fill"
-                        Command="{Binding GoToCategoryCommand}" />
-                <Button Text="💾 存储管理"
-                        FontSize="18"
-                        BackgroundColor="Transparent"
-                        TextColor="{DynamicResource AppTextColor}"
-                        HorizontalOptions="Fill"
-                        Command="{Binding GoToStorageCommand}" />
-                <Button Text="ℹ 关于"
-                        FontSize="18"
-                        BackgroundColor="Transparent"
-                        TextColor="{DynamicResource AppTextColor}"
-                        HorizontalOptions="Fill"
-                        Command="{Binding GoToAboutCommand}" />
-            </VerticalStackLayout>
-        </Frame>
+                <BoxView Grid.Row="1"
+                         HeightRequest="1"
+                         BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                         Margin="0,0,0,12"/>
+
+                <VerticalStackLayout Grid.Row="2" Spacing="8">
+                    <Button Text="📂  分类管理"
+                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                            TextColor="{DynamicResource ModernTextPrimary}"
+                            FontSize="15"
+                            HorizontalOptions="Fill"
+                            HorizontalContentAlignment="Start"
+                            HeightRequest="48"
+                            CornerRadius="14"
+                            Padding="14,0"
+                            Command="{Binding GoToCategoryCommand}"/>
+
+                    <Button Text="💾  存储管理"
+                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                            TextColor="{DynamicResource ModernTextPrimary}"
+                            FontSize="15"
+                            HorizontalOptions="Fill"
+                            HorizontalContentAlignment="Start"
+                            HeightRequest="48"
+                            CornerRadius="14"
+                            Padding="14,0"
+                            Command="{Binding GoToStorageCommand}"/>
+
+                    <Button Text="🔍  高级搜索"
+                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                            TextColor="{DynamicResource ModernTextPrimary}"
+                            FontSize="15"
+                            HorizontalOptions="Fill"
+                            HorizontalContentAlignment="Start"
+                            HeightRequest="48"
+                            CornerRadius="14"
+                            Padding="14,0"
+                            Command="{Binding OpenAdvancedSearchCommand}"/>
+
+                    <Button Text="ℹ  关于"
+                            BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                            TextColor="{DynamicResource ModernTextPrimary}"
+                            FontSize="15"
+                            HorizontalOptions="Fill"
+                            HorizontalContentAlignment="Start"
+                            HeightRequest="48"
+                            CornerRadius="14"
+                            Padding="14,0"
+                            Command="{Binding GoToAboutCommand}"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>
