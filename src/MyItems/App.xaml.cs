@@ -97,10 +97,14 @@ public partial class App : Application
         SetColor("ModernErrorContainer", dark ? "#4B111C" : "#FFE4E8");
         SetColor("ModernErrorText", dark ? "#FFB4C0" : "#B42318");
         SetColor("ModernSuccess", dark ? "#4EC89D" : "#22A97E");
+        SetColor("ModernSuccessContainer", dark ? "#1A3D2E" : "#DCFBE6");
+        SetColor("ModernSuccessText", dark ? "#A8F0D2" : "#146C52");
         SetColor("ModernWarning", dark ? "#F8B72B" : "#F5B51B");
         SetColor("ModernWarningContainer", dark ? "#4A3407" : "#FFF1B8");
         SetColor("ModernWarningText", dark ? "#FFD98A" : "#7A4A00");
         SetColor("ModernInfo", dark ? "#74B8F2" : "#4D9DE0");
+        SetColor("ModernInfoContainer", dark ? "#1E3A5F" : "#D9EEFF");
+        SetColor("ModernInfoText", dark ? "#B6DCFF" : "#1E5F96");
 
         SetColor("ModernTextPrimary", dark ? "#F8FAFC" : "#1A1A1A");
         SetColor("ModernTextSecondary", dark ? "#CBD5E1" : "#666666");

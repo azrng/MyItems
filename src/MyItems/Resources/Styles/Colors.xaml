@@ -90,10 +90,14 @@
     <Color x:Key="ModernErrorContainer">#FFE4E8</Color>       <!-- 错误容器 -->
     <Color x:Key="ModernErrorText">#B42318</Color>            <!-- 错误文字 -->
     <Color x:Key="ModernSuccess">#22A97E</Color>              <!-- 成功 -->
+    <Color x:Key="ModernSuccessContainer">#DCFBE6</Color>     <!-- 成功容器 -->
+    <Color x:Key="ModernSuccessText">#146C52</Color>          <!-- 成功文字 -->
     <Color x:Key="ModernWarning">#F5B51B</Color>              <!-- 警告 -->
     <Color x:Key="ModernWarningContainer">#FFF1B8</Color>     <!-- 警告容器 -->
     <Color x:Key="ModernWarningText">#7A4A00</Color>          <!-- 警告文字 -->
     <Color x:Key="ModernInfo">#4D9DE0</Color>                 <!-- 信息 -->
+    <Color x:Key="ModernInfoContainer">#D9EEFF</Color>        <!-- 信息容器 -->
+    <Color x:Key="ModernInfoText">#1E5F96</Color>             <!-- 信息文字 -->
 
     <!-- Modern Text Colors -->
     <Color x:Key="ModernTextPrimary">#1A1A1A</Color>          <!-- 主要文字 -->

@@ -37,12 +37,29 @@ public class SqliteDataService : IDataService
                 // 迁移失败仍允许进入系统，用户可在存储管理清空数据
             }
 
+            await EnsureRuntimeSchemaAsync();
+
             _initialized = true;
         }
         finally
         {
             _initLock.Release();
         }
+    }
+
+    private async Task EnsureRuntimeSchemaAsync()
+    {
+        var itemColumns = await _db.QueryAsync<TableColumnInfo>("PRAGMA table_info(\"Items\")");
+        if (itemColumns.Count > 0 && itemColumns.All(c => !string.Equals(c.Name, nameof(Item.Name), StringComparison.OrdinalIgnoreCase)))
+        {
+            await _db.ExecuteAsync("ALTER TABLE \"Items\" ADD COLUMN \"Name\" text NOT NULL DEFAULT ''");
+        }
+    }
+
+    public sealed class TableColumnInfo
+    {
+        [Column("name")]
+        public string Name { get; set; } = string.Empty;
     }
 
     private async Task<int> GetDbVersionInternalAsync()
@@ -199,6 +216,7 @@ public class SqliteDataService : IDataService
             ItemName = item.Name,
             ItemIcon = item.Icon,
             Brand = item.Brand,
+            Barcode = item.Barcode,
             CategoryId = item.CategoryId,
             CategoryName = category?.Name ?? string.Empty,
             CategoryIcon = category?.Icon,

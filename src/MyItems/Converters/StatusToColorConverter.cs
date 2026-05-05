@@ -18,8 +18,8 @@ public class ExpiryStatusToTextColorConverter : IValueConverter
             {
                 ExpiryStatus.Expired => GetColor("ModernErrorText", Color.FromArgb("#B42318")),
                 ExpiryStatus.Expiring => GetColor("ModernWarningText", Colors.Orange),
-                ExpiryStatus.Safe => GetColor("AppSafeColor", Color.FromArgb("#22A97E")),
-                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryColor", Color.FromArgb("#4D9DE0")),
+                ExpiryStatus.Safe => GetColor("ModernSuccessText", Color.FromArgb("#146C52")),
+                ExpiryStatus.NoExpiry => GetColor("ModernInfoText", Color.FromArgb("#1E5F96")),
                 _ => Colors.Gray
             };
         }
@@ -43,10 +43,10 @@ public class ExpiryStatusToBgColorConverter : IValueConverter
         {
             return status switch
             {
-                ExpiryStatus.Expired => GetColor("AppExpiredBgColor", "#FFE4E8"),
-                ExpiryStatus.Expiring => GetColor("AppExpiringBgColor", "#FEEFC8"),
-                ExpiryStatus.Safe => GetColor("AppSafeBgColor", "#DCFBE6"),
-                ExpiryStatus.NoExpiry => GetColor("AppNoExpiryBgColor", "#D9EEFF"),
+                ExpiryStatus.Expired => GetColor("ModernErrorContainer", "#FFE4E8"),
+                ExpiryStatus.Expiring => GetColor("ModernWarningContainer", "#FFF1B8"),
+                ExpiryStatus.Safe => GetColor("ModernSuccessContainer", "#DCFBE6"),
+                ExpiryStatus.NoExpiry => GetColor("ModernInfoContainer", "#D9EEFF"),
                 _ => Colors.Transparent
             };
         }

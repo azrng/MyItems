@@ -15,6 +15,9 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private bool isLoading = true;
 
+    [ObservableProperty]
+    private string? errorMessage;
+
     public ItemDetailViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -39,7 +42,12 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     private async Task EditItemAsync()
     {
         if (Item is null) return;
-        await Shell.Current.GoToAsync($"add?itemId={Item.ItemId}");
+
+        var parameters = new ShellNavigationQueryParameters
+        {
+            ["itemId"] = Item.ItemId.ToString()
+        };
+        await Shell.Current.GoToAsync("add", parameters);
     }
 
     [RelayCommand]
@@ -58,9 +66,21 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     private async Task LoadItemAsync(Guid itemId)
     {
         IsLoading = true;
+        ErrorMessage = null;
 
-        Item = await _dataService.GetItemDisplayDtoByIdAsync(itemId);
-
-        IsLoading = false;
+        try
+        {
+            Item = await _dataService.GetItemDisplayDtoByIdAsync(itemId);
+            if (Item is null)
+                ErrorMessage = "未找到该物品";
+        }
+        catch
+        {
+            ErrorMessage = "物品详情加载失败";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

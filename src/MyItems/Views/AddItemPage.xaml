@@ -12,6 +12,17 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBool" />
         <converters:StringNotNullOrEmptyConverter x:Key="NotNullOrEmpty" />
+        <Style x:Key="RequiredDotLabel" TargetType="Label">
+            <Setter Property="Text" Value="●" />
+            <Setter Property="FontSize" Value="9" />
+            <Setter Property="TextColor" Value="{DynamicResource ModernError}" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+        <Style x:Key="FieldErrorLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{DynamicResource ModernErrorText}" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
@@ -20,77 +31,71 @@
                 Padding="20"
                 Spacing="16">
 
+                <!-- 编辑模式加载状态 -->
+                <ActivityIndicator
+                    IsRunning="{Binding IsLoadingItem}"
+                    IsVisible="{Binding IsLoadingItem}"
+                    HorizontalOptions="Center"
+                    Color="{DynamicResource ModernPrimary}" />
+
                 <!-- Basic info -->
-                <Frame Style="{StaticResource ModernCardStyle}">
+                <Frame Style="{StaticResource ModernCardStyle}"
+                       IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
                     <VerticalStackLayout Spacing="20">
-                        <!-- Scan button temporarily disabled -->
-                        <!--<Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="12">
-                            <Label Grid.Column="0"
-                                   Text="📦 基础信息"
-                                   Style="{StaticResource ModernTitleLabel}"
-                                   VerticalOptions="Center" />
-                            <Button Grid.Column="1"
-                                    Text="📷 扫码"
-                                    Style="{StaticResource ModernSecondaryButton}"
-                                    Command="{Binding ScanBarcodeCommand}" />
-                        </Grid>-->
-
-                        <!-- Basic info header without scan -->
-                        <Label Text="📦 基础信息"
-                               Style="{StaticResource ModernTitleLabel}" />
-
-                        <!-- Scanned barcode display - temporarily disabled -->
-                        <!--<Frame
-                            IsVisible="{Binding Barcode, Converter={StaticResource NotNullOrEmpty}}"
-                            BackgroundColor="{DynamicResource ModernSuccessBgColor}"
-                            CornerRadius="12"
-                            Padding="16,12"
-                            HasShadow="False">
-                            <Grid ColumnDefinitions="*,Auto"
-                                  ColumnSpacing="12">
-                                <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
-                                    <Label Grid.Column="0"
-                                           Text="📱"
-                                           FontSize="18"
-                                           VerticalOptions="Center"
-                                           Margin="0,0,8,0"/>
-                                    <Label Grid.Column="1"
-                                           Text="{Binding Barcode, StringFormat='条码: {0}'}"
-                                           FontSize="16"
-                                           TextColor="{DynamicResource ModernSuccess}"
-                                           FontAttributes="Bold"
-                                           VerticalOptions="Center"
-                                           LineBreakMode="TailTruncation"/>
-                                </Grid>
-                                <Button Grid.Column="1"
-                                        Text="清除"
-                                        FontSize="14"
-                                        TextColor="White"
-                                        BackgroundColor="{DynamicResource ModernError}"
-                                        CornerRadius="8"
-                                        Padding="12,8"
-                                        Command="{Binding ClearBarcodeCommand}" />
+                        <!-- 动态表单头部：根据添加/编辑模式切换 -->
+                        <VerticalStackLayout Spacing="4">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Label Grid.Column="0"
+                                       Text="{Binding FormHeaderIcon}"
+                                       FontSize="22"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding FormHeaderTitle}"
+                                       Style="{StaticResource ModernTitleLabel}"
+                                       VerticalOptions="Center" />
                             </Grid>
-                        </Frame>-->
+                            <Label Text="{Binding FormSubtitle}"
+                                   Style="{StaticResource ModernCaptionLabel}"
+                                   Margin="32,0,0,0" />
+                        </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="12">
-                            <Label Text="物品名称" Style="{StaticResource ModernSubheadLabel}" />
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="6">
+                                <Label Grid.Column="0"
+                                       Style="{StaticResource RequiredDotLabel}" />
+                                <Label Grid.Column="1"
+                                       Text="物品名称"
+                                       Style="{StaticResource ModernSubheadLabel}" />
+                            </Grid>
                             <Entry
                                 Text="{Binding ItemName}"
                                 Placeholder="输入物品名称"
                                 ReturnType="Next"
                                 Style="{StaticResource EntryStyle}" />
+                            <Label Text="{Binding ItemNameError}"
+                                   Style="{StaticResource FieldErrorLabel}"
+                                   IsVisible="{Binding ItemNameError, Converter={StaticResource NotNullOrEmpty}}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="12">
-                            <Label Text="分类" Style="{StaticResource ModernSubheadLabel}" />
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="6">
+                                <Label Grid.Column="0"
+                                       Style="{StaticResource RequiredDotLabel}" />
+                                <Label Grid.Column="1"
+                                       Text="分类"
+                                       Style="{StaticResource ModernSubheadLabel}" />
+                            </Grid>
                             <Picker
                                 ItemsSource="{Binding Categories}"
                                 SelectedItem="{Binding SelectedCategory}"
                                 ItemDisplayBinding="{Binding Name}"
                                 Title="选择分类"
                                 Style="{StaticResource PickerStyle}" />
+                            <Label Text="{Binding CategoryError}"
+                                   Style="{StaticResource FieldErrorLabel}"
+                                   IsVisible="{Binding CategoryError, Converter={StaticResource NotNullOrEmpty}}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="12">
@@ -105,7 +110,8 @@
                 </Frame>
 
                 <!-- Purchase and storage -->
-                <Frame Style="{StaticResource ModernCardStyle}">
+                <Frame Style="{StaticResource ModernCardStyle}"
+                       IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
                     <VerticalStackLayout Spacing="20">
                         <Label Text="💰 购买与存放"
                                Style="{StaticResource ModernTitleLabel}" />
@@ -145,7 +151,8 @@
                 </Frame>
 
                 <!-- Usage settings -->
-                <Frame Style="{StaticResource ModernCardStyle}">
+                <Frame Style="{StaticResource ModernCardStyle}"
+                       IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
                     <VerticalStackLayout Spacing="20">
                         <Label Text="⏰ 期限与数量"
                                Style="{StaticResource ModernTitleLabel}" />

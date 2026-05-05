@@ -242,6 +242,7 @@
                                         <Label Grid.Column="0"
                                                Style="{StaticResource ModernBodyLabel}"
                                                FontSize="14"
+                                               MaxLines="1"
                                                LineBreakMode="TailTruncation">
                                             <Label.Text>
                                                 <MultiBinding StringFormat="{}购买于 {0:yyyy-MM-dd}  ¥{1:F1}">
@@ -253,15 +254,19 @@
                                         <Frame Grid.Column="1"
                                                BackgroundColor="{DynamicResource ModernSurfaceContainer}"
                                                CornerRadius="12"
-                                               Padding="8,4"
+                                               Padding="10,4"
                                                HasShadow="False"
+                                               MinimumWidthRequest="76"
+                                               HorizontalOptions="End"
                                                VerticalOptions="Center"
                                                IsVisible="{Binding ExpiryStatusText, Converter={StaticResource NotNullOrEmpty}}">
                                             <Label
                                                 Text="{Binding ExpiryStatusText}"
                                                 Style="{StaticResource ModernCaptionLabel}"
                                                 FontSize="12"
-                                                LineBreakMode="TailTruncation"
+                                                HorizontalOptions="Center"
+                                                HorizontalTextAlignment="Center"
+                                                LineBreakMode="NoWrap"
                                                 MaxLines="1"/>
                                         </Frame>
                                     </Grid>

@@ -14,7 +14,10 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
+    private readonly SemaphoreSlim _initializeLock = new(1, 1);
     private readonly SemaphoreSlim _loadLock = new(1, 1);
+    private bool _isInitialized;
+    private bool _suppressCategorySelectionLoad;
 
     public ObservableCollection<ItemDisplayDto> Items { get; } = [];
     public ObservableCollection<SelectableCategory> Categories { get; } = [];
@@ -56,7 +59,6 @@ public partial class ItemLibraryViewModel : ObservableObject
     public ItemLibraryViewModel(IDataService dataService)
     {
         _dataService = dataService;
-        _ = InitializeAsync();
     }
 
     [RelayCommand]
@@ -138,6 +140,12 @@ public partial class ItemLibraryViewModel : ObservableObject
     public async Task ApplySearchFilter(SearchFilter filter)
     {
         AdvancedSearchFilter = filter;
+        if (!_isInitialized)
+        {
+            await InitializeAsync();
+            return;
+        }
+
         await LoadDataAsync();
     }
 
@@ -166,13 +174,20 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.SeedSampleDataAsync();
+        _isInitialized = false;
         await InitializeAsync();
     }
 
     [RelayCommand]
-    private void Refresh()
+    private async Task RefreshAsync()
     {
-        _ = LoadDataAsync();
+        if (!_isInitialized)
+        {
+            await InitializeAsync();
+            return;
+        }
+
+        await LoadDataAsync();
     }
 
     [RelayCommand]
@@ -194,6 +209,9 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (value != null)
             value.IsSelected = true;
 
+        if (_suppressCategorySelectionLoad)
+            return;
+
         _ = LoadDataAsync();
     }
 
@@ -214,34 +232,71 @@ public partial class ItemLibraryViewModel : ObservableObject
         catch (TaskCanceledException) { }
     }
 
+    [RelayCommand]
     private async Task InitializeAsync()
     {
-        await LoadCategoriesAsync();
-        await LoadDataAsync();
+        if (_isInitialized)
+            return;
+
+        await _initializeLock.WaitAsync();
+        try
+        {
+            if (_isInitialized)
+                return;
+
+            IsLoading = true;
+            try
+            {
+                await LoadCategoriesAsync();
+                _isInitialized = true;
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ResetLoadedData();
+                await ShowLoadErrorAsync(ex);
+            }
+            finally
+            {
+                IsLoading = false;
+                OnPropertyChanged(nameof(IsEmpty));
+            }
+        }
+        finally
+        {
+            _initializeLock.Release();
+        }
     }
 
     private async Task LoadCategoriesAsync()
     {
-        Categories.Clear();
-        Categories.Add(new SelectableCategory(new Category { Id = Guid.Empty, Name = "全部" }, isSelected: true)
+        _suppressCategorySelectionLoad = true;
+        try
         {
-            OnSelect = (cat) => SelectedCategory = cat
-        });
-        var categories = await _dataService.GetCategoriesAsync();
-        foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
-        {
-            Categories.Add(new SelectableCategory(cat)
+            Categories.Clear();
+            Categories.Add(new SelectableCategory(new Category { Id = Guid.Empty, Name = "全部" }, isSelected: true)
             {
-                OnSelect = (c) => SelectedCategory = c
+                OnSelect = (cat) => SelectedCategory = cat
             });
+            var categories = await _dataService.GetCategoriesAsync();
+            foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
+            {
+                Categories.Add(new SelectableCategory(cat)
+                {
+                    OnSelect = (c) => SelectedCategory = c
+                });
+            }
+            SelectedCategory = Categories[0];
         }
-        SelectedCategory = Categories[0];
+        finally
+        {
+            _suppressCategorySelectionLoad = false;
+        }
     }
 
     private async Task LoadDataAsync()
     {
-        if (!await _loadLock.WaitAsync(0))
-            return;
+        await _loadLock.WaitAsync();
 
         try
         {
@@ -310,11 +365,37 @@ public partial class ItemLibraryViewModel : ObservableObject
 
             AppendPage();
         }
+        catch (Exception ex)
+        {
+            ResetLoadedData();
+            await ShowLoadErrorAsync(ex);
+        }
         finally
         {
             IsLoading = false;
             _loadLock.Release();
+            OnPropertyChanged(nameof(IsEmpty));
         }
+    }
+
+    private void ResetLoadedData()
+    {
+        _allItems = [];
+        _loadedCount = 0;
+        Items.Clear();
+        HasMoreItems = false;
+        TotalSpentText = "¥0.0";
+        ValidCountText = "0 件";
+        TotalItemsText = "0 件";
+    }
+
+    private static Task ShowLoadErrorAsync(Exception ex)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlertAsync("加载失败", $"物品库数据加载失败：{ex.Message}", "确定");
+        });
     }
 
     private async Task LoadMoreAsync()
