@@ -5,45 +5,82 @@
     xmlns:converters="clr-namespace:MyItems.Converters"
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     xmlns:dtos="clr-namespace:MyItems.Models.DTOs"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
     x:Class="MyItems.Views.MainPage"
     x:DataType="viewmodels:MainViewModel"
-    Title="我的物品"
+    Title="首页"
     Style="{StaticResource PageStyle}">
 
     <ContentPage.Resources>
         <converters:ExpiryStatusToTextColorConverter x:Key="StatusToTextColor" />
         <converters:ExpiryStatusToBgColorConverter x:Key="StatusToBgColor" />
         <converters:HasValueConverter x:Key="HasValue" />
+        <converters:ExpiryStatusVisibleConverter x:Key="ExpiryStatusVisibleConverter" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- Search bar + Add button -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto"
-              Margin="16,8"
-              ColumnSpacing="{StaticResource SpacingSm}">
-            <SearchBar
-                Grid.Column="0"
-                Style="{StaticResource SearchBarStyle}"
-                Placeholder="搜索物品..."
-                Text="{Binding SearchText}"
-                SearchCommand="{Binding RefreshCommand}" />
-            <Button
-                Grid.Column="1"
-                Text="＋"
-                Style="{StaticResource IconButton}"
-                Command="{Binding GoToAddCommand}"
-                VerticalOptions="Center" />
-        </Grid>
+        <!-- 现代化搜索栏 + 添加按钮 -->
+        <Frame Grid.Row="0"
+               Style="{StaticResource ModernCardStyle}"
+               Margin="16,10,16,6"
+               Padding="10">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="10">
+                <!-- 现代化搜索框 -->
+                <Frame Grid.Column="0"
+                       BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                       CornerRadius="14"
+                       Padding="12,8"
+                       HasShadow="False">
+                    <SearchBar Placeholder="搜索物品..."
+                               Text="{Binding SearchText}"
+                               SearchCommand="{Binding RefreshCommand}"
+                               Margin="0"
+                               BackgroundColor="Transparent"
+                               FontSize="15"
+                               HeightRequest="44"/>
+                </Frame>
 
-        <!-- Recent items list with pull-to-refresh -->
+                <!-- 现代化添加按钮 -->
+                <Border Grid.Column="1"
+                        WidthRequest="48"
+                        HeightRequest="48"
+                        Padding="0"
+                        Margin="0"
+                        StrokeThickness="0"
+                        BackgroundColor="{DynamicResource ModernSecondary}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="24" />
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="{DynamicResource ModernSecondary}"
+                                Opacity="0.28"
+                                Radius="18"
+                                Offset="0,6"/>
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToAddCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="+"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource ModernTextInverse}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           InputTransparent="True" />
+                </Border>
+            </Grid>
+        </Frame>
+
+        <!-- 现代化物品列表 -->
         <RefreshView
             Grid.Row="1"
             IsRefreshing="{Binding IsRefreshing}"
             Command="{Binding RefreshCommand}"
-            RefreshColor="{DynamicResource AppPrimaryColor}">
+            RefreshColor="{DynamicResource ModernPrimary}">
             <CollectionView
                 ItemsSource="{Binding RecentItems}"
-                Margin="16,0"
+                Margin="16,6"
                 ItemSizingStrategy="MeasureFirstItem"
                 RemainingItemsThreshold="3"
                 RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
@@ -53,67 +90,73 @@
                             <SwipeView.RightItems>
                                 <SwipeItem
                                     Text="删除"
-                                    BackgroundColor="{DynamicResource AppErrorColor}"
+                                    BackgroundColor="{DynamicResource ModernError}"
                                     Invoked="OnDeleteItemSwipe"
                                     CommandParameter="{Binding ItemId}" />
                             </SwipeView.RightItems>
-                            <Frame Style="{StaticResource ListCardStyle}">
+                            <Frame Style="{StaticResource ModernCardStyle}"
+                                   Margin="0,0,0,8"
+                                   Padding="12">
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ViewItemDetailCommand}"
                                         CommandParameter="{Binding ItemId}" />
                                 </Frame.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource SpacingXs}">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
 
-                                    <!-- Row 0: Name + Category + status badge -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                                    <!-- Row 0: Icon + Name + Category + status badge -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" VerticalOptions="Center">
                                         <Label Grid.Column="0"
-                                               Style="{StaticResource TitleLabel}"
-                                               LineBreakMode="TailTruncation">
-                                            <Label.Text>
-                                                <MultiBinding StringFormat="{}{0} · {1}">
-                                                    <Binding Path="ItemName" />
-                                                    <Binding Path="CategoryName" TargetNullValue="" />
-                                                </MultiBinding>
-                                            </Label.Text>
-                                        </Label>
+                                               Text="{Binding ItemIcon}"
+                                               FontSize="22"
+                                               VerticalOptions="Center"
+                                               Margin="0"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding ItemName}"
+                                               Style="{StaticResource ModernTitleLabel}"
+                                               FontSize="16"
+                                               LineBreakMode="TailTruncation"/>
                                         <Frame Grid.Column="2"
-                                               Style="{StaticResource StatusBadgeFrame}"
-                                               BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}">
-                                            <Frame.Triggers>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Expired">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="Safe">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ExpiryStatus}" Value="NoExpiry">
-                                                    <Setter Property="IsVisible" Value="False" />
-                                                </DataTrigger>
-                                            </Frame.Triggers>
-                                            <Label Text="临期"
-                                                   Style="{StaticResource StatusBadgeLabel}"
-                                                   TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}" />
+                                               Style="{StaticResource ModernBadgeStyle}"
+                                               Padding="8,4"
+                                               BackgroundColor="{Binding ExpiryStatus, Converter={StaticResource StatusToBgColor}}"
+                                               IsVisible="{Binding ExpiryStatus, Converter={StaticResource ExpiryStatusVisibleConverter}}">
+                                            <Label Text="{Binding ExpiryStatusText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{Binding ExpiryStatus, Converter={StaticResource StatusToTextColor}}"/>
                                         </Frame>
                                     </Grid>
 
-                                    <!-- Row 1: Purchase date + Brand -->
-                                    <Label Grid.Row="1"
-                                           LineBreakMode="TailTruncation"
-                                           Style="{StaticResource BodyLabel}">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="{}购买日期 {0:yyyy-MM-dd}  {1}">
-                                                <Binding Path="PurchaseDate" />
-                                                <Binding Path="Brand" TargetNullValue="" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-
-                                    <!-- Row 2: Expiry date (hidden when no expiry) -->
-                                    <Label Grid.Row="2"
-                                           Style="{StaticResource CaptionLabel}"
-                                           Text="{Binding ExpiryDate, StringFormat='保质期 {0:yyyy-MM-dd}'}"
-                                           IsVisible="{Binding ExpiryDate, Converter={StaticResource HasValue}}" />
+                                    <!-- Row 1: Category + Purchase + Expiry -->
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Label Grid.Column="0"
+                                               Style="{StaticResource ModernBodyLabel}"
+                                               FontSize="14"
+                                               LineBreakMode="TailTruncation">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0} · {1:yyyy-MM-dd}  {2}">
+                                                    <Binding Path="CategoryName" TargetNullValue="未分类" />
+                                                    <Binding Path="PurchaseDate" />
+                                                    <Binding Path="Brand" TargetNullValue="" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Frame Grid.Column="1"
+                                               BackgroundColor="{DynamicResource ModernSurfaceContainer}"
+                                               CornerRadius="12"
+                                               Padding="8,4"
+                                               HasShadow="False"
+                                               IsVisible="{Binding ExpiryDate, Converter={StaticResource HasValue}}"
+                                               VerticalOptions="Center">
+                                            <Label
+                                                Style="{StaticResource ModernCaptionLabel}"
+                                                FontSize="12"
+                                                Text="{Binding ExpiryDate, StringFormat='{0:MM-dd}到期'}"
+                                                LineBreakMode="TailTruncation"
+                                                MaxLines="1"/>
+                                        </Frame>
+                                    </Grid>
                                 </Grid>
                             </Frame>
                         </SwipeView>
@@ -130,21 +173,45 @@
             HorizontalOptions="Center"
             VerticalOptions="End"
             Margin="0,0,0,16"
-            Color="{DynamicResource AppPrimaryColor}" />
+            Color="{DynamicResource ModernPrimary}" />
 
-        <!-- Empty state -->
+        <!-- Modern Empty state -->
         <StackLayout
             Grid.Row="1"
             IsVisible="{Binding IsEmpty}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Spacing="8">
-            <Label Text="📦"
-                   FontSize="40"
-                   HorizontalOptions="Center" />
+            Spacing="16"
+            Padding="40">
+            <Frame WidthRequest="80" HeightRequest="80"
+                   CornerRadius="40"
+                   BackgroundColor="{DynamicResource ModernPrimary}"
+                   HasShadow="True"
+                   Padding="0">
+                <Frame.Shadow>
+                    <Shadow Brush="{DynamicResource ModernPrimary}"
+                            Opacity="0.3"
+                            Radius="24"
+                            Offset="0,8"/>
+                </Frame.Shadow>
+                <Label Text="📦"
+                       FontSize="36"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Frame>
             <Label Text="还没有物品"
-                   Style="{StaticResource BodyLabel}"
-                   HorizontalOptions="Center" />
+                   Style="{StaticResource ModernTitleLabel}"
+                   HorizontalOptions="Center"/>
+            <Label Text="点击右上角 + 添加你的第一个物品"
+                   Style="{StaticResource ModernBodyLabel}"
+                   HorizontalOptions="Center"/>
+            <Button Text="添加物品"
+                    StyleClass="FilledButton"
+                    Command="{Binding GoToAddCommand}"
+                    WidthRequest="200"
+                    Margin="0,16,0,0"
+                    HeightRequest="56"
+                    CornerRadius="16"/>
         </StackLayout>
 
         <!-- Loading indicator -->
@@ -154,6 +221,6 @@
             IsVisible="{Binding IsLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Color="{DynamicResource AppPrimaryColor}" />
+            Color="{DynamicResource ModernPrimary}" />
     </Grid>
 </ContentPage>

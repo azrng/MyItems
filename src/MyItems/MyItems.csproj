@@ -29,11 +29,10 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="*" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
     <PackageReference Include="CommunityToolkit.Maui" Version="*" />
-    <PackageReference Include="Syncfusion.Maui.Toolkit" Version="*" />
+    <PackageReference Include="UraniumUI.Material" Version="*" />
     <PackageReference Include="sqlite-net-pcl" Version="*" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.*" />
     <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.*" />
-    <PackageReference Include="ClosedXML" Version="*" />
   </ItemGroup>
 
   <ItemGroup>

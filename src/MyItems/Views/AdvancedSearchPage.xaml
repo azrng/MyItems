@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
+    xmlns:converters="clr-namespace:MyItems.Converters"
+    x:Class="MyItems.Views.AdvancedSearchPage"
+    x:DataType="viewmodels:AdvancedSearchViewModel"
+    Title="高级搜索"
+    Style="{StaticResource PageStyle}">
+
+    <ContentPage.Resources>
+        <converters:DecimalToStringConverter x:Key="DecimalToStringConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto" Margin="0">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="{StaticResource PagePadding}" Spacing="16">
+
+                <!-- 关键词 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="关键词" Style="{StaticResource SectionHeaderLabel}" />
+                        <Entry Text="{Binding Filter.Keyword}"
+                               Placeholder="输入物品名称或品牌"
+                               Style="{StaticResource EntryStyle}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- 价格区间 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="价格区间" Style="{StaticResource SectionHeaderLabel}" />
+                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8" RowSpacing="8">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding Filter.MinPrice, Converter={StaticResource DecimalToStringConverter}}"
+                                   Placeholder="最低价格"
+                                   Style="{StaticResource EntryStyle}"
+                                   Keyboard="Numeric" />
+                            <Label Grid.Column="1"
+                                   Text="-"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   VerticalOptions="Center" />
+                            <Entry Grid.Column="2"
+                                   Text="{Binding Filter.MaxPrice, Converter={StaticResource DecimalToStringConverter}}"
+                                   Placeholder="最高价格"
+                                   Style="{StaticResource EntryStyle}"
+                                   Keyboard="Numeric" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- 购买日期 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="购买日期" Style="{StaticResource SectionHeaderLabel}" />
+                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8" RowSpacing="8">
+                            <DatePicker Grid.Column="0"
+                                        Date="{Binding Filter.PurchaseDateFrom}"
+                                        Style="{StaticResource DatePickerStyle}" />
+                            <Label Grid.Column="1"
+                                   Text="-"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   VerticalOptions="Center" />
+                            <DatePicker Grid.Column="2"
+                                        Date="{Binding Filter.PurchaseDateTo}"
+                                        Style="{StaticResource DatePickerStyle}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- 保质期 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="保质期" Style="{StaticResource SectionHeaderLabel}" />
+                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8" RowSpacing="8">
+                            <DatePicker Grid.Column="0"
+                                        Date="{Binding Filter.ExpiryDateFrom}"
+                                        Style="{StaticResource DatePickerStyle}" />
+                            <Label Grid.Column="1"
+                                   Text="-"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   VerticalOptions="Center" />
+                            <DatePicker Grid.Column="2"
+                                        Date="{Binding Filter.ExpiryDateTo}"
+                                        Style="{StaticResource DatePickerStyle}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- 分类 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="分类" Style="{StaticResource SectionHeaderLabel}" />
+                        <Picker Title="选择分类"
+                                ItemsSource="{Binding Categories}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedCategory}"
+                                Style="{StaticResource PickerStyle}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- 保质期状态 -->
+                <Frame Style="{StaticResource FormSectionCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="保质期状态" Style="{StaticResource SectionHeaderLabel}" />
+
+                        <CheckBox IsChecked="{Binding Filter.HasExpiry}"
+                                  VerticalOptions="Center">
+                            <CheckBox.Content>
+                                <Label Text="只显示有保质期的物品" />
+                            </CheckBox.Content>
+                        </CheckBox>
+
+                        <CheckBox IsChecked="{Binding Filter.OnlyExpiring}"
+                                  VerticalOptions="Center">
+                            <CheckBox.Content>
+                                <Label Text="只显示临期/已过期" />
+                            </CheckBox.Content>
+                        </CheckBox>
+
+                        <CheckBox IsChecked="{Binding Filter.OnlyExpired}"
+                                  VerticalOptions="Center">
+                            <CheckBox.Content>
+                                <Label Text="只显示已过期" />
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- 底部操作按钮 -->
+        <Frame Grid.Row="1"
+               Style="{StaticResource BottomActionFrameStyle}">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Button Grid.Column="0"
+                        Text="重置"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding ResetCommand}" />
+                <Button Grid.Column="1"
+                        Text="搜索"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding SearchCommand}" />
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentPage>

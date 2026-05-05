@@ -17,10 +17,10 @@ public partial class ItemLibraryViewModel : ObservableObject
     private readonly SemaphoreSlim _loadLock = new(1, 1);
 
     public ObservableCollection<ItemDisplayDto> Items { get; } = [];
-    public ObservableCollection<Category> Categories { get; } = [];
+    public ObservableCollection<SelectableCategory> Categories { get; } = [];
 
     [ObservableProperty]
-    private Category selectedCategory = null!;
+    private SelectableCategory selectedCategory = null!;
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -45,6 +45,9 @@ public partial class ItemLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isSettingsOpen;
+
+    [ObservableProperty]
+    private SearchFilter? advancedSearchFilter;
 
     public bool IsEmpty => !IsLoading && Items.Count == 0 && _allItems.Count == 0;
 
@@ -119,11 +122,31 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportExcelAsync()
+    private async Task OpenAdvancedSearchAsync()
+    {
+        IsSettingsOpen = false;
+        await Task.Delay(100);
+
+        var navigationParameter = new Dictionary<string, object>
+        {
+            { "CurrentFilter", AdvancedSearchFilter != null ? (SearchFilter)AdvancedSearchFilter.Clone() : new SearchFilter() }
+        };
+
+        await Shell.Current.GoToAsync("advancedsearch", navigationParameter);
+    }
+
+    public async Task ApplySearchFilter(SearchFilter filter)
+    {
+        AdvancedSearchFilter = filter;
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
+    private async Task ExportCsvAsync()
     {
         try
         {
-            var path = await _dataService.ExportToExcelAsync();
+            var path = await _dataService.ExportToCsvAsync();
             await Share.Default.RequestAsync(new ShareFileRequest
             {
                 Title = "导出物品数据",
@@ -159,8 +182,18 @@ public partial class ItemLibraryViewModel : ObservableObject
         _ = LoadMoreAsync();
     }
 
-    partial void OnSelectedCategoryChanged(Category value)
+    partial void OnSelectedCategoryChanged(SelectableCategory value)
     {
+        // 取消其他分类的选中状态
+        foreach (var cat in Categories)
+        {
+            if (cat != value)
+                cat.IsSelected = false;
+        }
+
+        if (value != null)
+            value.IsSelected = true;
+
         _ = LoadDataAsync();
     }
 
@@ -190,10 +223,18 @@ public partial class ItemLibraryViewModel : ObservableObject
     private async Task LoadCategoriesAsync()
     {
         Categories.Clear();
-        Categories.Add(new Category { Id = Guid.Empty, Name = "全部" });
+        Categories.Add(new SelectableCategory(new Category { Id = Guid.Empty, Name = "全部" }, isSelected: true)
+        {
+            OnSelect = (cat) => SelectedCategory = cat
+        });
         var categories = await _dataService.GetCategoriesAsync();
         foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
-            Categories.Add(cat);
+        {
+            Categories.Add(new SelectableCategory(cat)
+            {
+                OnSelect = (c) => SelectedCategory = c
+            });
+        }
         SelectedCategory = Categories[0];
     }
 
@@ -207,16 +248,61 @@ public partial class ItemLibraryViewModel : ObservableObject
             var result = await _dataService.GetItemsWithStatisticsAsync();
 
             TotalSpentText = $"¥{result.TotalSpent:F1}";
-            ValidCountText = $"{result.ValidItems} 件有效";
-            TotalItemsText = $"共 {result.TotalItems} 件";
+            ValidCountText = $"{result.ValidItems} 件";
+            TotalItemsText = $"{result.TotalItems} 件";
 
             var items = result.Items.AsEnumerable();
 
-            if (SelectedCategory is { Id: var categoryId } && categoryId != Guid.Empty)
+            if (SelectedCategory?.Category?.Id is { } categoryId && categoryId != Guid.Empty)
                 items = items.Where(i => i.CategoryId == categoryId);
 
             if (!string.IsNullOrWhiteSpace(SearchText))
                 items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+            // 应用高级搜索过滤器
+            if (AdvancedSearchFilter != null && AdvancedSearchFilter.IsActive)
+            {
+                var filter = AdvancedSearchFilter;
+
+                // 关键词搜索
+                if (!string.IsNullOrWhiteSpace(filter.Keyword))
+                    items = items.Where(i => i.ItemName.Contains(filter.Keyword, StringComparison.OrdinalIgnoreCase) ||
+                                                (i.Brand != null && i.Brand.Contains(filter.Keyword, StringComparison.OrdinalIgnoreCase)));
+
+                // 价格区间
+                if (filter.MinPrice.HasValue)
+                    items = items.Where(i => i.PurchasePrice.HasValue && i.PurchasePrice.Value >= filter.MinPrice.Value);
+                if (filter.MaxPrice.HasValue)
+                    items = items.Where(i => i.PurchasePrice.HasValue && i.PurchasePrice.Value <= filter.MaxPrice.Value);
+
+                // 购买日期
+                if (filter.PurchaseDateFrom.HasValue)
+                    items = items.Where(i => i.PurchaseDate.HasValue && i.PurchaseDate.Value >= filter.PurchaseDateFrom.Value);
+                if (filter.PurchaseDateTo.HasValue)
+                    items = items.Where(i => i.PurchaseDate.HasValue && i.PurchaseDate.Value <= filter.PurchaseDateTo.Value);
+
+                // 保质期
+                if (filter.ExpiryDateFrom.HasValue)
+                    items = items.Where(i => i.ExpiryDate.HasValue && i.ExpiryDate.Value >= filter.ExpiryDateFrom.Value);
+                if (filter.ExpiryDateTo.HasValue)
+                    items = items.Where(i => i.ExpiryDate.HasValue && i.ExpiryDate.Value <= filter.ExpiryDateTo.Value);
+
+                // 分类
+                if (filter.CategoryId.HasValue)
+                    items = items.Where(i => i.CategoryId == filter.CategoryId.Value);
+
+                // 只显示有保质期的
+                if (filter.HasExpiry)
+                    items = items.Where(i => i.ExpiryDate.HasValue);
+
+                // 只显示临期/已过期
+                if (filter.OnlyExpiring)
+                    items = items.Where(i => i.ExpiryStatus != Enums.ExpiryStatus.Safe && i.ExpiryStatus != Enums.ExpiryStatus.NoExpiry);
+
+                // 只显示已过期
+                if (filter.OnlyExpired)
+                    items = items.Where(i => i.ExpiryStatus == Enums.ExpiryStatus.Expired);
+            }
 
             _allItems = items.OrderByDescending(i => i.PurchaseDate).ToList();
             _loadedCount = 0;

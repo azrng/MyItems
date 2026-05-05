@@ -16,6 +16,8 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
     public string PageTitle => IsEditMode ? "编辑物品" : "添加物品";
     public string SaveButtonText => IsEditMode ? "更新" : "保存";
+    public bool HasBarcode => !string.IsNullOrWhiteSpace(Barcode);
+    public string BarcodeDisplayText => HasBarcode ? $"条码: {Barcode?.Trim()}" : string.Empty;
 
     [ObservableProperty]
     private partial bool IsEditMode { get; set; }
@@ -62,6 +64,12 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private partial string? ErrorMessage { get; set; }
 
+    [ObservableProperty]
+    private partial string? ItemNameError { get; set; }
+
+    [ObservableProperty]
+    private partial string? CategoryError { get; set; }
+
     public AddItemViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -78,7 +86,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
         if (query.TryGetValue("barcode", out var barcodeObj) && barcodeObj?.ToString() is string barcodeValue)
         {
-            Barcode = barcodeValue;
+            Barcode = string.IsNullOrWhiteSpace(barcodeValue) ? null : barcodeValue.Trim();
         }
     }
 
@@ -99,7 +107,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         ItemName = item.Name;
         Brand = item.Brand;
         Location = item.DefaultLocation;
-        Barcode = item.Barcode;
+        Barcode = string.IsNullOrWhiteSpace(item.Barcode) ? null : item.Barcode.Trim();
         PurchaseDate = item.PurchaseDate;
         PurchasePrice = item.PurchasePrice;
         ExpiryDate = item.ExpiryDate;
@@ -118,46 +126,46 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(ItemName))
-        {
-            ErrorMessage = "请输入物品名称";
+        if (!ValidateRequiredFields())
             return;
-        }
-
-        if (SelectedCategory is null)
-        {
-            ErrorMessage = "请选择分类";
-            return;
-        }
 
         IsSaving = true;
         ErrorMessage = null;
 
-        var category = SelectedCategory;
-
-        var item = new Item
+        try
         {
-            Id = IsEditMode ? _editingItemId : Guid.NewGuid(),
-            Name = ItemName.Trim(),
-            CategoryId = category.Id,
-            Barcode = Barcode,
-            Brand = Brand,
-            Icon = category.Icon ?? "\U0001F4E6",
-            DefaultLocation = Location,
-            PurchaseDate = PurchaseDate,
-            PurchasePrice = PurchasePrice,
-            ExpiryDate = NoExpiry ? null : ExpiryDate,
-            Quantity = Math.Max(1, Quantity),
-            TrackDailyCost = TrackDailyCost,
-            Notes = Notes,
-            CreatedAt = IsEditMode ? _originalCreatedAt : DateTime.Now,
-            UpdatedAt = DateTime.Now,
-        };
+            var category = SelectedCategory!;
 
-        await _dataService.SaveItemAsync(item);
+            var item = new Item
+            {
+                Id = IsEditMode ? _editingItemId : Guid.NewGuid(),
+                Name = ItemName.Trim(),
+                CategoryId = category.Id,
+                Barcode = string.IsNullOrWhiteSpace(Barcode) ? null : Barcode.Trim(),
+                Brand = Brand,
+                Icon = category.Icon ?? "\U0001F4E6",
+                DefaultLocation = Location,
+                PurchaseDate = PurchaseDate,
+                PurchasePrice = PurchasePrice,
+                ExpiryDate = NoExpiry ? null : ExpiryDate,
+                Quantity = Math.Max(1, Quantity),
+                TrackDailyCost = TrackDailyCost,
+                Notes = Notes,
+                CreatedAt = IsEditMode ? _originalCreatedAt : DateTime.Now,
+                UpdatedAt = DateTime.Now,
+            };
 
-        IsSaving = false;
-        await Shell.Current.GoToAsync("..");
+            await _dataService.SaveItemAsync(item);
+            await Shell.Current.GoToAsync("..");
+        }
+        catch
+        {
+            ErrorMessage = "保存失败，请稍后重试";
+        }
+        finally
+        {
+            IsSaving = false;
+        }
     }
 
     [RelayCommand]
@@ -170,6 +178,24 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     private void ClearBarcode()
     {
         Barcode = null;
+    }
+
+    partial void OnItemNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            ItemNameError = null;
+    }
+
+    partial void OnSelectedCategoryChanged(Category? value)
+    {
+        if (value is not null)
+            CategoryError = null;
+    }
+
+    partial void OnBarcodeChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasBarcode));
+        OnPropertyChanged(nameof(BarcodeDisplayText));
     }
 
     partial void OnNoExpiryChanged(bool value)
@@ -186,5 +212,14 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         var categories = await _dataService.GetCategoriesAsync();
         foreach (var cat in categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder))
             Categories.Add(cat);
+    }
+
+    private bool ValidateRequiredFields()
+    {
+        ItemNameError = string.IsNullOrWhiteSpace(ItemName) ? "请输入物品名称" : null;
+        CategoryError = SelectedCategory is null ? "请选择分类" : null;
+        ErrorMessage = null;
+
+        return ItemNameError is null && CategoryError is null;
     }
 }

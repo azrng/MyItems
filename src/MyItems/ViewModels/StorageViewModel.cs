@@ -17,12 +17,12 @@ public partial class StorageViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportExcelAsync()
+    private async Task ExportCsvAsync()
     {
         IsBusy = true;
         try
         {
-            var path = await _dataService.ExportToExcelAsync();
+            var path = await _dataService.ExportToCsvAsync();
             await Share.Default.RequestAsync(new ShareFileRequest
             {
                 Title = "导出物品数据",
@@ -32,6 +32,51 @@ public partial class StorageViewModel : ObservableObject
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlertAsync("导出失败", ex.Message, "确定");
+        }
+        IsBusy = false;
+    }
+
+    [RelayCommand]
+    private async Task ImportCsvAsync()
+    {
+        var result = await FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "选择CSV文件",
+            FileTypes = new FilePickerFileType(
+                new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.Android, new[] { "text/csv", "application/csv" } },
+                    { DevicePlatform.WinUI, new[] { ".csv" } },
+                })
+        });
+
+        if (result is null) return;
+
+        var confirm = await Shell.Current.DisplayAlertAsync("导入CSV",
+            "将从CSV文件导入物品数据。\n\n注意：分类必须已存在才能导入成功。", "导入", "取消");
+        if (!confirm) return;
+
+        IsBusy = true;
+        try
+        {
+            var (successCount, failureCount, errors) = await _dataService.ImportFromCsvAsync(result.FullPath);
+
+            var message = $"导入完成！\n成功：{successCount} 条\n失败：{failureCount} 条";
+
+            if (errors.Count > 0)
+            {
+                message += "\n\n错误信息：\n" + string.Join("\n", errors.Take(10));
+                if (errors.Count > 10)
+                {
+                    message += $"\n... 还有 {errors.Count - 10} 条错误";
+                }
+            }
+
+            await Shell.Current.DisplayAlertAsync("导入结果", message, "确定");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("导入失败", ex.Message, "确定");
         }
         IsBusy = false;
     }

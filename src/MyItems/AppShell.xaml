@@ -6,20 +6,96 @@
     x:Class="MyItems.AppShell"
     Title="我的物品"
     FlyoutBehavior="Disabled"
-    BackgroundColor="{DynamicResource AppGray800Color}"
-    ForegroundColor="{DynamicResource AppTextInverseColor}"
-    TitleColor="{DynamicResource AppTextInverseColor}"
-    TabBarBackgroundColor="{DynamicResource AppCardBackgroundColor}"
-    TabBarForegroundColor="{DynamicResource AppTextMutedColor}"
-    TabBarTitleColor="{DynamicResource AppTextColor}"
-    TabBarUnselectedColor="{DynamicResource AppTextDisabledColor}">
+    BackgroundColor="{DynamicResource ModernPrimary}"
+    ForegroundColor="{DynamicResource ModernTextInverse}"
+    TitleColor="{DynamicResource ModernTextInverse}"
+    TabBarBackgroundColor="{DynamicResource ModernSurface}"
+    TabBarForegroundColor="{DynamicResource ModernPrimary}"
+    TabBarTitleColor="{DynamicResource ModernTextPrimary}"
+    TabBarUnselectedColor="{DynamicResource ModernTextSecondary}">
+
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="*,Auto"
+              HorizontalOptions="Fill"
+              VerticalOptions="Center"
+              Padding="16,8">
+            <!-- 现代化标题 -->
+            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
+                <Label Text="📦"
+                       FontSize="20"
+                       VerticalOptions="Center" />
+                <Label Text="我的物品"
+                       FontFamily="{DynamicResource ModernDisplayFont}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource ModernTextInverse}"
+                       VerticalOptions="Center" />
+            </StackLayout>
+
+            <!-- 临期提醒红点，保留完整触摸热区 -->
+            <Border Grid.Column="1"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    Padding="0"
+                    Margin="0,0,8,0"
+                    BackgroundColor="Transparent"
+                    StrokeThickness="0"
+                    x:Name="NotificationButton">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22" />
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnNotificationClicked" />
+                </Border.GestureRecognizers>
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Setter Property="Scale" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.7" />
+                                    <Setter Property="Scale" Value="0.9" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
+                <Grid>
+                    <Border x:Name="NotificationBadge"
+                            WidthRequest="12"
+                            HeightRequest="12"
+                            Padding="0"
+                            StrokeThickness="0"
+                            BackgroundColor="{DynamicResource ModernError}"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            IsVisible="False">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="6" />
+                        </Border.StrokeShape>
+                        <Border.Shadow>
+                            <Shadow Brush="{DynamicResource ModernError}"
+                                    Opacity="0.35"
+                                    Radius="8"
+                                    Offset="0,2"/>
+                        </Border.Shadow>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Shell.TitleView>
 
     <TabBar>
-        <Tab Title="主页">
+        <Tab Title="首页">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
-        <Tab Title="临期">
-            <ShellContent ContentTemplate="{DataTemplate views:ExpiringPage}" />
+        <Tab x:Name="ExpiringTab" Title="临期" Route="expiring">
+            <ShellContent Route="expiring-page" ContentTemplate="{DataTemplate views:ExpiringPage}" />
         </Tab>
         <Tab Title="物品库">
             <ShellContent ContentTemplate="{DataTemplate views:ItemLibraryPage}" />

@@ -134,6 +134,7 @@ src/AppName/
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`
 - 优先使用 Syncfusion.Maui.Toolkit 控件，不满足需求时再使用 MAUI 内置控件或自定义控件
 - 图标使用 MAUI 内置图形能力（Font Image Source）或项目既有素材
+- 覆盖式侧边栏或抽屉打开后，主体页面中的搜索框、统计卡片、列表卡片等内容不得与抽屉视觉重叠；若菜单只需要左侧固定宽度，应使用全宽覆盖容器承载左侧菜单内容，而不是让半宽容器后方的大圆角卡片继续透出
 
 ### MVVM 模式规则
 - 所有 ViewModel 最终都必须继承 `ObservableObject`；若项目已有 `BaseViewModel`，应由基类继承 `ObservableObject` 后统一复用

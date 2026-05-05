@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.ApplicationModel;
 
 namespace MyItems.ViewModels;
 
@@ -9,6 +10,7 @@ public partial class AboutViewModel : ObservableObject
 {
     private const string RepoUrl = "https://github.com/azrng/MyItems";
     private const string VersionsUrl = "https://github.com/azrng/MyItems/releases/latest/download/versions.json";
+    private const string ThemePreferenceKey = "app_theme";
 
     [ObservableProperty]
     private partial string AppName { get; set; } = "我的物品";
@@ -27,6 +29,48 @@ public partial class AboutViewModel : ObservableObject
 
     [ObservableProperty]
     private partial string ProjectUrl { get; set; } = RepoUrl;
+
+    [ObservableProperty]
+    private partial int SelectedThemeIndex { get; set; }
+
+    public List<string> ThemeOptions { get; } = new() { "跟随系统", "浅色模式", "深色模式" };
+
+    public AboutViewModel()
+    {
+        LoadThemePreference();
+    }
+
+    private void LoadThemePreference()
+    {
+        var themePreference = Preferences.Get(ThemePreferenceKey, 0);
+        SelectedThemeIndex = themePreference;
+    }
+
+    partial void OnSelectedThemeIndexChanged(int value)
+    {
+        Preferences.Set(ThemePreferenceKey, value);
+        ApplyTheme(value);
+    }
+
+    private static void ApplyTheme(int themeIndex)
+    {
+        var theme = themeIndex switch
+        {
+            0 => AppTheme.Unspecified,
+            1 => AppTheme.Light,
+            2 => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
+
+        Application.Current!.UserAppTheme = theme;
+
+        if (Application.Current is App app)
+        {
+            app.ApplyTheme(theme == AppTheme.Unspecified
+                ? Application.Current.RequestedTheme
+                : theme);
+        }
+    }
 
     [ObservableProperty]
     private partial bool IsCheckingUpdate { get; set; }
