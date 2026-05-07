@@ -6,6 +6,7 @@
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     x:Class="MyItems.Views.ItemDetailPage"
     x:DataType="viewmodels:ItemDetailViewModel"
+    Shell.TabBarIsVisible="False"
     Title="物品详情"
     Style="{StaticResource PageStyle}">
 

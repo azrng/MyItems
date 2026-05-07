@@ -1,17 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using MyItems.Models.DTOs;
 using MyItems.Services;
-using MyItems.Views;
 
 namespace MyItems.ViewModels;
 
 public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
-    private readonly IServiceProvider _serviceProvider;
+    private bool _isOpeningEditor;
 
     [ObservableProperty]
     private ItemDisplayDto? item;
@@ -22,10 +20,9 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private string? errorMessage;
 
-    public ItemDetailViewModel(IDataService dataService, IServiceProvider serviceProvider)
+    public ItemDetailViewModel(IDataService dataService)
     {
         _dataService = dataService;
-        _serviceProvider = serviceProvider;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -36,6 +33,12 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
+    public void RefreshCurrentItem()
+    {
+        if (!_isOpeningEditor && Item is not null)
+            _ = LoadItemAsync(Item.ItemId);
+    }
+
     [RelayCommand]
     private void Refresh()
     {
@@ -43,15 +46,24 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
             _ = LoadItemAsync(Item.ItemId);
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task EditItemAsync()
     {
         if (Item is null) return;
 
         Debug.WriteLine($"[ItemDetail] EditItem itemId={Item.ItemId}, name={Item.ItemName}, categoryId={Item.CategoryId}");
-        var page = _serviceProvider.GetRequiredService<AddItemPage>();
-        page.ViewModel.PrepareForEdit(Item);
-        await Shell.Current.Navigation.PushAsync(page);
+        _isOpeningEditor = true;
+        try
+        {
+            await Shell.Current.GoToAsync("add", new ShellNavigationQueryParameters
+            {
+                ["editDraft"] = Item
+            });
+        }
+        finally
+        {
+            _isOpeningEditor = false;
+        }
     }
 
     [RelayCommand]

@@ -6,9 +6,11 @@
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
-    Shell.NavBarIsVisible="False"
+    Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
     Title="{Binding PageTitle}"
+    Padding="0"
+    SafeAreaEdges="None"
     Style="{StaticResource PageStyle}">
 
     <ContentPage.Resources>
@@ -60,14 +62,36 @@
             <Setter Property="HeightRequest" Value="38" />
         </Style>
 
+        <Style x:Key="QuantityButtonStyle" TargetType="Button">
+            <Setter Property="WidthRequest" Value="44" />
+            <Setter Property="HeightRequest" Value="38" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource ModernSurfaceContainer}" />
+            <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+        </Style>
+
+        <Style x:Key="QuantityValueLabel" TargetType="Label">
+            <Setter Property="WidthRequest" Value="52" />
+            <Setter Property="HeightRequest" Value="38" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="VerticalTextAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{DynamicResource ModernTextPrimary}" />
+        </Style>
+
         <Style x:Key="CardEditorStyle" TargetType="Editor" BasedOn="{StaticResource EditorStyle}">
             <Setter Property="BackgroundColor" Value="Transparent" />
             <Setter Property="HeightRequest" Value="96" />
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="16,8,16,28" Spacing="10">
+    <ScrollView SafeAreaEdges="None">
+        <VerticalStackLayout Padding="16,12,16,28"
+                             Spacing="10"
+                             SafeAreaEdges="None">
             <ActivityIndicator
                 IsRunning="{Binding IsLoadingItem}"
                 IsVisible="{Binding IsLoadingItem}"
@@ -83,63 +107,59 @@
             <Frame
                 Style="{StaticResource ModernCardStyle}"
                 Margin="0"
-                Padding="14,12"
+                Padding="16"
                 IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
-                <VerticalStackLayout Spacing="10">
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12">
-                        <Button Grid.Column="0"
-                                Text="←"
-                                WidthRequest="40"
-                                HeightRequest="40"
-                                CornerRadius="20"
-                                BackgroundColor="{DynamicResource ModernSurfaceContainer}"
-                                TextColor="{DynamicResource ModernTextPrimary}"
-                                FontSize="24"
-                                Padding="0"
-                                Command="{Binding GoBackCommand}" />
+                <Grid ColumnDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="14"
+                      RowSpacing="12">
+                    <Frame Grid.RowSpan="2"
+                           WidthRequest="72"
+                           HeightRequest="72"
+                           CornerRadius="36"
+                           BackgroundColor="{DynamicResource ModernPrimary}"
+                           HasShadow="False"
+                           Padding="0"
+                           VerticalOptions="Start">
+                        <Label Text="{Binding HeaderIcon}"
+                               FontSize="34"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Frame>
 
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="0"
-                                             VerticalOptions="Center">
-                            <Label Text="{Binding PageTitle}"
-                                   Style="{StaticResource ModernHeadlineLabel}"
-                                   FontSize="20"
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Text="{Binding PageTitle}"
+                               Style="{StaticResource ModernHeadlineLabel}"
+                               FontSize="22"
+                               MaxLines="1"
+                               LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding FormSubtitle}"
+                               Style="{StaticResource DetailCaption}"
+                               FontSize="14" />
+                    </VerticalStackLayout>
+
+                    <Grid Grid.Row="1"
+                          Grid.Column="1"
+                          ColumnDefinitions="Auto,*"
+                          ColumnSpacing="8">
+                        <Frame Grid.Column="0"
+                               CornerRadius="12"
+                               Padding="10,4"
+                               HasShadow="False"
+                               BackgroundColor="{DynamicResource ModernPrimaryLight}">
+                            <Label Text="{Binding SaveButtonText}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource ModernPrimary}"
                                    MaxLines="1" />
-                            <Label Text="{Binding FormSubtitle}"
-                                   Style="{StaticResource DetailCaption}" />
-                        </VerticalStackLayout>
+                        </Frame>
+                        <Label Grid.Column="1"
+                               Text="{Binding SelectedCategory.Name}"
+                               Style="{StaticResource DetailCaption}"
+                               VerticalOptions="Center" />
                     </Grid>
-
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="12">
-                        <VerticalStackLayout Grid.Column="0" Spacing="4">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
-                                <Label Grid.Column="0" Style="{StaticResource RequiredDotLabel}" />
-                                <Label Grid.Column="1"
-                                       Text="物品名称"
-                                       Style="{StaticResource InlineFieldTitle}" />
-                            </Grid>
-                            <Entry Text="{Binding ItemName}"
-                                   Placeholder="输入物品名称"
-                                   Style="{StaticResource CardEntryStyle}" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="4">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
-                                <Label Grid.Column="0" Style="{StaticResource RequiredDotLabel}" />
-                                <Label Grid.Column="1"
-                                       Text="分类"
-                                       Style="{StaticResource InlineFieldTitle}" />
-                            </Grid>
-                            <Picker ItemsSource="{Binding Categories}"
-                                    SelectedItem="{Binding SelectedCategory}"
-                                    ItemDisplayBinding="{Binding Name}"
-                                    Title="选择分类"
-                                    Style="{StaticResource CardPickerStyle}" />
-                        </VerticalStackLayout>
-                    </Grid>
-                </VerticalStackLayout>
+                </Grid>
             </Frame>
 
             <Label Text="{Binding ItemNameError}"
@@ -159,42 +179,77 @@
                     <Label Text="基础信息" Style="{StaticResource DetailSectionTitle}" />
 
                     <Grid ColumnDefinitions="*,*"
-                          RowDefinitions="Auto,Auto"
+                          RowDefinitions="Auto,Auto,Auto"
                           ColumnSpacing="12"
                           RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
-                            <Label Text="品牌" Style="{StaticResource DetailCaption}" />
-                            <Entry Text="{Binding Brand}"
-                                   Placeholder="如：蒙牛、三九、戴尔"
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Style="{StaticResource RequiredDotLabel}" />
+                                <Label Grid.Column="1"
+                                       Text="物品名称"
+                                       Style="{StaticResource InlineFieldTitle}" />
+                            </Grid>
+                            <Entry x:Name="ItemNameEntry"
+                                   Text="{Binding ItemName}"
+                                   Placeholder="输入物品名称"
                                    Style="{StaticResource CardEntryStyle}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Style="{StaticResource RequiredDotLabel}" />
+                                <Label Grid.Column="1"
+                                       Text="分类"
+                                       Style="{StaticResource InlineFieldTitle}" />
+                            </Grid>
+                            <Picker x:Name="CategoryPicker"
+                                    ItemsSource="{Binding Categories}"
+                                    SelectedItem="{Binding SelectedCategory}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    Title="选择分类"
+                                    Style="{StaticResource CardPickerStyle}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                            <Label Text="品牌" Style="{StaticResource DetailCaption}" />
+                            <Entry x:Name="BrandEntry"
+                                   Text="{Binding Brand}"
+                                   Placeholder="如：蒙牛、三九、戴尔"
+                                   Style="{StaticResource CardEntryStyle}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
                             <Label Text="存放位置" Style="{StaticResource DetailCaption}" />
-                            <Entry Text="{Binding Location}"
+                            <Entry x:Name="LocationEntry"
+                                   Text="{Binding Location}"
                                    Placeholder="如：冰箱上层、药箱"
                                    Style="{StaticResource CardEntryStyle}" />
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
+                        <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="4">
                             <Label Text="数量" Style="{StaticResource DetailCaption}" />
-                            <Grid ColumnDefinitions="Auto,*"
-                                  ColumnSpacing="10">
-                                <Stepper Grid.Column="0"
-                                         Value="{Binding Quantity}"
-                                         Minimum="1"
-                                         Maximum="999"
-                                         VerticalOptions="Center" />
-                                <Label Grid.Column="1"
-                                       Text="{Binding Quantity, StringFormat='{0} 个'}"
-                                       Style="{StaticResource ModernBodyLabel}"
-                                       VerticalOptions="Center" />
+                            <Grid ColumnDefinitions="Auto,Auto,Auto"
+                                  ColumnSpacing="4"
+                                  HorizontalOptions="Start">
+                                <Button Grid.Column="0"
+                                        Text="-"
+                                        Style="{StaticResource QuantityButtonStyle}"
+                                        Command="{Binding DecreaseQuantityCommand}" />
+                                <Label x:Name="QuantityLabel"
+                                       Grid.Column="1"
+                                       Text="{Binding Quantity}"
+                                       Style="{StaticResource QuantityValueLabel}" />
+                                <Button Grid.Column="2"
+                                        Text="+"
+                                        Style="{StaticResource QuantityButtonStyle}"
+                                        Command="{Binding IncreaseQuantityCommand}" />
                             </Grid>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
+                        <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="4">
                             <Label Text="条码" Style="{StaticResource DetailCaption}" />
-                            <Entry Text="{Binding Barcode}"
+                            <Entry x:Name="BarcodeEntry"
+                                   Text="{Binding Barcode}"
                                    Placeholder="可选"
                                    Style="{StaticResource CardEntryStyle}" />
                         </VerticalStackLayout>
@@ -216,14 +271,16 @@
                           RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                             <Label Text="购买日期" Style="{StaticResource DetailCaption}" />
-                            <DatePicker Date="{Binding PurchaseDate}"
+                            <DatePicker x:Name="PurchaseDatePicker"
+                                        Date="{Binding PurchaseDate}"
                                         Format="yyyy-MM-dd"
                                         Style="{StaticResource CardDatePickerStyle}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
                             <Label Text="购入价格" Style="{StaticResource DetailCaption}" />
-                            <Entry Text="{Binding PurchasePrice}"
+                            <Entry x:Name="PurchasePriceEntry"
+                                   Text="{Binding PurchasePrice}"
                                    Placeholder="0.00 元"
                                    Keyboard="Numeric"
                                    Style="{StaticResource CardEntryStyle}" />
@@ -231,7 +288,8 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
                             <Label Text="保质期" Style="{StaticResource DetailCaption}" />
-                            <DatePicker Date="{Binding ExpiryDate}"
+                            <DatePicker x:Name="ExpiryDatePicker"
+                                        Date="{Binding ExpiryDate}"
                                         Format="yyyy-MM-dd"
                                         IsVisible="{Binding NoExpiry, Converter={StaticResource InvertedBool}}"
                                         Style="{StaticResource CardDatePickerStyle}" />
@@ -243,7 +301,8 @@
                         <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
                             <Label Text="无保质期" Style="{StaticResource DetailCaption}" />
                             <HorizontalStackLayout Spacing="8">
-                                <CheckBox IsChecked="{Binding NoExpiry}"
+                                <CheckBox x:Name="NoExpiryCheckBox"
+                                          IsChecked="{Binding NoExpiry}"
                                           VerticalOptions="Center" />
                                 <Label Text="跳过保质期"
                                        Style="{StaticResource ModernBodyLabel}"
@@ -256,7 +315,8 @@
                                              Spacing="4">
                             <Label Text="日均成本" Style="{StaticResource DetailCaption}" />
                             <HorizontalStackLayout Spacing="8">
-                                <Switch IsToggled="{Binding TrackDailyCost}"
+                                <Switch x:Name="TrackDailyCostSwitch"
+                                        IsToggled="{Binding TrackDailyCost}"
                                         VerticalOptions="Center" />
                                 <Label Text="在首页统计中展示"
                                        Style="{StaticResource ModernBodyLabel}"
@@ -274,7 +334,8 @@
                 IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="备注" Style="{StaticResource DetailSectionTitle}" />
-                    <Editor Text="{Binding Notes}"
+                    <Editor x:Name="NotesEditor"
+                            Text="{Binding Notes}"
                             Placeholder="可选备注信息"
                             AutoSize="TextChanges"
                             Style="{StaticResource CardEditorStyle}" />
@@ -286,7 +347,7 @@
                     HeightRequest="46"
                     Margin="0,2,0,0"
                     IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}"
-                    Command="{Binding SaveCommand}"
+                    Clicked="OnSaveClicked"
                     IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBool}}" />
         </VerticalStackLayout>
     </ScrollView>

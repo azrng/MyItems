@@ -147,6 +147,7 @@ src/AppName/
 - 使用 MAUI Shell 导航（`Shell.Current.GoToAsync`）进行页面切换
 - 导航路由统一在 `AppShell.xaml.cs` 或 `MauiProgram.cs` 中注册
 - 页面参数通过导航查询参数（`ShellNavigationQueryParameters`）或 `IQueryAttributable` 传递，禁止使用静态全局状态
+- 全屏编辑页优先使用 Shell 路由进入，不直接 `Navigation.PushAsync(page)` 手动压入页面实例；若确需直接压入，隐藏顶部导航与底部标签栏时需在 XAML 附加属性、页面构造和 `OnAppearing` 中同时确认 Shell NavBar、Shell TabBar 与 `NavigationPage` 导航栏状态，避免 Android 上残留顶部占位
 - 需要历史记录时，应支持前进 / 后退
 - 模态页面使用 `://` 前缀或 `Shell.Current.Navigation.PushModalAsync`
 - 深度链接配置统一在 `AppShell.xaml` 中声明

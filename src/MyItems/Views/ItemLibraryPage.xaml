@@ -31,7 +31,7 @@
                 FontSize="22"
                 Padding="0"
                 Command="{Binding ToggleSettingsCommand}">
-                <Button.VisualStateManager.VisualStateGroups>
+                <VisualStateManager.VisualStateGroups>
                     <VisualStateGroupList>
                         <VisualStateGroup x:Name="CommonStates">
                             <VisualState x:Name="Normal">
@@ -48,7 +48,7 @@
                             </VisualState>
                         </VisualStateGroup>
                     </VisualStateGroupList>
-                </Button.VisualStateManager.VisualStateGroups>
+                </VisualStateManager.VisualStateGroups>
             </Button>
             <Label
                 Grid.Column="1"
@@ -142,7 +142,6 @@
             HorizontalScrollBarVisibility="Never"
             HeightRequest="48">
             <FlexLayout
-                ItemsSource="{Binding Categories}"
                 BindableLayout.ItemsSource="{Binding Categories}"
                 JustifyContent="Start"
                 AlignItems="Center"
@@ -377,7 +376,6 @@
                             TextColor="{DynamicResource ModernTextPrimary}"
                             FontSize="15"
                             HorizontalOptions="Fill"
-                            HorizontalContentAlignment="Start"
                             HeightRequest="48"
                             CornerRadius="14"
                             Padding="14,0"
@@ -388,7 +386,6 @@
                             TextColor="{DynamicResource ModernTextPrimary}"
                             FontSize="15"
                             HorizontalOptions="Fill"
-                            HorizontalContentAlignment="Start"
                             HeightRequest="48"
                             CornerRadius="14"
                             Padding="14,0"
@@ -399,7 +396,6 @@
                             TextColor="{DynamicResource ModernTextPrimary}"
                             FontSize="15"
                             HorizontalOptions="Fill"
-                            HorizontalContentAlignment="Start"
                             HeightRequest="48"
                             CornerRadius="14"
                             Padding="14,0"
@@ -410,7 +406,6 @@
                             TextColor="{DynamicResource ModernTextPrimary}"
                             FontSize="15"
                             HorizontalOptions="Fill"
-                            HorizontalContentAlignment="Start"
                             HeightRequest="48"
                             CornerRadius="14"
                             Padding="14,0"

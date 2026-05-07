@@ -65,7 +65,6 @@
                     HeightRequest="48"
                     HorizontalScrollBarVisibility="Never">
                     <FlexLayout
-                        ItemsSource="{Binding AvailableIcons}"
                         BindableLayout.ItemsSource="{Binding AvailableIcons}"
                         JustifyContent="Start"
                         AlignItems="Center"
@@ -157,7 +156,7 @@
                                              FontSize="12"
                                              Padding="0"
                                             Clicked="OnSortUpClicked">
-                                        <Button.VisualStateManager.VisualStateGroups>
+                                        <VisualStateManager.VisualStateGroups>
                                             <VisualStateGroupList>
                                                 <VisualStateGroup x:Name="CommonStates">
                                                     <VisualState x:Name="Normal">
@@ -173,7 +172,7 @@
                                                     </VisualState>
                                                 </VisualStateGroup>
                                             </VisualStateGroupList>
-                                        </Button.VisualStateManager.VisualStateGroups>
+                                        </VisualStateManager.VisualStateGroups>
                                     </Button>
                                      <Button Text="下"
                                              BackgroundColor="{DynamicResource ModernSurfaceContainer}"
@@ -184,7 +183,7 @@
                                              FontSize="12"
                                              Padding="0"
                                             Clicked="OnSortDownClicked">
-                                        <Button.VisualStateManager.VisualStateGroups>
+                                        <VisualStateManager.VisualStateGroups>
                                             <VisualStateGroupList>
                                                 <VisualStateGroup x:Name="CommonStates">
                                                     <VisualState x:Name="Normal">
@@ -200,7 +199,7 @@
                                                     </VisualState>
                                                 </VisualStateGroup>
                                             </VisualStateGroupList>
-                                        </Button.VisualStateManager.VisualStateGroups>
+                                        </VisualStateManager.VisualStateGroups>
                                     </Button>
                                      <Button Text="删"
                                              BackgroundColor="{DynamicResource ModernError}"
@@ -212,7 +211,7 @@
                                             FontAttributes="Bold"
                                             Padding="0"
                                             Clicked="OnDeleteCategoryClicked">
-                                        <Button.VisualStateManager.VisualStateGroups>
+                                        <VisualStateManager.VisualStateGroups>
                                             <VisualStateGroupList>
                                                 <VisualStateGroup x:Name="CommonStates">
                                                     <VisualState x:Name="Normal">
@@ -228,7 +227,7 @@
                                                     </VisualState>
                                                 </VisualStateGroup>
                                             </VisualStateGroupList>
-                                        </Button.VisualStateManager.VisualStateGroups>
+                                        </VisualStateManager.VisualStateGroups>
                                     </Button>
                                 </HorizontalStackLayout>
                             </Grid>

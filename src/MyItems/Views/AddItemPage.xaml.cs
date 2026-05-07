@@ -1,4 +1,5 @@
 using MyItems.ViewModels;
+using System.Diagnostics;
 
 namespace MyItems.Views;
 
@@ -14,13 +15,29 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
+        Shell.SetNavBarIsVisible(this, true);
+        Shell.SetTabBarIsVisible(this, false);
+        NavigationPage.SetHasNavigationBar(this, true);
+        Loaded += OnLoaded;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        ApplyRouteFallbackParameters();
+        Shell.SetNavBarIsVisible(this, true);
+        Shell.SetTabBarIsVisible(this, false);
+        NavigationPage.SetHasNavigationBar(this, true);
+
         await _viewModel.OnAppearingAsync();
+        SynchronizeNativeControlsFromViewModel();
+        LogLayoutMetrics("appearing");
+    }
+
+    private async void OnLoaded(object? sender, EventArgs e)
+    {
+        await _viewModel.ApplyDeferredUiHydrationAsync();
+        SynchronizeNativeControlsFromViewModel();
+        LogLayoutMetrics("loaded");
     }
 
     public string? ItemIdQuery
@@ -38,37 +55,64 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
         _viewModel.ApplyQueryAttributes(query);
     }
 
-    private void ApplyRouteFallbackParameters()
+    private async void OnSaveClicked(object? sender, EventArgs e)
     {
-        var location = Shell.Current?.CurrentState?.Location;
-        if (location is null)
-            return;
+        ApplyNativeControlsToViewModel();
+        if (_viewModel.SaveCommand.CanExecute(null))
+            await _viewModel.SaveCommand.ExecuteAsync(null);
+    }
 
-        var locationText = location.IsAbsoluteUri
-            ? location.Query
-            : location.OriginalString;
+    private void SynchronizeNativeControlsFromViewModel()
+    {
+        var snapshot = _viewModel.CurrentFormSnapshot;
+        ItemNameEntry.Text = snapshot.ItemName;
+        CategoryPicker.SelectedItem = snapshot.SelectedCategory;
+        BrandEntry.Text = snapshot.Brand;
+        LocationEntry.Text = snapshot.Location;
+        QuantityLabel.Text = snapshot.Quantity.ToString();
+        BarcodeEntry.Text = snapshot.Barcode;
+        PurchaseDatePicker.Date = snapshot.PurchaseDate ?? DateTime.Today;
+        PurchasePriceEntry.Text = snapshot.PurchasePrice?.ToString("0.##");
+        ExpiryDatePicker.Date = snapshot.ExpiryDate ?? DateTime.Today;
+        NoExpiryCheckBox.IsChecked = snapshot.NoExpiry;
+        TrackDailyCostSwitch.IsToggled = snapshot.TrackDailyCost;
+        NotesEditor.Text = snapshot.Notes;
 
-        var queryIndex = locationText.IndexOf('?', StringComparison.Ordinal);
-        if (queryIndex < 0 || queryIndex >= locationText.Length - 1)
-            return;
+        Debug.WriteLine($"[AddItemPage] Sync controls itemName={ItemNameEntry.Text}, category={(CategoryPicker.SelectedItem as Models.Category)?.Name ?? "null"}, quantity={QuantityLabel.Text}");
+    }
 
-        var query = locationText[(queryIndex + 1)..];
-        if (string.IsNullOrWhiteSpace(query))
-            return;
+    private void LogLayoutMetrics(string phase)
+    {
+        Debug.WriteLine($"[AddItemPage] Layout {phase}: page=({X:0.##},{Y:0.##},{Width:0.##},{Height:0.##}), content=({Content?.X:0.##},{Content?.Y:0.##},{Content?.Width:0.##},{Content?.Height:0.##})");
+    }
 
-        foreach (var segment in query.Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            var parts = segment.Split('=', 2);
-            if (parts.Length != 2)
-                continue;
+    private void ApplyNativeControlsToViewModel()
+    {
+        _viewModel.ApplyFormSnapshot(new AddItemFormSnapshot(
+            ItemNameEntry.Text ?? string.Empty,
+            CategoryPicker.SelectedItem as Models.Category,
+            BrandEntry.Text,
+            LocationEntry.Text,
+            TryParseQuantity(QuantityLabel.Text),
+            BarcodeEntry.Text,
+            PurchaseDatePicker.Date,
+            TryParseNullableDecimal(PurchasePriceEntry.Text),
+            NoExpiryCheckBox.IsChecked ? null : ExpiryDatePicker.Date,
+            NoExpiryCheckBox.IsChecked,
+            TrackDailyCostSwitch.IsToggled,
+            NotesEditor.Text));
+    }
 
-            var key = Uri.UnescapeDataString(parts[0]);
-            var value = Uri.UnescapeDataString(parts[1]);
+    private static decimal? TryParseNullableDecimal(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
 
-            if (string.Equals(key, "itemId", StringComparison.OrdinalIgnoreCase))
-                _viewModel.ApplyItemIdQuery(value);
-            else if (string.Equals(key, "barcode", StringComparison.OrdinalIgnoreCase))
-                _viewModel.ApplyBarcodeQuery(value);
-        }
+        return decimal.TryParse(value.Trim(), out var parsed) ? parsed : null;
+    }
+
+    private static int TryParseQuantity(string? value)
+    {
+        return int.TryParse(value, out var parsed) ? parsed : 1;
     }
 }

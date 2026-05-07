@@ -30,8 +30,23 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     public string FormHeaderIcon => IsEditMode ? "\u270F\uFE0F" : "\U0001F4E6";
     public string FormSubtitle => IsEditMode ? "正在修改已有物品" : "创建新的物品记录";
     public string SaveButtonText => IsEditMode ? "更新" : "保存";
+    public string HeaderIcon => SelectedCategory?.Icon ?? FormHeaderIcon;
     public bool HasBarcode => !string.IsNullOrWhiteSpace(Barcode);
     public string BarcodeDisplayText => HasBarcode ? $"条码: {Barcode?.Trim()}" : string.Empty;
+
+    public AddItemFormSnapshot CurrentFormSnapshot => new(
+        ItemName,
+        SelectedCategory,
+        Brand,
+        Location,
+        Quantity,
+        Barcode,
+        PurchaseDate,
+        PurchasePrice,
+        ExpiryDate,
+        NoExpiry,
+        TrackDailyCost,
+        Notes);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PageTitle))]
@@ -103,11 +118,27 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         ErrorMessage = null;
         ItemNameError = null;
         CategoryError = null;
-        _pendingDraft = draft;
         _uiHydrationDraft = draft;
-        _hasLoadedEditingItem = false;
-        SetEditMode();
-        IsLoadingItem = true;
+        PrimeFromDraft(draft);
+        IsLoadingItem = false;
+    }
+
+    public bool HasPendingUiHydrationDraft => _uiHydrationDraft is not null;
+
+    public void ApplyFormSnapshot(AddItemFormSnapshot snapshot)
+    {
+        ItemName = snapshot.ItemName;
+        SelectedCategory = snapshot.SelectedCategory;
+        Brand = string.IsNullOrWhiteSpace(snapshot.Brand) ? null : snapshot.Brand.Trim();
+        Location = string.IsNullOrWhiteSpace(snapshot.Location) ? null : snapshot.Location.Trim();
+        Quantity = Math.Clamp(snapshot.Quantity, 1, 999);
+        Barcode = string.IsNullOrWhiteSpace(snapshot.Barcode) ? null : snapshot.Barcode.Trim();
+        PurchaseDate = snapshot.PurchaseDate;
+        PurchasePrice = snapshot.PurchasePrice;
+        NoExpiry = snapshot.NoExpiry;
+        ExpiryDate = snapshot.NoExpiry ? null : snapshot.ExpiryDate;
+        TrackDailyCost = snapshot.TrackDailyCost;
+        Notes = string.IsNullOrWhiteSpace(snapshot.Notes) ? null : snapshot.Notes.Trim();
     }
 
     public void ApplyItemIdQuery(string? itemIdText)
@@ -179,12 +210,18 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 
         if (_uiHydrationDraft is not null)
         {
-            await ApplyUiHydrationDraftAsync();
+            ApplyPendingSelectedCategory();
+            IsLoadingItem = false;
             return;
         }
 
         ApplyPendingSelectedCategory();
         await EnsureEditingItemLoadedAsync();
+    }
+
+    public Task ApplyDeferredUiHydrationAsync()
+    {
+        return ApplyUiHydrationDraftAsync();
     }
 
     private async Task ApplyUiHydrationDraftAsync()
@@ -194,6 +231,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
             return;
 
         await Task.Yield();
+        await EnsureCategoriesLoadedAsync();
 
         _uiHydrationDraft = null;
         PrimeFromDraft(draft);
@@ -341,6 +379,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         try
         {
             var category = SelectedCategory!;
+            Debug.WriteLine($"[AddItem] Save start isEdit={IsEditMode}, itemId={_editingItemId}, name={ItemName}, categoryId={category.Id}, quantity={Quantity}");
 
             var item = new Item
             {
@@ -362,10 +401,12 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
             };
 
             await _dataService.SaveItemAsync(item);
-            await Shell.Current.Navigation.PopAsync();
+            Debug.WriteLine($"[AddItem] Save success itemId={item.Id}, name={item.Name}");
+            await CloseAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[AddItem] Save failed: {ex}");
             ErrorMessage = "保存失败，请稍后重试";
         }
         finally
@@ -386,6 +427,18 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         Barcode = null;
     }
 
+    [RelayCommand]
+    private void DecreaseQuantity()
+    {
+        Quantity = Math.Max(1, Quantity - 1);
+    }
+
+    [RelayCommand]
+    private void IncreaseQuantity()
+    {
+        Quantity = Math.Min(999, Quantity + 1);
+    }
+
     partial void OnItemNameChanged(string value)
     {
         Debug.WriteLine($"[AddItem] OnItemNameChanged value={value}");
@@ -400,6 +453,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         if (value is not null)
             CategoryError = null;
 
+        OnPropertyChanged(nameof(HeaderIcon));
         RefreshValidationSummary();
     }
 
@@ -470,7 +524,16 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private async Task GoBackAsync()
     {
-        await Shell.Current.Navigation.PopAsync();
+        await CloseAsync();
+    }
+
+    private static async Task CloseAsync()
+    {
+        var navigation = Shell.Current.Navigation;
+        if (navigation.ModalStack.Count > 0)
+            await navigation.PopModalAsync();
+        else
+            await navigation.PopAsync();
     }
 
     private void ApplyPendingSelectedCategory()
@@ -498,3 +561,17 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
         }
     }
 }
+
+public sealed record AddItemFormSnapshot(
+    string ItemName,
+    Category? SelectedCategory,
+    string? Brand,
+    string? Location,
+    int Quantity,
+    string? Barcode,
+    DateTime? PurchaseDate,
+    decimal? PurchasePrice,
+    DateTime? ExpiryDate,
+    bool NoExpiry,
+    bool TrackDailyCost,
+    string? Notes);

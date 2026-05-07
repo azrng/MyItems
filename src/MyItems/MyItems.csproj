@@ -21,6 +21,12 @@
     <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#2563EB" />
   </ItemGroup>

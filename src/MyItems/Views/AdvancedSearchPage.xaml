@@ -105,26 +105,26 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="保质期状态" Style="{StaticResource SectionHeaderLabel}" />
 
-                        <CheckBox IsChecked="{Binding Filter.HasExpiry}"
-                                  VerticalOptions="Center">
-                            <CheckBox.Content>
-                                <Label Text="只显示有保质期的物品" />
-                            </CheckBox.Content>
-                        </CheckBox>
+                        <HorizontalStackLayout Spacing="8">
+                            <CheckBox IsChecked="{Binding Filter.HasExpiry}"
+                                      VerticalOptions="Center" />
+                            <Label Text="只显示有保质期的物品"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
 
-                        <CheckBox IsChecked="{Binding Filter.OnlyExpiring}"
-                                  VerticalOptions="Center">
-                            <CheckBox.Content>
-                                <Label Text="只显示临期/已过期" />
-                            </CheckBox.Content>
-                        </CheckBox>
+                        <HorizontalStackLayout Spacing="8">
+                            <CheckBox IsChecked="{Binding Filter.OnlyExpiring}"
+                                      VerticalOptions="Center" />
+                            <Label Text="只显示临期/已过期"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
 
-                        <CheckBox IsChecked="{Binding Filter.OnlyExpired}"
-                                  VerticalOptions="Center">
-                            <CheckBox.Content>
-                                <Label Text="只显示已过期" />
-                            </CheckBox.Content>
-                        </CheckBox>
+                        <HorizontalStackLayout Spacing="8">
+                            <CheckBox IsChecked="{Binding Filter.OnlyExpired}"
+                                      VerticalOptions="Center" />
+                            <Label Text="只显示已过期"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Frame>
 

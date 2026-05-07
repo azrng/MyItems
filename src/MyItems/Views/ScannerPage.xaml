@@ -74,17 +74,7 @@
                     <BoxView
                         AbsoluteLayout.LayoutBounds="10,70,260,2"
                         Color="{DynamicResource ModernPrimary}"
-                        Opacity="0.8">
-                        <BoxView.Animations>
-                            <Animation>
-                                <SizeAnimator
-                                    Duration="0:0:2"
-                                    Easing="Linear"
-                                    RepeatCount="Infinite"
-                                    AutoReverse="True" />
-                            </Animation>
-                        </BoxView.Animations>
-                    </BoxView>
+                        Opacity="0.8" />
                 </AbsoluteLayout>
             </Grid>
 
