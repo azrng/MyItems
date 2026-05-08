@@ -182,6 +182,30 @@ public sealed class ItemLibraryViewModelTests
         Assert.Contains(viewModel.Items, item => item.ItemId == remainingItem.ItemId);
     }
 
+    [Fact]
+    public async Task RefreshCommand_UsesItemQueryCacheSnapshot()
+    {
+        Shell.Current = new Shell();
+        var item = CreateItem("缓存物品");
+        var dataService = new FakeDataService
+        {
+            Categories = [new Category { Id = Guid.NewGuid(), Name = "日用", IsActive = true }],
+            LoadItems = () => CreateResult(CreateItem("数据库物品")),
+        };
+        var cache = new FakeItemQueryCache
+        {
+            LoadSnapshot = () => new ItemQuerySnapshot([item], 10, 1, 1),
+        };
+        var viewModel = new ItemLibraryViewModel(dataService, cache);
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, dataService.ItemsLoadCount);
+        Assert.Equal(1, cache.LoadCount);
+        var visibleItem = Assert.Single(viewModel.Items);
+        Assert.Equal("缓存物品", visibleItem.ItemName);
+    }
+
     private static ItemDisplayDto CreateItem(string name, Guid? categoryId = null)
     {
         return new ItemDisplayDto

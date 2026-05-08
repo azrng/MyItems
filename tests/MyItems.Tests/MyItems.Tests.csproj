@@ -19,8 +19,12 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MyItems\ViewModels\SelectableCategory.cs" Link="ViewModels\SelectableCategory.cs" />
+    <Compile Include="..\..\src\MyItems\ViewModels\MainViewModel.cs" Link="ViewModels\MainViewModel.cs" />
+    <Compile Include="..\..\src\MyItems\ViewModels\ExpiringViewModel.cs" Link="ViewModels\ExpiringViewModel.cs" />
     <Compile Include="..\..\src\MyItems\ViewModels\ItemLibraryViewModel.cs" Link="ViewModels\ItemLibraryViewModel.cs" />
     <Compile Include="..\..\src\MyItems\Services\IDataService.cs" Link="Services\IDataService.cs" />
+    <Compile Include="..\..\src\MyItems\Services\IItemQueryCache.cs" Link="Services\IItemQueryCache.cs" />
+    <Compile Include="..\..\src\MyItems\Services\ItemQueryCache.cs" Link="Services\ItemQueryCache.cs" />
     <Compile Include="..\..\src\MyItems\Models\SearchFilter.cs" Link="Models\SearchFilter.cs" />
     <Compile Include="..\..\src\MyItems\Models\DTOs\ItemDisplayDto.cs" Link="Models\DTOs\ItemDisplayDto.cs" />
     <Compile Include="..\..\src\MyItems\Models\DTOs\CategoryDto.cs" Link="Models\DTOs\CategoryDto.cs" />

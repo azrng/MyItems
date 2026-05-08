@@ -1,15 +1,13 @@
 using System.Windows.Input;
 using MyItems.Views;
 using MyItems.Services;
-using MyItems.Models.DTOs;
 
 namespace MyItems;
 
 public partial class AppShell : Shell
 {
-    private IDataService? _dataService;
+    private IItemQueryCache? _itemQueryCache;
     private IPreferencesService? _preferencesService;
-    private List<ExpiryGroupDto> _expiryGroups = [];
 
     public ICommand AboutCommand { get; }
     public ICommand CategoryCommand { get; }
@@ -48,10 +46,10 @@ public partial class AppShell : Shell
             await Task.Delay(100);
 
             // 安全获取服务
-            _dataService = GetCurrentService<IDataService>();
+            _itemQueryCache = GetCurrentService<IItemQueryCache>();
             _preferencesService = GetCurrentService<IPreferencesService>();
 
-            if (_dataService != null)
+            if (_itemQueryCache != null)
             {
                 await CheckExpiryNotificationsAsync();
             }
@@ -83,16 +81,15 @@ public partial class AppShell : Shell
 
     private async Task CheckExpiryNotificationsAsync()
     {
-        if (_dataService == null) return;
+        if (_itemQueryCache == null) return;
 
         try
         {
-            _expiryGroups = await _dataService.GetExpiryGroupsAsync();
+            var snapshot = await _itemQueryCache.GetSnapshotAsync();
 
             var threeDaysFromNow = DateTime.Now.AddDays(3);
-            var hasExpiring = _expiryGroups
-                .Where(g => g.Status != Enums.ExpiryStatus.Safe && g.Status != Enums.ExpiryStatus.NoExpiry)
-                .SelectMany(g => g.Items)
+            var hasExpiring = snapshot.Items
+                .Where(item => item.ExpiryStatus != Enums.ExpiryStatus.Safe && item.ExpiryStatus != Enums.ExpiryStatus.NoExpiry)
                 .Any(item => item.ExpiryDate.HasValue && item.ExpiryDate.Value <= threeDaysFromNow);
 
             // 确保在UI线程上更新UI
@@ -151,7 +148,7 @@ public partial class AppShell : Shell
     {
         try
         {
-            if (_dataService != null)
+            if (_itemQueryCache != null)
             {
                 await CheckExpiryNotificationsAsync();
             }

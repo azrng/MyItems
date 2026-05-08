@@ -9,7 +9,9 @@ namespace MyItems.ViewModels;
 
 public partial class ExpiringViewModel : ObservableObject
 {
+    private readonly IItemQueryCache _itemQueryCache;
     private readonly IDataService _dataService;
+    private List<ItemDisplayDto> _sourceItems = [];
 
     public ObservableCollection<ItemDisplayDto> ExpiringItems { get; private set; } = [];
     public ObservableCollection<ItemDisplayDto> ExpiredItems { get; private set; } = [];
@@ -25,18 +27,24 @@ public partial class ExpiringViewModel : ObservableObject
 
     private CancellationTokenSource? _searchCts;
 
-    public ExpiringViewModel(IDataService dataService)
+    public ExpiringViewModel(IItemQueryCache itemQueryCache, IDataService dataService)
     {
+        _itemQueryCache = itemQueryCache;
         _dataService = dataService;
-        _ = LoadDataAsync();
     }
 
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        IsRefreshing = true;
-        await LoadDataAsync();
-        IsRefreshing = false;
+        try
+        {
+            IsRefreshing = true;
+            await LoadDataAsync();
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     [RelayCommand]
@@ -48,13 +56,15 @@ public partial class ExpiringViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(itemId);
-        await LoadDataAsync();
+        _itemQueryCache.Invalidate();
+        _sourceItems.RemoveAll(i => i.ItemId == itemId);
+        ApplyFilters();
     }
 
     [RelayCommand]
     private void Search()
     {
-        _ = LoadDataAsync();
+        ApplyFilters();
     }
 
     partial void OnSearchTextChanged(string value)
@@ -69,16 +79,36 @@ public partial class ExpiringViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            await LoadDataAsync();
+            ApplyFilters();
         }
         catch (TaskCanceledException) { }
     }
 
     private async Task LoadDataAsync()
     {
-        var items = await _dataService.GetItemDisplayDtosAsync();
+        try
+        {
+            var snapshot = await _itemQueryCache.GetSnapshotAsync();
+            _sourceItems = snapshot.Items;
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            _sourceItems = [];
+            ExpiringItems.Clear();
+            ExpiredItems.Clear();
+            _ = ShowLoadErrorAsync(ex);
+        }
+        finally
+        {
+            IsLoading = false;
+            RefreshStateProperties();
+        }
+    }
 
-        var filtered = items.Where(i => i.ExpiryStatus != ExpiryStatus.NoExpiry);
+    private void ApplyFilters()
+    {
+        var filtered = _sourceItems.Where(i => i.ExpiryStatus != ExpiryStatus.NoExpiry);
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -91,12 +121,16 @@ public partial class ExpiringViewModel : ObservableObject
         UpdateCollection(ExpiringItems, list.Where(i => i.ExpiryStatus == ExpiryStatus.Expiring));
         UpdateCollection(ExpiredItems, list.Where(i => i.ExpiryStatus == ExpiryStatus.Expired));
 
+        RefreshStateProperties();
+    }
+
+    private void RefreshStateProperties()
+    {
         OnPropertyChanged(nameof(ExpiringItems));
         OnPropertyChanged(nameof(ExpiredItems));
         OnPropertyChanged(nameof(HasExpiring));
         OnPropertyChanged(nameof(HasExpired));
         OnPropertyChanged(nameof(IsEmpty));
-        IsLoading = false;
     }
 
     public bool HasExpiring => ExpiringItems.Count > 0;
@@ -115,5 +149,14 @@ public partial class ExpiringViewModel : ObservableObject
         }
         while (collection.Count > newList.Count)
             collection.RemoveAt(collection.Count - 1);
+    }
+
+    private static Task ShowLoadErrorAsync(Exception ex)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlertAsync("加载失败", $"临期数据加载失败：{ex.Message}", "确定");
+        });
     }
 }

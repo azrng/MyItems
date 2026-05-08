@@ -7,13 +7,15 @@ namespace MyItems.ViewModels;
 public partial class StorageViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private readonly IItemQueryCache _itemQueryCache;
 
     [ObservableProperty]
     private bool isBusy;
 
-    public StorageViewModel(IDataService dataService)
+    public StorageViewModel(IDataService dataService, IItemQueryCache itemQueryCache)
     {
         _dataService = dataService;
+        _itemQueryCache = itemQueryCache;
     }
 
     [RelayCommand]
@@ -60,6 +62,7 @@ public partial class StorageViewModel : ObservableObject
         try
         {
             var (successCount, failureCount, errors) = await _dataService.ImportFromCsvAsync(result.FullPath);
+            _itemQueryCache.Invalidate();
 
             var message = $"导入完成！\n成功：{successCount} 条\n失败：{failureCount} 条";
 
@@ -89,6 +92,7 @@ public partial class StorageViewModel : ObservableObject
 
         IsBusy = true;
         await _dataService.SeedSampleDataAsync();
+        _itemQueryCache.Invalidate();
         IsBusy = false;
         await Shell.Current.DisplayAlertAsync("完成", "测试数据已初始化", "确定");
     }
@@ -104,6 +108,7 @@ public partial class StorageViewModel : ObservableObject
 
         IsBusy = true;
         await _dataService.ClearAllDataAsync();
+        _itemQueryCache.Invalidate();
         IsBusy = false;
         await Shell.Current.DisplayAlertAsync("完成", "所有数据已清空", "确定");
     }
@@ -132,6 +137,7 @@ public partial class StorageViewModel : ObservableObject
         try
         {
             await _dataService.ImportDatabaseAsync(result.FullPath);
+            _itemQueryCache.Invalidate();
             await Shell.Current.DisplayAlertAsync("导入成功",
                 "数据库已导入，请重启应用以加载新数据。", "确定");
         }

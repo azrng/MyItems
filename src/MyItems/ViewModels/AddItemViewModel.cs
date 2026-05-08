@@ -12,6 +12,7 @@ namespace MyItems.ViewModels;
 public partial class AddItemViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
+    private readonly IItemQueryCache _itemQueryCache;
     private readonly SemaphoreSlim _categoryLoadLock = new(1, 1);
     private readonly SemaphoreSlim _itemLoadLock = new(1, 1);
     private Guid _editingItemId;
@@ -107,9 +108,10 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private partial string? CategoryError { get; set; }
 
-    public AddItemViewModel(IDataService dataService)
+    public AddItemViewModel(IDataService dataService, IItemQueryCache itemQueryCache)
     {
         _dataService = dataService;
+        _itemQueryCache = itemQueryCache;
     }
 
     public void PrepareForEdit(ItemDisplayDto draft)
@@ -401,6 +403,7 @@ public partial class AddItemViewModel : ObservableObject, IQueryAttributable
             };
 
             await _dataService.SaveItemAsync(item);
+            _itemQueryCache.Invalidate();
             Debug.WriteLine($"[AddItem] Save success itemId={item.Id}, name={item.Name}");
             await CloseAsync();
         }

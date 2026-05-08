@@ -8,9 +8,11 @@ namespace MyItems.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private readonly IItemQueryCache _itemQueryCache;
     private readonly IDataService _dataService;
     private const int PageSize = 20;
 
+    private List<ItemDisplayDto> _sourceItems = [];
     private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
 
@@ -33,18 +35,24 @@ public partial class MainViewModel : ObservableObject
 
     private CancellationTokenSource? _searchCts;
 
-    public MainViewModel(IDataService dataService)
+    public MainViewModel(IItemQueryCache itemQueryCache, IDataService dataService)
     {
+        _itemQueryCache = itemQueryCache;
         _dataService = dataService;
-        _ = LoadDataAsync();
     }
 
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        IsRefreshing = true;
-        await LoadDataAsync();
-        IsRefreshing = false;
+        try
+        {
+            IsRefreshing = true;
+            await LoadDataAsync();
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     [RelayCommand]
@@ -60,7 +68,7 @@ public partial class MainViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(item.ItemId);
-        await LoadDataAsync();
+        RemoveDeletedItem(item.ItemId);
     }
 
     [RelayCommand]
@@ -72,7 +80,7 @@ public partial class MainViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(itemId);
-        await LoadDataAsync();
+        RemoveDeletedItem(itemId);
     }
 
     [RelayCommand]
@@ -84,7 +92,7 @@ public partial class MainViewModel : ObservableObject
     public async Task DeleteItemByIdAsync(Guid itemId)
     {
         await _dataService.DeleteItemAsync(itemId);
-        await LoadDataAsync();
+        RemoveDeletedItem(itemId);
     }
 
     [RelayCommand]
@@ -106,16 +114,34 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            await LoadDataAsync();
+            ApplyFiltersAndResetPage();
         }
         catch (TaskCanceledException) { }
     }
 
     private async Task LoadDataAsync()
     {
-        var items = await _dataService.GetItemDisplayDtosAsync();
+        try
+        {
+            var snapshot = await _itemQueryCache.GetSnapshotAsync();
+            _sourceItems = snapshot.Items;
+            ApplyFiltersAndResetPage();
+        }
+        catch (Exception ex)
+        {
+            ResetLoadedData();
+            _ = ShowLoadErrorAsync(ex);
+        }
+        finally
+        {
+            IsLoading = false;
+            OnPropertyChanged(nameof(IsEmpty));
+        }
+    }
 
-        var filtered = items
+    private void ApplyFiltersAndResetPage()
+    {
+        var filtered = _sourceItems
             .OrderByDescending(i => i.PurchaseDate)
             .ToList();
 
@@ -131,15 +157,36 @@ public partial class MainViewModel : ObservableObject
         RecentItems.Clear();
 
         AppendPage();
-        IsLoading = false;
+    }
+
+    private void RemoveDeletedItem(Guid itemId)
+    {
+        _itemQueryCache.Invalidate();
+        _sourceItems.RemoveAll(i => i.ItemId == itemId);
+        ApplyFiltersAndResetPage();
+    }
+
+    private void ResetLoadedData()
+    {
+        _sourceItems = [];
+        _allItems = [];
+        _loadedCount = 0;
+        RecentItems.Clear();
+        HasMoreItems = false;
     }
 
     private async Task LoadMoreAsync()
     {
-        IsLoadingMore = true;
-        await Task.Delay(100);
-        AppendPage();
-        IsLoadingMore = false;
+        try
+        {
+            IsLoadingMore = true;
+            await Task.Delay(100);
+            AppendPage();
+        }
+        finally
+        {
+            IsLoadingMore = false;
+        }
     }
 
     private void AppendPage()
@@ -153,5 +200,14 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEmpty));
     }
 
-    public bool IsEmpty => !IsLoading && RecentItems.Count == 0 && _allItems.Count == 0;
+    public bool IsEmpty => !IsLoading && RecentItems.Count == 0;
+
+    private static Task ShowLoadErrorAsync(Exception ex)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlertAsync("加载失败", $"首页数据加载失败：{ex.Message}", "确定");
+        });
+    }
 }

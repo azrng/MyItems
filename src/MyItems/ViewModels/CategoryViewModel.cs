@@ -14,6 +14,7 @@ namespace MyItems.ViewModels;
 public partial class CategoryViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private readonly IItemQueryCache _itemQueryCache;
     private bool _hasLoaded;
     private bool _isLoadingData;
 
@@ -46,9 +47,10 @@ public partial class CategoryViewModel : ObservableObject
     [ObservableProperty]
     private bool isAdding;
 
-    public CategoryViewModel(IDataService dataService)
+    public CategoryViewModel(IDataService dataService, IItemQueryCache itemQueryCache)
     {
         _dataService = dataService;
+        _itemQueryCache = itemQueryCache;
         InitializeIcons();
     }
 
@@ -106,6 +108,7 @@ public partial class CategoryViewModel : ObservableObject
             };
 
             await _dataService.SaveCategoryAsync(category);
+            _itemQueryCache.Invalidate();
 
             var dto = new CategoryDto
             {
@@ -161,6 +164,7 @@ public partial class CategoryViewModel : ObservableObject
             IsActive = category.IsActive,
         };
         await _dataService.SaveCategoryAsync(cat);
+        _itemQueryCache.Invalidate();
     }
 
     [RelayCommand]
@@ -185,6 +189,7 @@ public partial class CategoryViewModel : ObservableObject
         {
             var cat = new Category { Id = category.Id };
             await _dataService.DeleteCategoryAsync(cat);
+            _itemQueryCache.Invalidate();
             category.PropertyChanged -= OnCategoryPropertyChanged;
             Categories.Remove(category);
         }
@@ -230,6 +235,7 @@ public partial class CategoryViewModel : ObservableObject
     {
         var cat = new Category { Id = dto.Id, Name = dto.Name, Icon = dto.Icon, SortOrder = dto.SortOrder, IsPreset = dto.IsPreset, IsActive = dto.IsActive };
         await _dataService.SaveCategoryAsync(cat);
+        _itemQueryCache.Invalidate();
     }
 
     private async void OnCategoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -239,6 +245,7 @@ public partial class CategoryViewModel : ObservableObject
         {
             var cat = new Category { Id = dto.Id, Name = dto.Name, Icon = dto.Icon, SortOrder = dto.SortOrder, IsPreset = dto.IsPreset, IsActive = dto.IsActive };
             await _dataService.SaveCategoryAsync(cat);
+            _itemQueryCache.Invalidate();
         }
     }
 

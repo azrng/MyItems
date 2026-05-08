@@ -9,6 +9,7 @@ namespace MyItems.ViewModels;
 public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly IDataService _dataService;
+    private readonly IItemQueryCache _itemQueryCache;
     private bool _isOpeningEditor;
 
     [ObservableProperty]
@@ -20,9 +21,10 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty]
     private string? errorMessage;
 
-    public ItemDetailViewModel(IDataService dataService)
+    public ItemDetailViewModel(IDataService dataService, IItemQueryCache itemQueryCache)
     {
         _dataService = dataService;
+        _itemQueryCache = itemQueryCache;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -76,7 +78,10 @@ public partial class ItemDetailViewModel : ObservableObject, IQueryAttributable
 
         var result = await _dataService.DeleteItemAsync(Item.ItemId);
         if (result > 0)
+        {
+            _itemQueryCache.Invalidate();
             await Shell.Current.GoToAsync("..");
+        }
     }
 
     private async Task LoadItemAsync(Guid itemId)

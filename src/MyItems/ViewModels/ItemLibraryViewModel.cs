@@ -10,6 +10,7 @@ namespace MyItems.ViewModels;
 public partial class ItemLibraryViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private readonly IItemQueryCache _itemQueryCache;
     private const int PageSize = 10;
 
     private List<ItemDisplayDto> _sourceItems = [];
@@ -58,8 +59,14 @@ public partial class ItemLibraryViewModel : ObservableObject
     private CancellationTokenSource? _searchCts;
 
     public ItemLibraryViewModel(IDataService dataService)
+        : this(dataService, new ItemQueryCache(dataService))
+    {
+    }
+
+    public ItemLibraryViewModel(IDataService dataService, IItemQueryCache itemQueryCache)
     {
         _dataService = dataService;
+        _itemQueryCache = itemQueryCache;
     }
 
     [RelayCommand]
@@ -77,6 +84,7 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(itemId);
+        _itemQueryCache.Invalidate();
         _sourceItems.RemoveAll(i => i.ItemId == itemId);
         RefreshStatisticsFromCache();
         ApplyFiltersAndResetPage();
@@ -177,6 +185,7 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.SeedSampleDataAsync();
+        _itemQueryCache.Invalidate();
         _isInitialized = false;
         await InitializeAsync();
     }
@@ -308,7 +317,7 @@ public partial class ItemLibraryViewModel : ObservableObject
 
         try
         {
-            var result = await _dataService.GetItemsWithStatisticsAsync();
+            var result = await _itemQueryCache.GetSnapshotAsync();
 
             TotalSpentText = $"¥{result.TotalSpent:F1}";
             ValidCountText = $"{result.ValidItems} 件";
