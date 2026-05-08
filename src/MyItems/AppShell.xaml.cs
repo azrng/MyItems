@@ -98,6 +98,7 @@ public partial class AppShell : Shell
             // 确保在UI线程上更新UI
             Dispatcher.Dispatch(() =>
             {
+                NotificationButton.IsVisible = hasExpiring;
                 NotificationBadge.IsVisible = hasExpiring;
             });
         }
@@ -118,6 +119,7 @@ public partial class AppShell : Shell
             }
 
             // 更新UI
+            NotificationButton.IsVisible = false;
             NotificationBadge.IsVisible = false;
 
             // 直接选中临期 Tab，避免 Shell 自动路由名不稳定导致跳转失败。

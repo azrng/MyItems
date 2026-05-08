@@ -1,39 +1,28 @@
 using Microsoft.Maui.ApplicationModel;
+using MyItems.Helpers;
 
 namespace MyItems;
 
 public partial class App : Application
 {
-    private const string ThemePreferenceKey = "app_theme";
-
     public App()
     {
         InitializeComponent();
         LoadAndApplyTheme();
-        RequestedThemeChanged += (_, e) => ApplyTheme(e.RequestedTheme);
+        RequestedThemeChanged += (_, e) =>
+        {
+            if (UserAppTheme == AppTheme.Unspecified)
+                ApplyTheme(e.RequestedTheme);
+        };
     }
 
     private void LoadAndApplyTheme()
     {
-        // 读取用户选择的主题
-        var themePreference = Preferences.Get(ThemePreferenceKey, 0);
+        var selectedTheme = ToAppTheme(ThemePreferenceHelper.ToPreference(
+            Preferences.Get(ThemePreferenceHelper.PreferenceKey, 0)));
 
-        // 如果用户没有选择跟随系统，应用用户选择的主题
-        if (themePreference == 1)
-        {
-            UserAppTheme = AppTheme.Light;
-            ApplyTheme(AppTheme.Light);
-        }
-        else if (themePreference == 2)
-        {
-            UserAppTheme = AppTheme.Dark;
-            ApplyTheme(AppTheme.Dark);
-        }
-        else
-        {
-            UserAppTheme = AppTheme.Unspecified;
-            ApplyTheme(RequestedTheme);
-        }
+        UserAppTheme = selectedTheme;
+        ApplyTheme(ResolveEffectiveTheme(selectedTheme));
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -115,7 +104,38 @@ public partial class App : Application
 
     private void SetColor(string key, string hex)
     {
-        if (Resources.ContainsKey(key))
-            Resources[key] = Color.FromArgb(hex);
+        SetColor(Resources, key, Color.FromArgb(hex));
+    }
+
+    private static bool SetColor(ResourceDictionary resources, string key, Color color)
+    {
+        if (resources.ContainsKey(key))
+        {
+            resources[key] = color;
+            return true;
+        }
+
+        foreach (var dictionary in resources.MergedDictionaries)
+        {
+            if (SetColor(dictionary, key, color))
+                return true;
+        }
+
+        return false;
+    }
+
+    private AppTheme ResolveEffectiveTheme(AppTheme selectedTheme)
+    {
+        return selectedTheme == AppTheme.Unspecified ? RequestedTheme : selectedTheme;
+    }
+
+    private static AppTheme ToAppTheme(ThemePreference themePreference)
+    {
+        return themePreference switch
+        {
+            ThemePreference.Light => AppTheme.Light,
+            ThemePreference.Dark => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
     }
 }

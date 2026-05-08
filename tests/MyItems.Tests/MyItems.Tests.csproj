@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MyItems\ViewModels\SelectableCategory.cs" Link="ViewModels\SelectableCategory.cs" />
+    <Compile Include="..\..\src\MyItems\Helpers\ThemePreferenceHelper.cs" Link="Helpers\ThemePreferenceHelper.cs" />
   </ItemGroup>
 
 </Project>

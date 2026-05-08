@@ -3,6 +3,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
+using MyItems.Helpers;
 
 namespace MyItems.ViewModels;
 
@@ -10,7 +11,6 @@ public partial class AboutViewModel : ObservableObject
 {
     private const string RepoUrl = "https://github.com/azrng/MyItems";
     private const string VersionsUrl = "https://github.com/azrng/MyItems/releases/latest/download/versions.json";
-    private const string ThemePreferenceKey = "app_theme";
 
     [ObservableProperty]
     private partial string AppName { get; set; } = "我的物品";
@@ -19,7 +19,7 @@ public partial class AboutViewModel : ObservableObject
     private partial string Version { get; set; } = AppInfo.Current.VersionString;
 
     [ObservableProperty]
-    private partial string Author { get; set; } = "azrng";
+    public partial string Author { get; set; } = "azrng";
 
     [ObservableProperty]
     private partial string Description { get; set; } = "个人/家庭自用的物品管理 App，核心功能是跟踪物品的保质期，同时管理物品的购入、存放等信息。";
@@ -42,25 +42,19 @@ public partial class AboutViewModel : ObservableObject
 
     private void LoadThemePreference()
     {
-        var themePreference = Preferences.Get(ThemePreferenceKey, 0);
+        var themePreference = Preferences.Get(ThemePreferenceHelper.PreferenceKey, 0);
         SelectedThemeIndex = themePreference;
     }
 
     partial void OnSelectedThemeIndexChanged(int value)
     {
-        Preferences.Set(ThemePreferenceKey, value);
+        Preferences.Set(ThemePreferenceHelper.PreferenceKey, value);
         ApplyTheme(value);
     }
 
     private static void ApplyTheme(int themeIndex)
     {
-        var theme = themeIndex switch
-        {
-            0 => AppTheme.Unspecified,
-            1 => AppTheme.Light,
-            2 => AppTheme.Dark,
-            _ => AppTheme.Unspecified
-        };
+        var theme = ToAppTheme(ThemePreferenceHelper.ToPreference(themeIndex));
 
         Application.Current!.UserAppTheme = theme;
 
@@ -70,6 +64,16 @@ public partial class AboutViewModel : ObservableObject
                 ? Application.Current.RequestedTheme
                 : theme);
         }
+    }
+
+    private static AppTheme ToAppTheme(ThemePreference themePreference)
+    {
+        return themePreference switch
+        {
+            ThemePreference.Light => AppTheme.Light,
+            ThemePreference.Dark => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
     }
 
     [ObservableProperty]
