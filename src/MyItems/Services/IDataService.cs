@@ -22,6 +22,7 @@ public interface IDataService
     // DTO queries
     Task<ItemDisplayDto?> GetItemDisplayDtoByIdAsync(Guid itemId);
     Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync();
+    Task<PagedItemDisplayResult> GetItemDisplayPageAsync(ItemQueryOptions options);
     Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync();
     Task<List<CategoryDto>> GetCategoryDtosAsync();
     Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync();
@@ -43,3 +44,16 @@ public interface IDataService
     Task<int> GetDbVersionAsync();
     Task ImportDatabaseAsync(string sourcePath);
 }
+
+public sealed record ItemQueryOptions(
+    int Offset,
+    int Limit,
+    Guid? CategoryId = null,
+    string? SearchText = null,
+    SearchFilter? AdvancedSearchFilter = null)
+{
+    public int SafeOffset => Math.Max(0, Offset);
+    public int SafeLimit => Limit <= 0 ? 20 : Math.Min(Limit, 100);
+}
+
+public sealed record PagedItemDisplayResult(List<ItemDisplayDto> Items, int TotalCount);

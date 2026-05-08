@@ -4,7 +4,7 @@ using MyItems.Services;
 
 namespace MyItems.Tests;
 
-public sealed class NoopDataService : IDataService
+public class NoopDataService : IDataService
 {
     public Task InitializeAsync() => Task.CompletedTask;
     public Task<List<Category>> GetCategoriesAsync() => Task.FromResult(new List<Category>());
@@ -17,6 +17,11 @@ public sealed class NoopDataService : IDataService
     public Task<int> DeleteItemAsync(Guid itemId) => Task.FromResult(1);
     public Task<ItemDisplayDto?> GetItemDisplayDtoByIdAsync(Guid itemId) => Task.FromResult<ItemDisplayDto?>(null);
     public Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync() => Task.FromResult(new List<ItemDisplayDto>());
+    public virtual Task<PagedItemDisplayResult> GetItemDisplayPageAsync(ItemQueryOptions options)
+    {
+        return Task.FromResult(new PagedItemDisplayResult(new List<ItemDisplayDto>(), 0));
+    }
+
     public Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync() => Task.FromResult(new List<ExpiryGroupDto>());
     public Task<List<CategoryDto>> GetCategoryDtosAsync() => Task.FromResult(new List<CategoryDto>());
     public Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync() => Task.FromResult((0m, 0, 0));

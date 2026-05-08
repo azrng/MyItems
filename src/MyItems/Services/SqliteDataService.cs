@@ -251,6 +251,126 @@ public class SqliteDataService : IDataService
         }).ToList();
     }
 
+    public async Task<PagedItemDisplayResult> GetItemDisplayPageAsync(ItemQueryOptions options)
+    {
+        await EnsureInitializedAsync();
+
+        var (whereSql, parameters) = BuildItemPageWhereClause(options);
+        var countSql = $"SELECT COUNT(*) FROM \"Items\" {whereSql}";
+        var totalCount = await _db.ExecuteScalarAsync<int>(countSql, parameters.ToArray());
+
+        var pageParameters = parameters.ToList();
+        pageParameters.Add(options.SafeLimit);
+        pageParameters.Add(options.SafeOffset);
+
+        var items = await _db.QueryAsync<Item>(
+            $"SELECT * FROM \"Items\" {whereSql} ORDER BY \"PurchaseDate\" DESC, \"CreatedAt\" DESC LIMIT ? OFFSET ?",
+            pageParameters.ToArray());
+
+        var categories = await _db.Table<Category>().OrderBy(c => c.SortOrder).ToListAsync();
+        var catLookup = categories.ToDictionary(c => c.Id);
+        var dtos = items.Select(item =>
+        {
+            catLookup.TryGetValue(item.CategoryId, out var category);
+            return ToItemDisplayDto(item, category);
+        }).ToList();
+
+        return new PagedItemDisplayResult(dtos, totalCount);
+    }
+
+    private static (string Sql, List<object> Parameters) BuildItemPageWhereClause(ItemQueryOptions options)
+    {
+        var clauses = new List<string> { "\"IsArchived\" = ?" };
+        var parameters = new List<object> { false };
+
+        if (options.CategoryId is { } categoryId && categoryId != Guid.Empty)
+        {
+            clauses.Add("\"CategoryId\" = ?");
+            parameters.Add(categoryId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.SearchText))
+        {
+            clauses.Add("\"Name\" LIKE ? ESCAPE '\\'");
+            parameters.Add(ToLikePattern(options.SearchText));
+        }
+
+        var filter = options.AdvancedSearchFilter;
+        if (filter is { IsActive: true })
+        {
+            if (!string.IsNullOrWhiteSpace(filter.Keyword))
+            {
+                clauses.Add("(\"Name\" LIKE ? ESCAPE '\\' OR \"Brand\" LIKE ? ESCAPE '\\')");
+                var keyword = ToLikePattern(filter.Keyword);
+                parameters.Add(keyword);
+                parameters.Add(keyword);
+            }
+
+            if (filter.MinPrice.HasValue)
+            {
+                clauses.Add("\"PurchasePrice\" IS NOT NULL AND \"PurchasePrice\" >= ?");
+                parameters.Add(filter.MinPrice.Value);
+            }
+
+            if (filter.MaxPrice.HasValue)
+            {
+                clauses.Add("\"PurchasePrice\" IS NOT NULL AND \"PurchasePrice\" <= ?");
+                parameters.Add(filter.MaxPrice.Value);
+            }
+
+            if (filter.PurchaseDateFrom.HasValue)
+            {
+                clauses.Add("\"PurchaseDate\" IS NOT NULL AND \"PurchaseDate\" >= ?");
+                parameters.Add(filter.PurchaseDateFrom.Value.Date);
+            }
+
+            if (filter.PurchaseDateTo.HasValue)
+            {
+                clauses.Add("\"PurchaseDate\" IS NOT NULL AND \"PurchaseDate\" < ?");
+                parameters.Add(filter.PurchaseDateTo.Value.Date.AddDays(1));
+            }
+
+            if (filter.ExpiryDateFrom.HasValue)
+            {
+                clauses.Add("\"ExpiryDate\" IS NOT NULL AND \"ExpiryDate\" >= ?");
+                parameters.Add(filter.ExpiryDateFrom.Value.Date);
+            }
+
+            if (filter.ExpiryDateTo.HasValue)
+            {
+                clauses.Add("\"ExpiryDate\" IS NOT NULL AND \"ExpiryDate\" < ?");
+                parameters.Add(filter.ExpiryDateTo.Value.Date.AddDays(1));
+            }
+
+            if (filter.CategoryId is { } filterCategoryId && filterCategoryId != Guid.Empty)
+            {
+                clauses.Add("\"CategoryId\" = ?");
+                parameters.Add(filterCategoryId);
+            }
+
+            if (filter.HasExpiry)
+                clauses.Add("\"ExpiryDate\" IS NOT NULL");
+
+            if (filter.OnlyExpired)
+            {
+                clauses.Add("\"ExpiryDate\" IS NOT NULL AND \"ExpiryDate\" < ?");
+                parameters.Add(DateTime.Today);
+            }
+            else if (filter.OnlyExpiring)
+            {
+                clauses.Add("\"ExpiryDate\" IS NOT NULL AND \"ExpiryDate\" <= ?");
+                parameters.Add(DateTime.Today.AddDays(7));
+            }
+        }
+
+        return ($"WHERE {string.Join(" AND ", clauses)}", parameters);
+    }
+
+    private static string ToLikePattern(string value)
+    {
+        return $"%{value.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+    }
+
     public async Task<ItemDisplayDto?> GetItemDisplayDtoByIdAsync(Guid itemId)
     {
         await EnsureInitializedAsync();
@@ -309,23 +429,23 @@ public class SqliteDataService : IDataService
 
     public async Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync()
     {
-        var (items, _) = await LoadCoreDataAsync();
+        await EnsureInitializedAsync();
 
-        var totalItems = items.Count;
-        decimal totalSpent = 0;
-        var validCount = 0;
+        var totalItems = await _db.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM \"Items\" WHERE \"IsArchived\" = ?",
+            false);
 
-        foreach (var item in items)
-        {
-            var status = StatusHelper.CalculateExpiryStatus(item.ExpiryDate);
-            if (status != ExpiryStatus.Expired)
-            {
-                totalSpent += (item.PurchasePrice ?? 0) * item.Quantity;
-                validCount++;
-            }
-        }
+        var validItems = await _db.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM \"Items\" WHERE \"IsArchived\" = ? AND (\"ExpiryDate\" IS NULL OR \"ExpiryDate\" >= ?)",
+            false,
+            DateTime.Today);
 
-        return (totalSpent, totalItems, validCount);
+        var totalSpent = await _db.ExecuteScalarAsync<decimal>(
+            "SELECT COALESCE(SUM(COALESCE(\"PurchasePrice\", 0) * \"Quantity\"), 0) FROM \"Items\" WHERE \"IsArchived\" = ? AND (\"ExpiryDate\" IS NULL OR \"ExpiryDate\" >= ?)",
+            false,
+            DateTime.Today);
+
+        return (totalSpent, totalItems, validItems);
     }
 
     public async Task<(List<ItemDisplayDto> Items, decimal TotalSpent, int TotalItems, int ValidItems)> GetItemsWithStatisticsAsync()

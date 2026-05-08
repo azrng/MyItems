@@ -77,6 +77,7 @@ public sealed class ItemQueryCacheTests
         public Task<int> DeleteItemAsync(Guid itemId) => Task.FromResult(1);
         public Task<ItemDisplayDto?> GetItemDisplayDtoByIdAsync(Guid itemId) => Task.FromResult<ItemDisplayDto?>(null);
         public Task<List<ItemDisplayDto>> GetItemDisplayDtosAsync() => Task.FromResult(new List<ItemDisplayDto>());
+        public Task<PagedItemDisplayResult> GetItemDisplayPageAsync(ItemQueryOptions options) => Task.FromResult(new PagedItemDisplayResult([], 0));
         public Task<List<ExpiryGroupDto>> GetExpiryGroupsAsync() => Task.FromResult(new List<ExpiryGroupDto>());
         public Task<List<CategoryDto>> GetCategoryDtosAsync() => Task.FromResult(new List<CategoryDto>());
         public Task<(decimal TotalSpent, int TotalItems, int ValidItems)> GetStatisticsAsync() => Task.FromResult((0m, 0, 0));

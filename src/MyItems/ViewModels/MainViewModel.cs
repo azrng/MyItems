@@ -12,8 +12,6 @@ public partial class MainViewModel : ObservableObject
     private readonly IDataService _dataService;
     private const int PageSize = 20;
 
-    private List<ItemDisplayDto> _sourceItems = [];
-    private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
 
     public ObservableCollection<ItemDisplayDto> RecentItems { get; } = [];
@@ -68,19 +66,19 @@ public partial class MainViewModel : ObservableObject
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(item.ItemId);
-        RemoveDeletedItem(item.ItemId);
+        await RefreshAfterDeleteAsync();
     }
 
     [RelayCommand]
     private async Task DeleteWithConfirmAsync(Guid itemId)
     {
-        var item = _allItems.FirstOrDefault(i => i.ItemId == itemId);
+        var item = RecentItems.FirstOrDefault(i => i.ItemId == itemId);
         var name = item?.ItemName ?? "这个物品";
         var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{name}」吗？", "删除", "取消");
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(itemId);
-        RemoveDeletedItem(itemId);
+        await RefreshAfterDeleteAsync();
     }
 
     [RelayCommand]
@@ -92,14 +90,24 @@ public partial class MainViewModel : ObservableObject
     public async Task DeleteItemByIdAsync(Guid itemId)
     {
         await _dataService.DeleteItemAsync(itemId);
-        RemoveDeletedItem(itemId);
+        await RefreshAfterDeleteAsync();
     }
 
     [RelayCommand]
-    private void LoadMore()
+    private async Task LoadMoreAsync()
     {
         if (IsLoadingMore || !HasMoreItems) return;
-        _ = LoadMoreAsync();
+
+        try
+        {
+            IsLoadingMore = true;
+            var result = await LoadPageAsync(_loadedCount);
+            AppendPage(result, replace: false);
+        }
+        finally
+        {
+            IsLoadingMore = false;
+        }
     }
 
     partial void OnSearchTextChanged(string value)
@@ -114,7 +122,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            ApplyFiltersAndResetPage();
+            await LoadDataAsync();
         }
         catch (TaskCanceledException) { }
     }
@@ -123,9 +131,8 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            var snapshot = await _itemQueryCache.GetSnapshotAsync();
-            _sourceItems = snapshot.Items;
-            ApplyFiltersAndResetPage();
+            var result = await LoadPageAsync(0);
+            AppendPage(result, replace: true);
         }
         catch (Exception ex)
         {
@@ -139,64 +146,41 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private void ApplyFiltersAndResetPage()
+    private Task<PagedItemDisplayResult> LoadPageAsync(int offset)
     {
-        var filtered = _sourceItems
-            .OrderByDescending(i => i.PurchaseDate)
-            .ToList();
-
-        if (!string.IsNullOrWhiteSpace(SearchText))
-        {
-            filtered = filtered
-                .Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
-        _allItems = filtered;
-        _loadedCount = 0;
-        RecentItems.Clear();
-
-        AppendPage();
+        var options = new ItemQueryOptions(
+            Offset: offset,
+            Limit: PageSize,
+            SearchText: SearchText);
+        return _dataService.GetItemDisplayPageAsync(options);
     }
 
-    private void RemoveDeletedItem(Guid itemId)
+    private async Task RefreshAfterDeleteAsync()
     {
         _itemQueryCache.Invalidate();
-        _sourceItems.RemoveAll(i => i.ItemId == itemId);
-        ApplyFiltersAndResetPage();
+        await LoadDataAsync();
     }
 
     private void ResetLoadedData()
     {
-        _sourceItems = [];
-        _allItems = [];
         _loadedCount = 0;
         RecentItems.Clear();
         HasMoreItems = false;
     }
 
-    private async Task LoadMoreAsync()
+    private void AppendPage(PagedItemDisplayResult result, bool replace)
     {
-        try
+        if (replace)
         {
-            IsLoadingMore = true;
-            await Task.Delay(100);
-            AppendPage();
+            _loadedCount = 0;
+            RecentItems.Clear();
         }
-        finally
-        {
-            IsLoadingMore = false;
-        }
-    }
 
-    private void AppendPage()
-    {
-        var next = _allItems.Skip(_loadedCount).Take(PageSize).ToList();
-        foreach (var item in next)
+        foreach (var item in result.Items)
             RecentItems.Add(item);
 
-        _loadedCount += next.Count;
-        HasMoreItems = _loadedCount < _allItems.Count;
+        _loadedCount += result.Items.Count;
+        HasMoreItems = _loadedCount < result.TotalCount;
         OnPropertyChanged(nameof(IsEmpty));
     }
 

@@ -13,8 +13,6 @@ public partial class ItemLibraryViewModel : ObservableObject
     private readonly IItemQueryCache _itemQueryCache;
     private const int PageSize = 10;
 
-    private List<ItemDisplayDto> _sourceItems = [];
-    private List<ItemDisplayDto> _allItems = [];
     private int _loadedCount;
     private readonly SemaphoreSlim _initializeLock = new(1, 1);
     private readonly SemaphoreSlim _loadLock = new(1, 1);
@@ -78,16 +76,14 @@ public partial class ItemLibraryViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteItemAsync(Guid itemId)
     {
-        var item = _allItems.FirstOrDefault(i => i.ItemId == itemId);
+        var item = Items.FirstOrDefault(i => i.ItemId == itemId);
         var name = item?.ItemName ?? "这个物品";
         var confirm = await Shell.Current.DisplayAlertAsync("确认删除", $"确定要删除「{name}」吗？", "删除", "取消");
         if (!confirm) return;
 
         await _dataService.DeleteItemAsync(itemId);
         _itemQueryCache.Invalidate();
-        _sourceItems.RemoveAll(i => i.ItemId == itemId);
-        RefreshStatisticsFromCache();
-        ApplyFiltersAndResetPage();
+        await LoadDataAsync();
     }
 
     [RelayCommand]
@@ -157,7 +153,7 @@ public partial class ItemLibraryViewModel : ObservableObject
             return;
         }
 
-        ApplyFiltersAndResetPage();
+        await LoadDataAsync();
     }
 
     [RelayCommand]
@@ -203,10 +199,20 @@ public partial class ItemLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void LoadMore()
+    private async Task LoadMoreAsync()
     {
         if (IsLoadingMore || !HasMoreItems) return;
-        _ = LoadMoreAsync();
+
+        try
+        {
+            IsLoadingMore = true;
+            var result = await LoadPageAsync(_loadedCount);
+            AppendPage(result, replace: false);
+        }
+        finally
+        {
+            IsLoadingMore = false;
+        }
     }
 
     partial void OnSelectedCategoryChanged(SelectableCategory value)
@@ -224,7 +230,7 @@ public partial class ItemLibraryViewModel : ObservableObject
         if (_suppressCategorySelectionLoad)
             return;
 
-        ApplyFiltersAndResetPage();
+        _ = LoadDataAsync();
     }
 
     partial void OnSearchTextChanged(string value)
@@ -239,7 +245,7 @@ public partial class ItemLibraryViewModel : ObservableObject
         try
         {
             await Task.Delay(300, ct);
-            ApplyFiltersAndResetPage();
+            await LoadDataAsync();
         }
         catch (TaskCanceledException) { }
     }
@@ -317,14 +323,14 @@ public partial class ItemLibraryViewModel : ObservableObject
 
         try
         {
-            var result = await _itemQueryCache.GetSnapshotAsync();
+            var result = await _dataService.GetStatisticsAsync();
 
             TotalSpentText = $"¥{result.TotalSpent:F1}";
             ValidCountText = $"{result.ValidItems} 件";
             TotalItemsText = $"{result.TotalItems} 件";
 
-            _sourceItems = result.Items;
-            ApplyFiltersAndResetPage();
+            var page = await LoadPageAsync(0);
+            AppendPage(page, replace: true);
         }
         catch (Exception ex)
         {
@@ -342,84 +348,20 @@ public partial class ItemLibraryViewModel : ObservableObject
             _ = ShowLoadErrorAsync(loadError);
     }
 
-    private void RefreshStatisticsFromCache()
+    private Task<PagedItemDisplayResult> LoadPageAsync(int offset)
     {
-        var validItems = _sourceItems
-            .Where(i => i.ExpiryStatus != Enums.ExpiryStatus.Expired)
-            .ToList();
-        var totalSpent = validItems.Sum(i => (i.PurchasePrice ?? 0) * i.Quantity);
-
-        TotalSpentText = $"¥{totalSpent:F1}";
-        ValidCountText = $"{validItems.Count} 件";
-        TotalItemsText = $"{_sourceItems.Count} 件";
-    }
-
-    private void ApplyFiltersAndResetPage()
-    {
-        var items = _sourceItems.AsEnumerable();
-
-        if (SelectedCategory?.Category?.Id is { } categoryId && categoryId != Guid.Empty)
-            items = items.Where(i => i.CategoryId == categoryId);
-
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            items = items.Where(i => i.ItemName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-
-        // 应用高级搜索过滤器
-        if (AdvancedSearchFilter != null && AdvancedSearchFilter.IsActive)
-        {
-            var filter = AdvancedSearchFilter;
-
-            // 关键词搜索
-            if (!string.IsNullOrWhiteSpace(filter.Keyword))
-                items = items.Where(i => i.ItemName.Contains(filter.Keyword, StringComparison.OrdinalIgnoreCase) ||
-                                            (i.Brand != null && i.Brand.Contains(filter.Keyword, StringComparison.OrdinalIgnoreCase)));
-
-            // 价格区间
-            if (filter.MinPrice.HasValue)
-                items = items.Where(i => i.PurchasePrice.HasValue && i.PurchasePrice.Value >= filter.MinPrice.Value);
-            if (filter.MaxPrice.HasValue)
-                items = items.Where(i => i.PurchasePrice.HasValue && i.PurchasePrice.Value <= filter.MaxPrice.Value);
-
-            // 购买日期
-            if (filter.PurchaseDateFrom.HasValue)
-                items = items.Where(i => i.PurchaseDate.HasValue && i.PurchaseDate.Value >= filter.PurchaseDateFrom.Value);
-            if (filter.PurchaseDateTo.HasValue)
-                items = items.Where(i => i.PurchaseDate.HasValue && i.PurchaseDate.Value <= filter.PurchaseDateTo.Value);
-
-            // 保质期
-            if (filter.ExpiryDateFrom.HasValue)
-                items = items.Where(i => i.ExpiryDate.HasValue && i.ExpiryDate.Value >= filter.ExpiryDateFrom.Value);
-            if (filter.ExpiryDateTo.HasValue)
-                items = items.Where(i => i.ExpiryDate.HasValue && i.ExpiryDate.Value <= filter.ExpiryDateTo.Value);
-
-            // 分类
-            if (filter.CategoryId.HasValue)
-                items = items.Where(i => i.CategoryId == filter.CategoryId.Value);
-
-            // 只显示有保质期的
-            if (filter.HasExpiry)
-                items = items.Where(i => i.ExpiryDate.HasValue);
-
-            // 只显示临期/已过期
-            if (filter.OnlyExpiring)
-                items = items.Where(i => i.ExpiryStatus != Enums.ExpiryStatus.Safe && i.ExpiryStatus != Enums.ExpiryStatus.NoExpiry);
-
-            // 只显示已过期
-            if (filter.OnlyExpired)
-                items = items.Where(i => i.ExpiryStatus == Enums.ExpiryStatus.Expired);
-        }
-
-        _allItems = items.OrderByDescending(i => i.PurchaseDate).ToList();
-        _loadedCount = 0;
-        Items.Clear();
-
-        AppendPage();
+        var categoryId = SelectedCategory?.Category?.Id;
+        var options = new ItemQueryOptions(
+            Offset: offset,
+            Limit: PageSize,
+            CategoryId: categoryId is { } id && id != Guid.Empty ? id : null,
+            SearchText: SearchText,
+            AdvancedSearchFilter: AdvancedSearchFilter);
+        return _dataService.GetItemDisplayPageAsync(options);
     }
 
     private void ResetLoadedData()
     {
-        _sourceItems = [];
-        _allItems = [];
         _loadedCount = 0;
         Items.Clear();
         HasMoreItems = false;
@@ -437,28 +379,19 @@ public partial class ItemLibraryViewModel : ObservableObject
         });
     }
 
-    private async Task LoadMoreAsync()
+    private void AppendPage(PagedItemDisplayResult result, bool replace)
     {
-        try
+        if (replace)
         {
-            IsLoadingMore = true;
-            await Task.Delay(100);
-            AppendPage();
+            _loadedCount = 0;
+            Items.Clear();
         }
-        finally
-        {
-            IsLoadingMore = false;
-        }
-    }
 
-    private void AppendPage()
-    {
-        var next = _allItems.Skip(_loadedCount).Take(PageSize).ToList();
-        foreach (var item in next)
+        foreach (var item in result.Items)
             Items.Add(item);
 
-        _loadedCount += next.Count;
-        HasMoreItems = _loadedCount < _allItems.Count;
+        _loadedCount += result.Items.Count;
+        HasMoreItems = _loadedCount < result.TotalCount;
         OnPropertyChanged(nameof(IsEmpty));
     }
 }
