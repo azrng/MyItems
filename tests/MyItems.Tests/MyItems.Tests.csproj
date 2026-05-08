@@ -19,6 +19,13 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MyItems\ViewModels\SelectableCategory.cs" Link="ViewModels\SelectableCategory.cs" />
+    <Compile Include="..\..\src\MyItems\ViewModels\ItemLibraryViewModel.cs" Link="ViewModels\ItemLibraryViewModel.cs" />
+    <Compile Include="..\..\src\MyItems\Services\IDataService.cs" Link="Services\IDataService.cs" />
+    <Compile Include="..\..\src\MyItems\Models\SearchFilter.cs" Link="Models\SearchFilter.cs" />
+    <Compile Include="..\..\src\MyItems\Models\DTOs\ItemDisplayDto.cs" Link="Models\DTOs\ItemDisplayDto.cs" />
+    <Compile Include="..\..\src\MyItems\Models\DTOs\CategoryDto.cs" Link="Models\DTOs\CategoryDto.cs" />
+    <Compile Include="..\..\src\MyItems\Models\DTOs\ExpiryGroupDto.cs" Link="Models\DTOs\ExpiryGroupDto.cs" />
+    <Compile Include="..\..\src\MyItems\Enums\ExpiryStatus.cs" Link="Enums\ExpiryStatus.cs" />
     <Compile Include="..\..\src\MyItems\Helpers\ThemePreferenceHelper.cs" Link="Helpers\ThemePreferenceHelper.cs" />
   </ItemGroup>
 
