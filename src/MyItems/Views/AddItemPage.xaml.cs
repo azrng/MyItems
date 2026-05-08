@@ -15,18 +15,14 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
-        Shell.SetNavBarIsVisible(this, true);
         Shell.SetTabBarIsVisible(this, false);
-        NavigationPage.SetHasNavigationBar(this, true);
         Loaded += OnLoaded;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        Shell.SetNavBarIsVisible(this, true);
         Shell.SetTabBarIsVisible(this, false);
-        NavigationPage.SetHasNavigationBar(this, true);
 
         await _viewModel.OnAppearingAsync();
         SynchronizeNativeControlsFromViewModel();

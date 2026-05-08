@@ -6,11 +6,9 @@
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
-    Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
     Title="{Binding PageTitle}"
     Padding="0"
-    SafeAreaEdges="None"
     Style="{StaticResource PageStyle}">
 
     <ContentPage.Resources>
@@ -88,10 +86,9 @@
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView SafeAreaEdges="None">
+    <ScrollView>
         <VerticalStackLayout Padding="16,12,16,28"
-                             Spacing="10"
-                             SafeAreaEdges="None">
+                             Spacing="10">
             <ActivityIndicator
                 IsRunning="{Binding IsLoadingItem}"
                 IsVisible="{Binding IsLoadingItem}"
