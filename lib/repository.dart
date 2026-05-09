@@ -200,6 +200,21 @@ CREATE TABLE IF NOT EXISTS items (
     return displays.skip(query.offset).take(query.limit).toList();
   }
 
+  Future<List<ItemDisplay>> getHomeItemDisplays({String? searchText, int limit = 1000}) async {
+    final categories = await getCategories();
+    final lookup = {for (final category in categories) category.id: category};
+    final displays = (await getItems())
+        .map((item) => ItemDisplay.fromItem(
+              item: item,
+              category: lookup[item.categoryId] ?? fallbackCategory,
+            ))
+        .where((display) => display.matchesKeyword(searchText ?? ''))
+        .toList();
+
+    displays.sort((a, b) => b.item.createdAt.compareTo(a.item.createdAt));
+    return displays.take(limit).toList();
+  }
+
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async {
     final displays = await getItemDisplays(
       query: ItemQuery(searchText: searchText, onlyExpiring: true, limit: 1000),

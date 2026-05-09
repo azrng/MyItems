@@ -51,6 +51,24 @@ void main() {
     expect(find.text('选择分类图标'), findsOneWidget);
     expect(find.text('🍔'), findsWidgets);
   });
+
+  testWidgets('drawer opens storage management page', (tester) async {
+    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('存储管理'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('存储管理'), findsWidgets);
+    expect(find.text('导出 CSV'), findsOneWidget);
+    expect(find.text('导入 CSV'), findsOneWidget);
+    expect(find.text('清空所有数据'), findsOneWidget);
+  });
 }
 
 class FakeNavigationRepository extends ItemRepository {
@@ -70,6 +88,9 @@ class FakeNavigationRepository extends ItemRepository {
 
   @override
   Future<List<ItemDisplay>> getItemDisplays({ItemQuery query = const ItemQuery()}) async => const [];
+
+  @override
+  Future<List<ItemDisplay>> getHomeItemDisplays({String? searchText, int limit = 1000}) async => const [];
 
   @override
   Future<LibraryStatistics> getStatistics() async => LibraryStatistics.empty;

@@ -34,6 +34,8 @@ class _RootPageState extends State<RootPage> {
             Navigator.pop(context);
             if (target == DrawerTarget.add) {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AddItemPage()));
+            } else if (target == DrawerTarget.storage) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const StoragePage()));
             } else {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage()));
             }
@@ -73,7 +75,7 @@ class _RootPageState extends State<RootPage> {
       };
 }
 
-enum DrawerTarget { add, about }
+enum DrawerTarget { add, storage, about }
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, required this.onNavigate});
@@ -105,6 +107,11 @@ class AppDrawer extends StatelessWidget {
               onTap: () => onNavigate(DrawerTarget.add),
             ),
             ListTile(
+              leading: const Icon(Icons.storage_outlined),
+              title: const Text('存储管理'),
+              onTap: () => onNavigate(DrawerTarget.storage),
+            ),
+            ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('关于'),
               onTap: () => onNavigate(DrawerTarget.about),
@@ -131,15 +138,18 @@ class HomePage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
               SearchField(
-                hint: '搜索过期或临期物品',
+                hint: '搜索全部物品',
                 initialValue: store.homeSearch,
                 onChanged: store.setHomeSearch,
               ),
               const SizedBox(height: 12),
               if (store.errorMessage != null) ErrorBanner(message: store.errorMessage!),
-              if (store.expiryGroups.every((group) => group.items.isEmpty))
-                const EmptyState(icon: Icons.check_circle_outline, title: '暂无过期或临期物品', subtitle: '当前需要关注的物品会显示在这里。'),
-              ...store.expiryGroups.map((group) => ExpiryGroupSection(group: group)),
+              if (store.homeItems.isEmpty)
+                const EmptyState(icon: Icons.inventory_2_outlined, title: '暂无物品', subtitle: '点击物品库右下角按钮或抽屉里的添加入口记录第一件物品。'),
+              ...store.homeItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: ItemCard(display: item),
+                  )),
             ],
           ),
         );
@@ -747,6 +757,194 @@ class IconPreviewButton extends StatelessWidget {
         children: [
           Text(icon, style: const TextStyle(fontSize: 22)),
           const Text('图标', style: TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+class StoragePage extends StatefulWidget {
+  const StoragePage({super.key});
+
+  @override
+  State<StoragePage> createState() => _StoragePageState();
+}
+
+class _StoragePageState extends State<StoragePage> {
+  final _importPath = TextEditingController();
+
+  @override
+  void dispose() {
+    _importPath.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('存储管理')),
+          body: Stack(
+            children: [
+              ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                children: [
+                  const Center(child: Text('💾', style: TextStyle(fontSize: 52))),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text('管理你的数据，随时导入导出', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+                  ),
+                  const SizedBox(height: 18),
+                  SectionCard(
+                    title: '数据导出与导入',
+                    children: [
+                      StorageActionTile(
+                        icon: '📤',
+                        title: '导出 CSV',
+                        subtitle: '将所有物品数据导出为 CSV 文件',
+                        buttonText: '导出数据',
+                        onPressed: () async {
+                          try {
+                            final path = await store.exportToCsv();
+                            if (context.mounted) showSnack(context, '已导出：$path');
+                          } catch (error) {
+                            if (context.mounted) showSnack(context, '导出失败：$error');
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _importPath,
+                        decoration: const InputDecoration(
+                          labelText: 'CSV 文件路径',
+                          hintText: r'D:\path\my_items_export.csv',
+                          prefixIcon: Icon(Icons.folder_open_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      StorageActionTile(
+                        icon: '📥',
+                        title: '导入 CSV',
+                        subtitle: '从 CSV 文件导入物品数据',
+                        buttonText: '导入数据',
+                        onPressed: () async {
+                          final path = _importPath.text.trim();
+                          if (path.isEmpty) {
+                            showSnack(context, '请先填写 CSV 文件路径');
+                            return;
+                          }
+                          final confirmed = await showConfirm(context, '导入 CSV', '将从 CSV 文件导入物品数据，确认继续？');
+                          if (!confirmed) return;
+                          try {
+                            final result = await store.importFromCsv(path);
+                            if (context.mounted) {
+                              showSnack(context, '导入完成：成功 ${result.$1} 条，失败 ${result.$2} 条');
+                            }
+                          } catch (error) {
+                            if (context.mounted) showSnack(context, '导入失败：$error');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SectionCard(
+                    title: '危险操作',
+                    children: [
+                      StorageActionTile(
+                        icon: '🗑️',
+                        title: '清空所有数据',
+                        subtitle: '删除所有物品和自定义分类，此操作不可恢复',
+                        buttonText: '清空数据',
+                        danger: true,
+                        onPressed: () async {
+                          final confirmed = await showConfirm(context, '清空数据', '将删除所有物品数据，此操作不可恢复。确定继续？');
+                          if (!confirmed) return;
+                          if (!context.mounted) return;
+                          final secondConfirmed = await showConfirm(context, '二次确认', '真的要清空所有数据吗？');
+                          if (!secondConfirmed) return;
+                          try {
+                            await store.clearAllData();
+                            if (context.mounted) showSnack(context, '所有数据已清空');
+                          } catch (error) {
+                            if (context.mounted) showSnack(context, '清空失败：$error');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (store.isLoading) const LinearProgressIndicator(minHeight: 2),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class StorageActionTile extends StatelessWidget {
+  const StorageActionTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.buttonText,
+    required this.onPressed,
+    this.danger = false,
+  });
+
+  final String icon;
+  final String title;
+  final String subtitle;
+  final String buttonText;
+  final VoidCallback onPressed;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = danger ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: danger ? const Color(0xFFFFE4E8) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: danger ? color : null)),
+                    const SizedBox(height: 3),
+                    Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: danger ? color : Colors.black54)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          danger
+              ? FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: color),
+                  onPressed: onPressed,
+                  child: Text(buttonText),
+                )
+              : FilledButton.tonal(
+                  onPressed: onPressed,
+                  child: Text(buttonText),
+                ),
         ],
       ),
     );

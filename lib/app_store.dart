@@ -14,6 +14,7 @@ class AppStore extends ChangeNotifier {
   String librarySearch = '';
   String? selectedCategoryId;
   List<Category> categories = [];
+  List<ItemDisplay> homeItems = [];
   List<ExpiryGroup> expiryGroups = [];
   List<ItemDisplay> libraryItems = [];
   LibraryStatistics statistics = LibraryStatistics.empty;
@@ -27,6 +28,7 @@ class AppStore extends ChangeNotifier {
 
   Future<void> refreshAll() async {
     categories = await repository.getCategories();
+    homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
     expiryGroups = await repository.getExpiryGroups(searchText: homeSearch);
     libraryItems = await repository.getItemDisplays(
       query: ItemQuery(
@@ -42,6 +44,7 @@ class AppStore extends ChangeNotifier {
   Future<void> setHomeSearch(String value) async {
     homeSearch = value;
     await _run(() async {
+      homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
       expiryGroups = await repository.getExpiryGroups(searchText: homeSearch);
       notifyListeners();
     }, setLoading: false);
@@ -161,6 +164,21 @@ class AppStore extends ChangeNotifier {
   Future<void> deleteCategory(Category category) async {
     await _run(() async {
       await repository.deleteCategory(category);
+      await refreshAll();
+    });
+  }
+
+  Future<String> exportToCsv() => repository.exportToCsv();
+
+  Future<(int successCount, int failureCount, List<String> errors)> importFromCsv(String filePath) async {
+    final result = await repository.importFromCsv(filePath);
+    await refreshAll();
+    return result;
+  }
+
+  Future<void> clearAllData() async {
+    await _run(() async {
+      await repository.clearAllData();
       await refreshAll();
     });
   }
