@@ -64,6 +64,7 @@ void main() {
 
     expect(find.text('测试物品'), findsOneWidget);
     expect(find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
+    expect(find.text('¥0.00/天'), findsNothing);
   });
 
   testWidgets('drawer opens storage management page', (tester) async {

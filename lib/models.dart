@@ -227,7 +227,7 @@ class ItemDisplay {
       expiryStatusText: getExpiryStatusText(status, item.expiryDate, baseDate),
       holdingDays: holdingDays,
       dailyCost: dailyCost,
-      dailyCostText: '¥${dailyCost.toStringAsFixed(2)}/天',
+      dailyCostText: item.trackDailyCost ? '¥${dailyCost.toStringAsFixed(2)}/天' : '',
       holdingText: holdingDays == 0 ? '今天购入' : '持有 $holdingDays 天',
     );
   }

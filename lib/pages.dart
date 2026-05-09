@@ -401,9 +401,20 @@ class ItemCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      display.item.expiryDate == null ? display.holdingText : '保质 ${display.expiryDateText}  ${display.dailyCostText}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
+                      children: [
+                        Text(
+                          display.item.expiryDate == null ? display.holdingText : '保质 ${display.expiryDateText}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (display.dailyCostText.isNotEmpty)
+                          Text(
+                            display.dailyCostText,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
                     ),
                   ],
                 ),

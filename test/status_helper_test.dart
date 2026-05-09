@@ -38,6 +38,7 @@ void main() {
           purchasePrice: 20,
           expiryDate: DateTime(2026, 5, 12),
           quantity: 2,
+          trackDailyCost: true,
           createdAt: today,
           updatedAt: today,
         ),
@@ -48,6 +49,27 @@ void main() {
       expect(display.holdingDays, 5);
       expect(display.dailyCost, 4);
       expect(display.dailyCostText, '¥4.00/天');
+    });
+
+    test('hides daily cost text when item does not track daily cost', () {
+      final today = DateTime(2026, 5, 9);
+      final display = ItemDisplay.fromItem(
+        item: Item(
+          id: '1',
+          name: '面包',
+          categoryId: 'food',
+          purchaseDate: DateTime(2026, 5, 8),
+          purchasePrice: 0,
+          expiryDate: DateTime(2026, 5, 12),
+          trackDailyCost: false,
+          createdAt: today,
+          updatedAt: today,
+        ),
+        category: Category(id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
+        today: today,
+      );
+
+      expect(display.dailyCostText, isEmpty);
     });
 
     test('matches keyword against name brand category and location', () {
