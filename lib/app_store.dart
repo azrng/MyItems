@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' hide Category;
 import 'models.dart';
 import 'repository.dart';
 
+const defaultCategoryIconValue = '🏷️';
+
 class AppStore extends ChangeNotifier {
   AppStore(this.repository);
 
@@ -11,9 +13,11 @@ class AppStore extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   String homeSearch = '';
+  String expirySearch = '';
   String librarySearch = '';
   String? selectedCategoryId;
   List<Category> categories = [];
+  List<StorageLocation> locations = [];
   List<ItemDisplay> homeItems = [];
   List<ExpiryGroup> expiryGroups = [];
   List<ItemDisplay> libraryItems = [];
@@ -36,9 +40,10 @@ class AppStore extends ChangeNotifier {
 
   Future<void> refreshAll() async {
     categories = await repository.getCategories();
+    locations = await repository.getLocations();
     homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
     expiryGroups = _sortExpiryGroupsByExpiryAsc(
-        await repository.getExpiryGroups(searchText: homeSearch));
+        await repository.getExpiryGroups(searchText: expirySearch));
     libraryItems = _sortByCreatedDesc(await repository.getItemDisplays(
       query: ItemQuery(
         categoryId: selectedCategoryId,
@@ -54,8 +59,15 @@ class AppStore extends ChangeNotifier {
     homeSearch = value;
     await _run(() async {
       homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
+      notifyListeners();
+    }, setLoading: false);
+  }
+
+  Future<void> setExpirySearch(String value) async {
+    expirySearch = value;
+    await _run(() async {
       expiryGroups = _sortExpiryGroupsByExpiryAsc(
-          await repository.getExpiryGroups(searchText: homeSearch));
+          await repository.getExpiryGroups(searchText: expirySearch));
       notifyListeners();
     }, setLoading: false);
   }
@@ -115,6 +127,9 @@ class AppStore extends ChangeNotifier {
       purchasePrice: form.purchasePrice,
       expiryDate: form.noExpiry ? null : form.expiryDate,
       quantity: form.quantity < 1 ? 1 : form.quantity,
+      initialQuantity: form.quantity < 1 ? 1 : form.quantity,
+      remainingQuantity:
+          form.remainingQuantity ?? (form.quantity < 1 ? 1 : form.quantity),
       trackDailyCost: form.trackDailyCost,
       notes: emptyStringToNull(form.notes),
       createdAt: form.createdAt ?? now,
@@ -133,6 +148,43 @@ class AppStore extends ChangeNotifier {
     });
   }
 
+  Future<void> deleteItem(String itemId) async {
+    await _run(() async {
+      await repository.deleteItem(itemId);
+      await refreshAll();
+    });
+  }
+
+  Future<void> consumeOne(String itemId) async {
+    await _run(() async {
+      await repository.consumeItem(
+        itemId,
+        quantity: 1,
+        type: ConsumptionType.consumeOne,
+      );
+      await refreshAll();
+    });
+  }
+
+  Future<void> consumeAll(String itemId) async {
+    final item = await repository.getItem(itemId);
+    if (item == null) {
+      throw const StoreException('物品不存在');
+    }
+    await _run(() async {
+      await repository.consumeItem(
+        itemId,
+        quantity: item.remainingQuantity,
+        type: ConsumptionType.consumeAll,
+      );
+      await refreshAll();
+    });
+  }
+
+  Future<List<ConsumptionRecord>> getConsumptionRecords(String itemId) {
+    return repository.getConsumptionRecords(itemId);
+  }
+
   Future<void> addCategory(String name, String icon) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -141,12 +193,62 @@ class AppStore extends ChangeNotifier {
     final category = Category(
       id: newId(),
       name: trimmed,
-      icon: icon.trim().isEmpty ? '🏷️' : icon.trim(),
+      icon: icon.trim().isEmpty ? defaultCategoryIconValue : icon.trim(),
       sortOrder: categories.length + 1,
       isPreset: false,
     );
     await _run(() async {
       await repository.saveCategory(category);
+      await refreshAll();
+    });
+  }
+
+  Future<void> renameCategory(
+      Category category, String name, String icon) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw const StoreException('请填写分类名称');
+    }
+    await _run(() async {
+      await repository.renameCategory(
+        category,
+        trimmed,
+        icon.trim().isEmpty ? defaultCategoryIconValue : icon.trim(),
+      );
+      await refreshAll();
+    });
+  }
+
+  Future<void> addLocation(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw const StoreException('请填写位置名称');
+    }
+    final location = StorageLocation(
+      id: newId(),
+      name: trimmed,
+      sortOrder: locations.length + 1,
+    );
+    await _run(() async {
+      await repository.saveLocation(location);
+      await refreshAll();
+    });
+  }
+
+  Future<void> renameLocation(StorageLocation location, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw const StoreException('请填写位置名称');
+    }
+    await _run(() async {
+      await repository.renameLocation(location.id, trimmed);
+      await refreshAll();
+    });
+  }
+
+  Future<void> deleteLocation(StorageLocation location) async {
+    await _run(() async {
+      await repository.deleteLocation(location);
       await refreshAll();
     });
   }
@@ -257,6 +359,7 @@ class ItemFormData {
     DateTime? expiryDate,
     this.noExpiry = false,
     this.quantity = 1,
+    this.remainingQuantity,
     this.trackDailyCost = false,
     this.notes,
     this.createdAt,
@@ -273,6 +376,7 @@ class ItemFormData {
   DateTime? expiryDate;
   bool noExpiry;
   int quantity;
+  int? remainingQuantity;
   bool trackDailyCost;
   String? notes;
   DateTime? createdAt;
@@ -289,6 +393,7 @@ class ItemFormData {
         expiryDate: item.expiryDate,
         noExpiry: item.expiryDate == null,
         quantity: item.quantity,
+        remainingQuantity: item.remainingQuantity,
         trackDailyCost: item.trackDailyCost,
         notes: item.notes,
         createdAt: item.createdAt,

@@ -104,6 +104,94 @@ void main() {
             .map((category) => '${category.id}:${category.sortOrder}'),
         ['daily:1', 'food:2', 'other:3']);
   });
+
+  test('statistics uses unit price multiplied by remaining quantity', () async {
+    final today = DateTime(2026, 5, 9);
+    final repository = FakeHomeRepository([
+      Item(
+        id: 'bread',
+        name: '面包',
+        categoryId: 'food',
+        purchasePrice: 5,
+        quantity: 3,
+        initialQuantity: 3,
+        remainingQuantity: 2,
+        createdAt: today,
+        updatedAt: today,
+      ),
+    ]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+
+    expect(store.statistics.totalSpent, 10);
+    expect(store.statistics.totalItems, 1);
+    expect(store.statistics.validItems, 1);
+  });
+
+  test('consumes one item and records consumption', () async {
+    final today = DateTime(2026, 5, 9);
+    final repository = FakeHomeRepository([
+      Item(
+        id: 'milk',
+        name: '牛奶',
+        categoryId: 'food',
+        quantity: 2,
+        initialQuantity: 2,
+        remainingQuantity: 2,
+        createdAt: today,
+        updatedAt: today,
+      ),
+    ]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+    await store.consumeOne('milk');
+
+    expect(repository.items.single.remainingQuantity, 1);
+    expect(repository.records.single.itemId, 'milk');
+    expect(repository.records.single.quantity, 1);
+    expect(repository.records.single.type, ConsumptionType.consumeOne);
+  });
+
+  test('consume all archives depleted item', () async {
+    final today = DateTime(2026, 5, 9);
+    final repository = FakeHomeRepository([
+      Item(
+        id: 'egg',
+        name: '鸡蛋',
+        categoryId: 'food',
+        quantity: 6,
+        initialQuantity: 6,
+        remainingQuantity: 4,
+        createdAt: today,
+        updatedAt: today,
+      ),
+    ]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+    await store.consumeAll('egg');
+
+    expect(repository.items.single.remainingQuantity, 0);
+    expect(repository.items.single.isArchived, isTrue);
+    expect(repository.records.single.quantity, 4);
+    expect(repository.records.single.type, ConsumptionType.consumeAll);
+  });
+
+  test('home and expiry search are independent', () async {
+    final repository = FakeHomeRepository([]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+    await store.setHomeSearch('面包');
+    await store.setExpirySearch('牛奶');
+
+    expect(store.homeSearch, '面包');
+    expect(store.expirySearch, '牛奶');
+    expect(repository.lastHomeSearch, '面包');
+    expect(repository.lastExpirySearch, '牛奶');
+  });
 }
 
 class FakeCategoryRepository extends ItemRepository {
@@ -132,6 +220,9 @@ class FakeCategoryRepository extends ItemRepository {
       const [];
 
   @override
+  Future<List<StorageLocation>> getLocations() async => const [];
+
+  @override
   Future<List<ItemDisplay>> getItemDisplays(
           {ItemQuery query = const ItemQuery()}) async =>
       const [];
@@ -155,9 +246,13 @@ class FakeHomeRepository extends ItemRepository {
   FakeHomeRepository(this._items);
 
   final List<Item> _items;
+  List<Item> get items => _items;
+  final List<ConsumptionRecord> records = [];
   final _category = const Category(
       id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true);
   ThemePreference _themePreference = ThemePreference.system;
+  String? lastHomeSearch;
+  String? lastExpirySearch;
 
   @override
   Future<void> initialize() async {}
@@ -174,7 +269,11 @@ class FakeHomeRepository extends ItemRepository {
   Future<List<Category>> getCategories() async => [_category];
 
   @override
+  Future<List<StorageLocation>> getLocations() async => const [];
+
+  @override
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async {
+    lastExpirySearch = searchText;
     final displays = await getItemDisplays(
         query:
             ItemQuery(searchText: searchText, onlyExpiring: true, limit: 1000));
@@ -194,6 +293,7 @@ class FakeHomeRepository extends ItemRepository {
   Future<List<ItemDisplay>> getItemDisplays(
       {ItemQuery query = const ItemQuery()}) async {
     return _items
+        .where((item) => !item.isArchived)
         .where((item) => item.name.contains(query.searchText ?? ''))
         .map((item) => ItemDisplay.fromItem(
             item: item, category: _category, today: DateTime(2026, 5, 9)))
@@ -203,6 +303,7 @@ class FakeHomeRepository extends ItemRepository {
   @override
   Future<List<ItemDisplay>> getHomeItemDisplays(
       {String? searchText, int limit = 1000}) async {
+    lastHomeSearch = searchText;
     final displays = await getItemDisplays(
         query: ItemQuery(searchText: searchText, limit: limit));
     displays.sort((a, b) => b.item.createdAt.compareTo(a.item.createdAt));
@@ -210,5 +311,52 @@ class FakeHomeRepository extends ItemRepository {
   }
 
   @override
-  Future<LibraryStatistics> getStatistics() async => LibraryStatistics.empty;
+  Future<LibraryStatistics> getStatistics() async {
+    final displays =
+        await getItemDisplays(query: const ItemQuery(limit: 10000));
+    final valid = displays
+        .where((item) => item.expiryStatus != ExpiryStatus.expired)
+        .fold<double>(
+            0,
+            (sum, item) =>
+                sum +
+                (item.item.purchasePrice ?? 0) * item.item.remainingQuantity);
+    return LibraryStatistics(
+      totalSpent: valid,
+      totalItems: displays.length,
+      validItems: displays
+          .where((item) => item.expiryStatus != ExpiryStatus.expired)
+          .length,
+    );
+  }
+
+  @override
+  Future<Item?> getItem(String id) async {
+    for (final item in _items) {
+      if (item.id == id) return item;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> consumeItem(String itemId,
+      {required int quantity, required ConsumptionType type}) async {
+    final index = _items.indexWhere((item) => item.id == itemId);
+    if (index < 0) return;
+    final item = _items[index];
+    final consumed =
+        quantity > item.remainingQuantity ? item.remainingQuantity : quantity;
+    final remaining = item.remainingQuantity - consumed;
+    _items[index] = item.copyWith(
+      remainingQuantity: remaining,
+      isArchived: remaining == 0 ? true : item.isArchived,
+    );
+    records.add(ConsumptionRecord(
+      id: newId(),
+      itemId: itemId,
+      quantity: consumed,
+      type: type,
+      consumedAt: DateTime(2026, 5, 9),
+    ));
+  }
 }

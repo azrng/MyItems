@@ -23,6 +23,84 @@ enum ThemePreference {
   }
 }
 
+enum ConsumptionType {
+  consumeOne('consume_one', '用掉一件'),
+  consumeAll('consume_all', '消耗完成');
+
+  const ConsumptionType(this.value, this.label);
+
+  final String value;
+  final String label;
+
+  static ConsumptionType fromValue(String? value) {
+    return ConsumptionType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => ConsumptionType.consumeOne,
+    );
+  }
+}
+
+class StorageLocation {
+  const StorageLocation({
+    required this.id,
+    required this.name,
+    required this.sortOrder,
+    this.isActive = true,
+  });
+
+  final String id;
+  final String name;
+  final int sortOrder;
+  final bool isActive;
+
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'name': name,
+        'sort_order': sortOrder,
+        'is_active': isActive ? 1 : 0,
+      };
+
+  static StorageLocation fromMap(Map<String, Object?> map) => StorageLocation(
+        id: map['id'] as String,
+        name: map['name'] as String,
+        sortOrder: (map['sort_order'] as num).toInt(),
+        isActive: (map['is_active'] as num).toInt() == 1,
+      );
+}
+
+class ConsumptionRecord {
+  const ConsumptionRecord({
+    required this.id,
+    required this.itemId,
+    required this.quantity,
+    required this.type,
+    required this.consumedAt,
+  });
+
+  final String id;
+  final String itemId;
+  final int quantity;
+  final ConsumptionType type;
+  final DateTime consumedAt;
+
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'item_id': itemId,
+        'quantity': quantity,
+        'type': type.value,
+        'consumed_at': consumedAt.toIso8601String(),
+      };
+
+  static ConsumptionRecord fromMap(Map<String, Object?> map) =>
+      ConsumptionRecord(
+        id: map['id'] as String,
+        itemId: map['item_id'] as String,
+        quantity: (map['quantity'] as num).toInt(),
+        type: ConsumptionType.fromValue(map['type'] as String?),
+        consumedAt: parseDate(map['consumed_at'] as String?) ?? DateTime.now(),
+      );
+}
+
 class Category {
   const Category({
     required this.id,
@@ -91,12 +169,15 @@ class Item {
     this.purchasePrice,
     this.expiryDate,
     this.quantity = 1,
+    int? initialQuantity,
+    int? remainingQuantity,
     this.trackDailyCost = false,
     this.notes,
     this.imagePath,
     required this.createdAt,
     required this.updatedAt,
-  });
+  })  : initialQuantity = initialQuantity ?? quantity,
+        remainingQuantity = remainingQuantity ?? quantity;
 
   final String id;
   final String name;
@@ -110,6 +191,8 @@ class Item {
   final double? purchasePrice;
   final DateTime? expiryDate;
   final int quantity;
+  final int initialQuantity;
+  final int remainingQuantity;
   final bool trackDailyCost;
   final String? notes;
   final String? imagePath;
@@ -129,6 +212,8 @@ class Item {
     double? purchasePrice,
     DateTime? expiryDate,
     int? quantity,
+    int? initialQuantity,
+    int? remainingQuantity,
     bool? trackDailyCost,
     String? notes,
     String? imagePath,
@@ -148,6 +233,8 @@ class Item {
       purchasePrice: purchasePrice ?? this.purchasePrice,
       expiryDate: expiryDate ?? this.expiryDate,
       quantity: quantity ?? this.quantity,
+      initialQuantity: initialQuantity ?? this.initialQuantity,
+      remainingQuantity: remainingQuantity ?? this.remainingQuantity,
       trackDailyCost: trackDailyCost ?? this.trackDailyCost,
       notes: notes ?? this.notes,
       imagePath: imagePath ?? this.imagePath,
@@ -169,6 +256,8 @@ class Item {
         'purchase_price': purchasePrice,
         'expiry_date': expiryDate?.toIso8601String(),
         'quantity': quantity,
+        'initial_quantity': initialQuantity,
+        'remaining_quantity': remainingQuantity,
         'track_daily_cost': trackDailyCost ? 1 : 0,
         'notes': notes,
         'image_path': imagePath,
@@ -189,6 +278,10 @@ class Item {
         purchasePrice: (map['purchase_price'] as num?)?.toDouble(),
         expiryDate: parseDate(map['expiry_date'] as String?),
         quantity: (map['quantity'] as num).toInt(),
+        initialQuantity:
+            ((map['initial_quantity'] ?? map['quantity']) as num).toInt(),
+        remainingQuantity:
+            ((map['remaining_quantity'] ?? map['quantity']) as num).toInt(),
         trackDailyCost: (map['track_daily_cost'] as num).toInt() == 1,
         notes: map['notes'] as String?,
         imagePath: map['image_path'] as String?,
@@ -227,6 +320,8 @@ class ItemDisplay {
   String get priceText => item.purchasePrice == null
       ? '未记录'
       : '¥${item.purchasePrice!.toStringAsFixed(1)}';
+  String get stockText =>
+      '剩余 ${item.remainingQuantity}/${item.initialQuantity} 件';
   String get expiryDateText =>
       item.expiryDate == null ? '无保质期' : formatDate(item.expiryDate!);
   String get notesDisplay => emptyToFallback(item.notes, '暂无备注');

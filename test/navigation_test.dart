@@ -49,6 +49,7 @@ void main() {
     expect(find.byIcon(Icons.drag_handle), findsWidgets);
     expect(
         find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsWidgets);
 
     expect(find.text('图标'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
@@ -62,8 +63,8 @@ void main() {
   });
 
   testWidgets('library item supports swipe delete action', (tester) async {
-    await tester
-        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    final repository = FakeNavigationRepository();
+    await tester.pumpWidget(MyItemsApp(store: AppStore(repository)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -75,6 +76,18 @@ void main() {
     expect(
         find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
     expect(find.text('¥0.00/天'), findsNothing);
+
+    await tester.drag(
+        find.byKey(const ValueKey('item-dismiss-test-item')),
+        const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('确定永久删除「测试物品」吗？该操作不可恢复。'), findsOneWidget);
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    expect(find.text('真的永久删除这个物品吗？'), findsOneWidget);
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    expect(repository.deletedItemIds, ['test-item']);
   });
 
   testWidgets('library overview uses compact metric strip', (tester) async {
@@ -114,6 +127,24 @@ void main() {
     expect(find.text('清空所有数据'), findsOneWidget);
   });
 
+  testWidgets('drawer opens location management page', (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('存储位置'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('存储位置'), findsWidgets);
+    expect(find.text('新增位置'), findsOneWidget);
+    expect(find.text('冰箱'), findsOneWidget);
+  });
+
   testWidgets('home app bar add button opens add item page', (tester) async {
     await tester
         .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
@@ -140,7 +171,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('购买日期'), findsOneWidget);
-    expect(find.text('未记录'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, '未记录'), findsOneWidget);
+    expect(find.text('单价'), findsOneWidget);
+    expect(find.text('存放位置'), findsOneWidget);
+    expect(find.text('初始数量'), findsOneWidget);
   });
 
   testWidgets('about page exposes project link and theme choices',
@@ -175,7 +209,11 @@ class FakeNavigationRepository extends ItemRepository {
     const Category(
         id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
   ];
+  final _locations = const [
+    StorageLocation(id: 'fridge', name: '冰箱', sortOrder: 1),
+  ];
   final _today = DateTime(2026, 5, 9);
+  final deletedItemIds = <String>[];
   ThemePreference _themePreference = ThemePreference.system;
 
   @override
@@ -191,6 +229,9 @@ class FakeNavigationRepository extends ItemRepository {
 
   @override
   Future<List<Category>> getCategories() async => _categories;
+
+  @override
+  Future<List<StorageLocation>> getLocations() async => _locations;
 
   @override
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async =>
@@ -215,8 +256,13 @@ class FakeNavigationRepository extends ItemRepository {
   @override
   Future<List<ItemDisplay>> getHomeItemDisplays(
           {String? searchText, int limit = 1000}) async =>
-      const [];
+      getItemDisplays(query: ItemQuery(searchText: searchText, limit: limit));
 
   @override
   Future<LibraryStatistics> getStatistics() async => LibraryStatistics.empty;
+
+  @override
+  Future<void> deleteItem(String itemId) async {
+    deletedItemIds.add(itemId);
+  }
 }

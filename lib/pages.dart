@@ -51,6 +51,9 @@ class _RootPageState extends State<RootPage> {
             } else if (target == DrawerTarget.storage) {
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const StoragePage()));
+            } else if (target == DrawerTarget.locations) {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const LocationPage()));
             } else {
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const AboutPage()));
@@ -104,7 +107,7 @@ class _RootPageState extends State<RootPage> {
       };
 }
 
-enum DrawerTarget { add, storage, about }
+enum DrawerTarget { add, storage, locations, about }
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, required this.onNavigate});
@@ -143,6 +146,11 @@ class AppDrawer extends StatelessWidget {
               leading: const Icon(Icons.storage_outlined),
               title: const Text('存储管理'),
               onTap: () => onNavigate(DrawerTarget.storage),
+            ),
+            ListTile(
+              leading: const Icon(Icons.place_outlined),
+              title: const Text('存储位置'),
+              onTap: () => onNavigate(DrawerTarget.locations),
             ),
             ListTile(
               leading: const Icon(Icons.info_outline),
@@ -242,8 +250,8 @@ class ExpiringPage extends StatelessWidget {
             children: [
               SearchField(
                 hint: '搜索临期或已过期物品',
-                initialValue: store.homeSearch,
-                onChanged: store.setHomeSearch,
+                initialValue: store.expirySearch,
+                onChanged: store.setExpirySearch,
               ),
               const SizedBox(height: 12),
               if (store.errorMessage != null)
@@ -303,13 +311,19 @@ class LibraryPage extends StatelessWidget {
                       direction: DismissDirection.endToStart,
                       background: const SizedBox.shrink(),
                       secondaryBackground:
-                          const SwipeDeleteBackground(label: '移除'),
+                          const SwipeDeleteBackground(label: '删除'),
                       confirmDismiss: (_) async {
                         final confirmed = await showConfirm(
-                            context, '移除物品', '确定移除「${item.name}」吗？');
+                            context,
+                            '删除物品',
+                            '确定永久删除「${item.name}」吗？该操作不可恢复。');
                         if (!confirmed) return false;
+                        if (!context.mounted) return false;
+                        final secondConfirmed = await showConfirm(
+                            context, '二次确认', '真的永久删除这个物品吗？');
+                        if (!secondConfirmed) return false;
                         try {
-                          await store.archiveItem(item.id);
+                          await store.deleteItem(item.id);
                         } catch (error) {
                           if (context.mounted) {
                             showSnack(context, error.toString());
@@ -511,13 +525,16 @@ class ItemCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     Text(
-                      '${display.brandDisplay} · ${display.categoryName} · ${display.locationDisplay} · ${display.priceText}',
+                      '${display.brandDisplay} · ${display.categoryName} · ${display.locationDisplay}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
-                          ?.copyWith(color: Colors.black54),
+                          ?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                     ),
                     const SizedBox(height: 6),
                     Wrap(
@@ -528,6 +545,14 @@ class ItemCard extends StatelessWidget {
                           display.item.expiryDate == null
                               ? display.holdingText
                               : '保质 ${display.expiryDateText}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Text(
+                          display.priceText,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Text(
+                          display.stockText,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         if (display.dailyCostText.isNotEmpty)
@@ -557,25 +582,26 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final (background, foreground, text) = switch (display.expiryStatus) {
       ExpiryStatus.expired => (
-          const Color(0xFFFFE4E8),
-          const Color(0xFFD92D46),
+          colorScheme.errorContainer,
+          colorScheme.onErrorContainer,
           display.expiryStatusText
         ),
       ExpiryStatus.expiring => (
-          const Color(0xFFFFF1B8),
-          const Color(0xFFB76A00),
+          colorScheme.tertiaryContainer,
+          colorScheme.onTertiaryContainer,
           display.expiryStatusText
         ),
       ExpiryStatus.safe => (
-          const Color(0xFFDCFBE6),
-          const Color(0xFF22A97E),
+          colorScheme.secondaryContainer,
+          colorScheme.onSecondaryContainer,
           '安全'
         ),
       ExpiryStatus.noExpiry => (
-          const Color(0xFFD9F6EE),
-          const Color(0xFF2A817A),
+          colorScheme.surfaceContainerHighest,
+          colorScheme.onSurfaceVariant,
           '无期限'
         ),
     };
@@ -665,40 +691,84 @@ class ItemDetailPage extends StatelessWidget {
                       : formatDate(item.purchaseDate!)),
               DetailTile(label: '购入价格', value: display.priceText),
               DetailTile(label: '保质期', value: display.expiryDateText),
-              DetailTile(label: '数量', value: '${item.quantity}'),
+              DetailTile(label: '初始数量', value: '${item.initialQuantity}'),
+              DetailTile(label: '剩余数量', value: '${item.remainingQuantity}'),
               DetailTile(label: '备注', value: display.notesDisplay),
+              const SizedBox(height: 12),
+              FutureBuilder<List<ConsumptionRecord>>(
+                future: store.getConsumptionRecords(item.id),
+                builder: (context, snapshot) {
+                  final records = snapshot.data ?? const <ConsumptionRecord>[];
+                  if (records.isEmpty) {
+                    return const DetailTile(label: '消耗记录', value: '暂无记录');
+                  }
+                  return SectionCard(
+                    title: '消耗记录',
+                    children: records
+                        .map((record) => DetailTile(
+                              label: record.type.label,
+                              value:
+                                  '${record.quantity} 件 · ${formatDate(record.consumedAt)}',
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
             ],
           ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.all(16),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => AddItemPage(item: item)));
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('编辑'),
-                  ),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => AddItemPage(item: item)));
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('编辑'),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final confirmed = await showConfirm(
-                          context, '删除物品', '确定移除「${item.name}」吗？');
-                      if (!confirmed || !context.mounted) return;
-                      await store.archiveItem(item.id);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('移除'),
-                  ),
+                FilledButton.tonalIcon(
+                  onPressed: item.remainingQuantity <= 0
+                      ? null
+                      : () async {
+                          await store.consumeOne(item.id);
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                  icon: const Icon(Icons.remove_circle_outline),
+                  label: const Text('用掉一件'),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: item.remainingQuantity <= 0
+                      ? null
+                      : () async {
+                          final confirmed = await showConfirm(
+                              context, '消耗完成', '确认将「${item.name}」剩余数量全部消耗完成？');
+                          if (!confirmed) return;
+                          await store.consumeAll(item.id);
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                  icon: const Icon(Icons.done_all_outlined),
+                  label: const Text('消耗完成'),
+                ),
+                FilledButton.icon(
+                  onPressed: () async {
+                    final confirmed = await showConfirm(
+                        context, '删除物品', '确定永久删除「${item.name}」吗？该操作不可恢复。');
+                    if (!confirmed || !context.mounted) return;
+                    final secondConfirmed =
+                        await showConfirm(context, '二次确认', '真的永久删除这个物品吗？');
+                    if (!secondConfirmed) return;
+                    await store.deleteItem(item.id);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('删除'),
                 ),
               ],
             ),
@@ -726,8 +796,6 @@ class _AddItemPageState extends State<AddItemPage> {
       TextEditingController(text: _form.name);
   late final TextEditingController _brand =
       TextEditingController(text: _form.brand);
-  late final TextEditingController _location =
-      TextEditingController(text: _form.location);
   late final TextEditingController _price =
       TextEditingController(text: _form.purchasePrice?.toString() ?? '');
   late final TextEditingController _notes =
@@ -737,7 +805,6 @@ class _AddItemPageState extends State<AddItemPage> {
   void dispose() {
     _name.dispose();
     _brand.dispose();
-    _location.dispose();
     _price.dispose();
     _notes.dispose();
     super.dispose();
@@ -788,10 +855,27 @@ class _AddItemPageState extends State<AddItemPage> {
                   TextField(
                       controller: _price,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: '购入价格')),
-                  TextField(
-                      controller: _location,
-                      decoration: const InputDecoration(labelText: '存放位置')),
+                      decoration: const InputDecoration(labelText: '单价')),
+                  DropdownButtonFormField<String>(
+                    initialValue: _form.location?.trim().isEmpty ?? true
+                        ? null
+                        : _form.location,
+                    decoration: const InputDecoration(labelText: '存放位置'),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('未选择'),
+                      ),
+                      ...store.locations.map(
+                        (location) => DropdownMenuItem<String>(
+                          value: location.name,
+                          child: Text(location.name),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _form.location = value ?? ''),
+                  ),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('购买日期'),
@@ -837,6 +921,7 @@ class _AddItemPageState extends State<AddItemPage> {
                       },
                     ),
                   StepperRow(
+                    label: '初始数量',
                     value: _form.quantity,
                     onChanged: (value) =>
                         setState(() => _form.quantity = value),
@@ -864,7 +949,6 @@ class _AddItemPageState extends State<AddItemPage> {
                 try {
                   _form.name = _name.text;
                   _form.brand = _brand.text;
-                  _form.location = _location.text;
                   _form.purchasePrice = double.tryParse(_price.text);
                   _form.notes = _notes.text;
                   await store.saveItemFromForm(_form);
@@ -971,6 +1055,17 @@ class _CategoryPageState extends State<CategoryPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (category.isPreset) const Icon(Icons.lock_outline),
+                        IconButton(
+                          tooltip: '编辑分类',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () async {
+                            await showCategoryEditDialog(
+                              context,
+                              category,
+                              store,
+                            );
+                          },
+                        ),
                         ReorderableDragStartListener(
                           index: index,
                           child: const Padding(
@@ -1008,12 +1103,28 @@ class _CategoryPageState extends State<CategoryPage> {
                             child: Text(category.icon ?? defaultCategoryIcon)),
                         title: Text(category.name),
                         subtitle: const Text('自定义分类'),
-                        trailing: ReorderableDragStartListener(
-                          index: index,
-                          child: const Padding(
-                            padding: EdgeInsets.all(8),
-                            child: Icon(Icons.drag_handle),
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: '编辑分类',
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () async {
+                                await showCategoryEditDialog(
+                                  context,
+                                  category,
+                                  store,
+                                );
+                              },
+                            ),
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Icon(Icons.drag_handle),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -1067,6 +1178,108 @@ class StoragePage extends StatefulWidget {
   State<StoragePage> createState() => _StoragePageState();
 }
 
+class LocationPage extends StatefulWidget {
+  const LocationPage({super.key});
+
+  @override
+  State<LocationPage> createState() => _LocationPageState();
+}
+
+class _LocationPageState extends State<LocationPage> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('存储位置')),
+      body: AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              SectionCard(
+                title: '新增位置',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _name,
+                          decoration: const InputDecoration(labelText: '位置名称'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton.filled(
+                        onPressed: () async {
+                          try {
+                            await store.addLocation(_name.text);
+                            _name.clear();
+                          } catch (error) {
+                            if (context.mounted) {
+                              showSnack(context, error.toString());
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...store.locations.map(
+                (location) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.place_outlined),
+                      title: Text(location.name),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: '重命名',
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () async {
+                              await showLocationEditDialog(
+                                context,
+                                location,
+                                store,
+                              );
+                            },
+                          ),
+                          IconButton(
+                            tooltip: '删除',
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () async {
+                              final confirmed = await showConfirm(
+                                  context, '删除位置', '确定删除「${location.name}」吗？');
+                              if (!confirmed) return;
+                              await store.deleteLocation(location);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _StoragePageState extends State<StoragePage> {
   String? _selectedImportPath;
 
@@ -1093,7 +1306,10 @@ class _StoragePageState extends State<StoragePage> {
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
-                              ?.copyWith(color: Colors.black54)),
+                              ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant)),
                     ),
                     const SizedBox(height: 18),
                     SectionCard(
@@ -1138,7 +1354,10 @@ class _StoragePageState extends State<StoragePage> {
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(color: Colors.black54),
+                              ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant),
                         ),
                         const SizedBox(height: 8),
                         StorageActionTile(
@@ -1234,13 +1453,16 @@ class StorageActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final color = danger
-        ? Theme.of(context).colorScheme.error
-        : Theme.of(context).colorScheme.primary;
+        ? colorScheme.error
+        : colorScheme.primary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: danger ? const Color(0xFFFFE4E8) : const Color(0xFFF1F5F9),
+        color: danger
+            ? colorScheme.errorContainer
+            : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1264,7 +1486,10 @@ class StorageActionTile extends StatelessWidget {
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
-                            ?.copyWith(color: danger ? color : Colors.black54)),
+                            ?.copyWith(
+                                color: danger
+                                    ? colorScheme.onErrorContainer
+                                    : colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -1394,7 +1619,9 @@ class ProjectLinkTile extends StatelessWidget {
           children: [
             SizedBox(
               width: 84,
-              child: Text(label, style: const TextStyle(color: Colors.black54)),
+              child: Text(label,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ),
             Expanded(
               child: Text(
@@ -1447,7 +1674,7 @@ class _SearchFieldState extends State<SearchField> {
         hintText: widget.hint,
         prefixIcon: const Icon(Icons.search),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none),
@@ -1486,8 +1713,14 @@ class SectionCard extends StatelessWidget {
 }
 
 class StepperRow extends StatelessWidget {
-  const StepperRow({super.key, required this.value, required this.onChanged});
+  const StepperRow({
+    super.key,
+    this.label = '数量',
+    required this.value,
+    required this.onChanged,
+  });
 
+  final String label;
   final int value;
   final ValueChanged<int> onChanged;
 
@@ -1495,7 +1728,7 @@ class StepperRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Text('数量')),
+        Expanded(child: Text(label)),
         IconButton.outlined(
             onPressed: value <= 1 ? null : () => onChanged(value - 1),
             icon: const Icon(Icons.remove)),
@@ -1525,8 +1758,9 @@ class DetailTile extends StatelessWidget {
         children: [
           SizedBox(
               width: 84,
-              child:
-                  Text(label, style: const TextStyle(color: Colors.black54))),
+              child: Text(label,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant))),
           Expanded(child: Text(value)),
         ],
       ),
@@ -1562,7 +1796,8 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 6),
             Text(subtitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -1577,14 +1812,16 @@ class ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE4E8),
+        color: colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(message, style: const TextStyle(color: Color(0xFFD92D46))),
+      child: Text(message,
+          style: TextStyle(color: colorScheme.onErrorContainer)),
     );
   }
 }
@@ -1607,6 +1844,81 @@ Future<bool> showConfirm(
     ),
   );
   return result ?? false;
+}
+
+Future<void> showCategoryEditDialog(
+    BuildContext context, Category category, AppStore store) async {
+  final controller = TextEditingController(text: category.name);
+  var selectedIcon = category.icon ?? defaultCategoryIcon;
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('编辑分类'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconPreviewButton(
+                icon: selectedIcon,
+                onPressed: () async {
+                  final icon =
+                      await showCategoryIconPicker(context, selectedIcon);
+                  if (icon != null) setState(() => selectedIcon = icon);
+                },
+              ),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(labelText: '分类名称'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('取消')),
+            FilledButton(
+              onPressed: () async {
+                await store.renameCategory(
+                    category, controller.text, selectedIcon);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  controller.dispose();
+}
+
+Future<void> showLocationEditDialog(
+    BuildContext context, StorageLocation location, AppStore store) async {
+  final controller = TextEditingController(text: location.name);
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('重命名位置'),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(labelText: '位置名称'),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('取消')),
+        FilledButton(
+          onPressed: () async {
+            await store.renameLocation(location, controller.text);
+            if (dialogContext.mounted) Navigator.pop(dialogContext);
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
 }
 
 Future<String?> showCategoryIconPicker(
@@ -1646,7 +1958,9 @@ Future<String?> showCategoryIconPicker(
                       decoration: BoxDecoration(
                         color: selected
                             ? Theme.of(context).colorScheme.primaryContainer
-                            : const Color(0xFFF1F5F9),
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: selected
                             ? Border.all(
