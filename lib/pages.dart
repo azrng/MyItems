@@ -1,0 +1,863 @@
+import 'package:flutter/material.dart';
+
+import 'app_store.dart';
+import 'main.dart';
+import 'models.dart';
+
+class RootPage extends StatefulWidget {
+  const RootPage({super.key});
+
+  @override
+  State<RootPage> createState() => _RootPageState();
+}
+
+class _RootPageState extends State<RootPage> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    final pages = [
+      const HomePage(),
+      const LibraryPage(),
+      const CategoryPage(),
+    ];
+
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return Scaffold(
+          appBar: AppBar(title: Text(_title)),
+          drawer: AppDrawer(onNavigate: (target) {
+            Navigator.pop(context);
+            if (target == DrawerTarget.add) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddItemPage()));
+            } else {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage()));
+            }
+          }),
+          body: Stack(
+            children: [
+              pages[_index],
+              if (store.isLoading) const LinearProgressIndicator(minHeight: 2),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (value) => setState(() => _index = value),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.notifications_none), selectedIcon: Icon(Icons.notifications), label: '主页'),
+              NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2), label: '物品库'),
+              NavigationDestination(icon: Icon(Icons.category_outlined), selectedIcon: Icon(Icons.category), label: '分类'),
+            ],
+          ),
+          floatingActionButton: _index == 1
+              ? FloatingActionButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddItemPage())),
+                  child: const Icon(Icons.add),
+                )
+              : null,
+        );
+      },
+    );
+  }
+
+  String get _title => switch (_index) {
+        0 => '我的物品',
+        1 => '物品库',
+        _ => '分类管理',
+      };
+}
+
+enum DrawerTarget { add, about }
+
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key, required this.onNavigate});
+
+  final ValueChanged<DrawerTarget> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              color: Theme.of(context).colorScheme.primary,
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('📦 我的物品', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 6),
+                  Text('物品管理助手', style: TextStyle(color: Colors.white70)),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_box_outlined),
+              title: const Text('添加'),
+              onTap: () => onNavigate(DrawerTarget.add),
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('关于'),
+              onTap: () => onNavigate(DrawerTarget.about),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return RefreshIndicator(
+          onRefresh: store.refreshAll,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              SearchField(
+                hint: '搜索过期或临期物品',
+                initialValue: store.homeSearch,
+                onChanged: store.setHomeSearch,
+              ),
+              const SizedBox(height: 12),
+              if (store.errorMessage != null) ErrorBanner(message: store.errorMessage!),
+              if (store.expiryGroups.every((group) => group.items.isEmpty))
+                const EmptyState(icon: Icons.check_circle_outline, title: '暂无过期或临期物品', subtitle: '当前需要关注的物品会显示在这里。'),
+              ...store.expiryGroups.map((group) => ExpiryGroupSection(group: group)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ExpiryGroupSection extends StatelessWidget {
+  const ExpiryGroupSection({super.key, required this.group});
+
+  final ExpiryGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    if (group.items.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('${group.icon} ${group.headerText}', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          ),
+          ...group.items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ItemCard(display: item),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class LibraryPage extends StatelessWidget {
+  const LibraryPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return RefreshIndicator(
+          onRefresh: store.refreshAll,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+            children: [
+              SearchField(
+                hint: '搜索名称、品牌、分类或位置',
+                initialValue: store.librarySearch,
+                onChanged: store.setLibrarySearch,
+              ),
+              const SizedBox(height: 12),
+              StatisticsCard(statistics: store.statistics),
+              const SizedBox(height: 12),
+              CategoryChips(
+                categories: store.categories,
+                selectedCategoryId: store.selectedCategoryId,
+                onSelected: store.selectCategory,
+              ),
+              const SizedBox(height: 12),
+              if (store.libraryItems.isEmpty)
+                const EmptyState(icon: Icons.inventory_2_outlined, title: '暂无物品', subtitle: '点击右下角按钮添加第一件物品。'),
+              ...store.libraryItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: ItemCard(display: item),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class StatisticsCard extends StatelessWidget {
+  const StatisticsCard({super.key, required this.statistics});
+
+  final LibraryStatistics statistics;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(child: StatItem(label: '有效花费', value: '¥${statistics.totalSpent.toStringAsFixed(1)}')),
+            Expanded(child: StatItem(label: '有效商品', value: '${statistics.validItems} 件')),
+            Expanded(child: StatItem(label: '全部', value: '${statistics.totalItems} 件')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StatItem extends StatelessWidget {
+  const StatItem({super.key, required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+class CategoryChips extends StatelessWidget {
+  const CategoryChips({
+    super.key,
+    required this.categories,
+    required this.selectedCategoryId,
+    required this.onSelected,
+  });
+
+  final List<Category> categories;
+  final String? selectedCategoryId;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('全部'),
+              selected: selectedCategoryId == null,
+              onSelected: (_) => onSelected(null),
+            ),
+          ),
+          ...categories.map((category) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text('${category.icon ?? '📦'} ${category.name}'),
+                  selected: selectedCategoryId == category.id,
+                  onSelected: (_) => onSelected(category.id),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class ItemCard extends StatelessWidget {
+  const ItemCard({super.key, required this.display});
+
+  final ItemDisplay display;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ItemDetailPage(itemId: display.id))),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Text(display.categoryIcon),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(display.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${display.brandDisplay} · ${display.categoryName} · ${display.locationDisplay} · ${display.priceText}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      display.item.expiryDate == null ? display.holdingText : '保质 ${display.expiryDateText}  ${display.dailyCostText}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              StatusPill(display: display),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class StatusPill extends StatelessWidget {
+  const StatusPill({super.key, required this.display});
+
+  final ItemDisplay display;
+
+  @override
+  Widget build(BuildContext context) {
+    final (background, foreground, text) = switch (display.expiryStatus) {
+      ExpiryStatus.expired => (const Color(0xFFFFE4E8), const Color(0xFFD92D46), display.expiryStatusText),
+      ExpiryStatus.expiring => (const Color(0xFFFFF1B8), const Color(0xFFB76A00), display.expiryStatusText),
+      ExpiryStatus.safe => (const Color(0xFFDCFBE6), const Color(0xFF22A97E), '安全'),
+      ExpiryStatus.noExpiry => (const Color(0xFFD9F6EE), const Color(0xFF2A817A), '无期限'),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(text, style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+class ItemDetailPage extends StatelessWidget {
+  const ItemDetailPage({super.key, required this.itemId});
+
+  final String itemId;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return FutureBuilder<Item?>(
+      future: store.getItem(itemId),
+      builder: (context, snapshot) {
+        final item = snapshot.data;
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (item == null) {
+          return const Scaffold(body: EmptyState(icon: Icons.error_outline, title: '物品不存在', subtitle: '该物品可能已被删除。'));
+        }
+        final category = store.categoryById(item.categoryId) ?? fallbackDisplayCategory;
+        final display = ItemDisplay.fromItem(item: item, category: category);
+        return Scaffold(
+          appBar: AppBar(title: const Text('物品详情')),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              ItemCard(display: display),
+              const SizedBox(height: 12),
+              DetailTile(label: '分类', value: display.categoryName),
+              DetailTile(label: '品牌', value: display.brandDisplay),
+              DetailTile(label: '条码', value: emptyToFallback(item.barcode, '未填写')),
+              DetailTile(label: '存放位置', value: display.locationDisplay),
+              DetailTile(label: '购买日期', value: item.purchaseDate == null ? '未记录' : formatDate(item.purchaseDate!)),
+              DetailTile(label: '购入价格', value: display.priceText),
+              DetailTile(label: '保质期', value: display.expiryDateText),
+              DetailTile(label: '数量', value: '${item.quantity}'),
+              DetailTile(label: '备注', value: display.notesDisplay),
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            minimum: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(context, MaterialPageRoute(builder: (_) => AddItemPage(item: item)));
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('编辑'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      final confirmed = await showConfirm(context, '删除物品', '确定移除「${item.name}」吗？');
+                      if (!confirmed || !context.mounted) return;
+                      await store.archiveItem(item.id);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('移除'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class AddItemPage extends StatefulWidget {
+  const AddItemPage({super.key, this.item});
+
+  final Item? item;
+
+  @override
+  State<AddItemPage> createState() => _AddItemPageState();
+}
+
+class _AddItemPageState extends State<AddItemPage> {
+  late final ItemFormData _form = widget.item == null ? ItemFormData() : ItemFormData.fromItem(widget.item!);
+  late final TextEditingController _name = TextEditingController(text: _form.name);
+  late final TextEditingController _brand = TextEditingController(text: _form.brand);
+  late final TextEditingController _location = TextEditingController(text: _form.location);
+  late final TextEditingController _price = TextEditingController(text: _form.purchasePrice?.toString() ?? '');
+  late final TextEditingController _notes = TextEditingController(text: _form.notes);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _brand.dispose();
+    _location.dispose();
+    _price.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    final isEditing = widget.item != null;
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        _form.categoryId ??= store.categories.isEmpty ? null : store.categories.first.id;
+        return Scaffold(
+          appBar: AppBar(title: Text(isEditing ? '编辑物品' : '添加物品')),
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => showSnack(context, '扫码录入将在 Flutter 后续迭代接入相机与 Open Food Facts。'),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('扫码录入'),
+              ),
+              const SizedBox(height: 12),
+              SectionCard(
+                title: '基础信息',
+                children: [
+                  TextField(controller: _name, decoration: const InputDecoration(labelText: '物品名称 *')),
+                  DropdownButtonFormField<String>(
+                    value: _form.categoryId,
+                    decoration: const InputDecoration(labelText: '分类 *'),
+                    items: store.categories.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.icon ?? '📦'} ${c.name}'))).toList(),
+                    onChanged: (value) => setState(() => _form.categoryId = value),
+                  ),
+                  TextField(controller: _brand, decoration: const InputDecoration(labelText: '品牌')),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SectionCard(
+                title: '批次信息',
+                children: [
+                  TextField(controller: _price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '购入价格')),
+                  TextField(controller: _location, decoration: const InputDecoration(labelText: '存放位置')),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('无保质期'),
+                    value: _form.noExpiry,
+                    onChanged: (value) => setState(() => _form.noExpiry = value),
+                  ),
+                  if (!_form.noExpiry)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('保质期'),
+                      subtitle: Text(formatDate(_form.expiryDate!)),
+                      trailing: const Icon(Icons.calendar_month),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _form.expiryDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) setState(() => _form.expiryDate = picked);
+                      },
+                    ),
+                  StepperRow(
+                    value: _form.quantity,
+                    onChanged: (value) => setState(() => _form.quantity = value),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('记录日均成本'),
+                    value: _form.trackDailyCost,
+                    onChanged: (value) => setState(() => _form.trackDailyCost = value),
+                  ),
+                  TextField(controller: _notes, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: '备注')),
+                ],
+              ),
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            minimum: const EdgeInsets.all(16),
+            child: FilledButton(
+              onPressed: () async {
+                try {
+                  _form.name = _name.text;
+                  _form.brand = _brand.text;
+                  _form.location = _location.text;
+                  _form.purchasePrice = double.tryParse(_price.text);
+                  _form.notes = _notes.text;
+                  await store.saveItemFromForm(_form);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (error) {
+                  if (context.mounted) showSnack(context, error.toString());
+                }
+              },
+              child: Text(isEditing ? '保存修改' : '保存'),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class CategoryPage extends StatefulWidget {
+  const CategoryPage({super.key});
+
+  @override
+  State<CategoryPage> createState() => _CategoryPageState();
+}
+
+class _CategoryPageState extends State<CategoryPage> {
+  final _name = TextEditingController();
+  final _icon = TextEditingController(text: '🏷️');
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _icon.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            SectionCard(
+              title: '新增分类',
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: 72, child: TextField(controller: _icon, decoration: const InputDecoration(labelText: '图标'))),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextField(controller: _name, decoration: const InputDecoration(labelText: '分类名称'))),
+                    const SizedBox(width: 12),
+                    IconButton.filled(
+                      onPressed: () async {
+                        try {
+                          await store.addCategory(_name.text, _icon.text);
+                          _name.clear();
+                        } catch (error) {
+                          if (context.mounted) showSnack(context, error.toString());
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...store.categories.map((category) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    child: ListTile(
+                      leading: CircleAvatar(child: Text(category.icon ?? '📦')),
+                      title: Text(category.name),
+                      subtitle: Text(category.isPreset ? '预置分类' : '自定义分类'),
+                      trailing: category.isPreset
+                          ? const Icon(Icons.lock_outline)
+                          : IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () async {
+                                try {
+                                  await store.deleteCategory(category);
+                                } catch (error) {
+                                  if (context.mounted) showSnack(context, error.toString());
+                                }
+                              },
+                            ),
+                    ),
+                  ),
+                )),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class AboutPage extends StatelessWidget {
+  const AboutPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('关于')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          Center(child: Text('📦', style: TextStyle(fontSize: 54))),
+          SizedBox(height: 8),
+          Center(child: Text('我的物品', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+          SizedBox(height: 4),
+          Center(child: Text('版本 1.0.0')),
+          SizedBox(height: 18),
+          SectionCard(
+            title: '简介',
+            children: [
+              Text('个人/家庭自用的物品管理 App，用于跟踪保质期、存放位置、购买价格和分类信息。'),
+            ],
+          ),
+          SizedBox(height: 12),
+          SectionCard(
+            title: '信息',
+            children: [
+              DetailTile(label: '作者', value: 'azrng'),
+              DetailTile(label: '技术栈', value: 'Flutter + SQLite'),
+              DetailTile(label: '项目地址', value: 'github.com/azrng/MyItems'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SearchField extends StatefulWidget {
+  const SearchField({
+    super.key,
+    required this.hint,
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  final String hint;
+  final String initialValue;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<SearchField> {
+  late final TextEditingController _controller = TextEditingController(text: widget.initialValue);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: InputDecoration(
+        hintText: widget.hint,
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+      ),
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+class SectionCard extends StatelessWidget {
+  const SectionCard({super.key, required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StepperRow extends StatelessWidget {
+  const StepperRow({super.key, required this.value, required this.onChanged});
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Text('数量')),
+        IconButton.outlined(onPressed: value <= 1 ? null : () => onChanged(value - 1), icon: const Icon(Icons.remove)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text('$value', style: Theme.of(context).textTheme.titleMedium),
+        ),
+        IconButton.outlined(onPressed: () => onChanged(value + 1), icon: const Icon(Icons.add)),
+      ],
+    );
+  }
+}
+
+class DetailTile extends StatelessWidget {
+  const DetailTile({super.key, required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 84, child: Text(label, style: const TextStyle(color: Colors.black54))),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key, required this.icon, required this.title, required this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+        child: Column(
+          children: [
+            Icon(icon, size: 42, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 12),
+            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ErrorBanner extends StatelessWidget {
+  const ErrorBanner({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE4E8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(message, style: const TextStyle(color: Color(0xFFD92D46))),
+    );
+  }
+}
+
+Future<bool> showConfirm(BuildContext context, String title, String content) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('确定')),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+void showSnack(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+const fallbackDisplayCategory = Category(id: 'other', name: '其他', icon: '📦', sortOrder: 999, isPreset: true);

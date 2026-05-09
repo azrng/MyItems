@@ -41,6 +41,16 @@ bld/
 **/*.ipa
 **/_ReSharper.Caches/
 
+## Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+android/local.properties
+android/.gradle/
+android/app/generated/
+
 ## OS
 Thumbs.db
 Desktop.ini
