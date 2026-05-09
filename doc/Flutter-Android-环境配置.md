@@ -1,4 +1,4 @@
-# Flutter Android 环境配置指南（Windows，小白版）
+# Flutter Android 环境配置指南（Windows）
 
 > 适用场景：在 Windows 电脑上安装 Flutter Android 开发环境，并用 Android 真机运行 Flutter 项目。
 > 目标读者：第一次接触 Android 调试、不了解 Android SDK / ADB / Flutter Doctor 的同学。
@@ -448,6 +448,28 @@ flutter config --android-sdk D:\Soft\Android\Sdk
 
 ## 第 9 步：检查环境是否可用
 
+如果你是刚配置完环境变量，建议先关闭当前 PowerShell，重新打开一个新的 PowerShell。
+
+如果不想关闭窗口，也可以先执行下面命令，让当前窗口读取最新的用户级环境变量：
+
+```powershell
+$env:Path = (([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) -join ';'
+$env:JAVA_HOME = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
+$env:ANDROID_SDK_ROOT = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'User')
+$env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User')
+$env:PUB_CACHE = [Environment]::GetEnvironmentVariable('PUB_CACHE', 'User')
+$env:PUB_HOSTED_URL = [Environment]::GetEnvironmentVariable('PUB_HOSTED_URL', 'User')
+$env:FLUTTER_STORAGE_BASE_URL = [Environment]::GetEnvironmentVariable('FLUTTER_STORAGE_BASE_URL', 'User')
+```
+
+这一步很重要。否则可能明明已经配置了环境变量，当前窗口里仍然提示：
+
+```text
+flutter 不是内部或外部命令
+sdkmanager 不是内部或外部命令
+JAVA_HOME is not set
+```
+
 执行：
 
 ```powershell
@@ -809,6 +831,13 @@ flutter build apk --debug -v
 ## 最小验证清单
 
 完成配置后，至少确认下面命令能跑通：
+
+```powershell
+$env:Path = (([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) -join ';'
+$env:JAVA_HOME = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
+$env:ANDROID_SDK_ROOT = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'User')
+$env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User')
+```
 
 ```powershell
 flutter --version
