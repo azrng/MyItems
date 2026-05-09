@@ -2,18 +2,17 @@
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
+import android.os.Build
+import android.os.Environment
+import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
-import java.io.OutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private var pendingBackupResult: MethodChannel.Result? = null
-    private var pendingBackupContent: String? = null
-
     companion object {
-        private const val REQUEST_CREATE_BACKUP = 9302
         private const val CHANNEL = "my_items/system"
     }
 
@@ -42,52 +41,70 @@ class MainActivity : FlutterActivity() {
                             result.error("INVALID_BACKUP", "Backup file name or content is empty", null)
                             return@setMethodCallHandler
                         }
-                        launchSaveDialog(fileName, content, result)
+                        try {
+                            saveAndShareBackup(fileName, content)
+                            result.success(fileName)
+                        } catch (error: Exception) {
+                            result.error("SAVE_BACKUP_FAILED", error.message, null)
+                        }
                     }
                     else -> result.notImplemented()
                 }
             }
     }
 
-    private fun launchSaveDialog(
-        fileName: String,
-        content: String,
-        result: MethodChannel.Result
-    ) {
-        pendingBackupResult = result
-        pendingBackupContent = content
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
+    private fun saveAndShareBackup(fileName: String, content: String) {
+        val safeName = fileName.replace(Regex("""[\\/:*?"<>|]"""), "_")
+        val bytes = content.toByteArray(Charsets.UTF_8)
+
+        // Try public Download/MyItems first (no permission needed on API 28-)
+        val savedPath = tryWriteToPublicDownloads(safeName, bytes)
+
+        // Always write to app cache as fallback / for sharing
+        val cacheFile = File(cacheDir, "backups").also { it.mkdirs() }
+        val shareFile = File(cacheFile, safeName)
+        FileOutputStream(shareFile).use { it.write(bytes) }
+
+        // Share via system chooser so user can save wherever they want
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${packageName}.fileprovider",
+            shareFile
+        )
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "application/json"
-            putExtra(Intent.EXTRA_TITLE, fileName)
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_CREATE_BACKUP)
+        startActivity(Intent.createChooser(shareIntent, "保存备份文件到..."))
+
+        // If direct write also succeeded, the file is in two places
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_CREATE_BACKUP) return
-
-        val result = pendingBackupResult ?: return
-        val content = pendingBackupContent ?: return
-        pendingBackupResult = null
-        pendingBackupContent = null
-
-        if (resultCode != RESULT_OK || data == null || data.data == null) {
-            result.error("SAVE_CANCELLED", "User cancelled or no location selected", null)
-            return
-        }
-
-        try {
-            val uri = data.data!!
-            contentResolver.openOutputStream(uri, "w")?.use { output: OutputStream ->
-                output.write(content.toByteArray(Charsets.UTF_8))
-            } ?: throw IllegalStateException("Cannot open output stream")
-            result.success(uri.toString())
-        } catch (error: Exception) {
-            result.error("SAVE_BACKUP_FAILED", error.message, null)
+    private fun tryWriteToPublicDownloads(fileName: String, bytes: ByteArray): String? {
+        return try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                // Android 10+: Use app-specific external directory (visible in file manager)
+                val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                    ?: return null
+                val myDir = File(dir, "MyItems")
+                if (!myDir.exists() && !myDir.mkdirs()) return null
+                val file = File(myDir, fileName)
+                FileOutputStream(file).use { it.write(bytes) }
+                file.absolutePath
+            } else {
+                // Android 9-: Direct write to public Downloads (no permission needed in app context)
+                val downloads = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS
+                )
+                val myDir = File(downloads, "MyItems")
+                if (!myDir.exists() && !myDir.mkdirs()) return null
+                val file = File(myDir, fileName)
+                FileOutputStream(file).use { it.write(bytes) }
+                file.absolutePath
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 }
