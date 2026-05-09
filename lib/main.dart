@@ -33,29 +33,29 @@ class _MyItemsAppState extends State<MyItemsApp> {
       surface: const Color(0xFFF8FAFC),
     );
 
-    return MaterialApp(
-      title: '我的物品',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        appBarTheme: AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
-          backgroundColor: colorScheme.primary,
-          foregroundColor: Colors.white,
+    return AppScope(
+      store: widget.store,
+      child: MaterialApp(
+        title: '我的物品',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: colorScheme,
+          useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+          appBarTheme: AppBarTheme(
+            centerTitle: false,
+            elevation: 0,
+            backgroundColor: colorScheme.primary,
+            foregroundColor: Colors.white,
+          ),
+          cardTheme: const CardThemeData(
+            elevation: 0,
+            color: Colors.white,
+            margin: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
+          ),
         ),
-        cardTheme: const CardThemeData(
-          elevation: 0,
-          color: Colors.white,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
-        ),
-      ),
-      home: AppScope(
-        store: widget.store,
-        child: const RootPage(),
+        home: const RootPage(),
       ),
     );
   }
