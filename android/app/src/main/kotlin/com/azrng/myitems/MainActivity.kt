@@ -3,6 +3,7 @@
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
@@ -12,6 +13,7 @@ import java.io.FileOutputStream
 class MainActivity : FlutterActivity() {
     companion object {
         private const val CHANNEL = "my_items/system"
+        private const val TAG = "MyItems"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -39,10 +41,13 @@ class MainActivity : FlutterActivity() {
                             result.error("INVALID_BACKUP", "Backup file name or content is empty", null)
                             return@setMethodCallHandler
                         }
+                        Log.d(TAG, "Backup fileName=$fileName contentLength=${content.length}")
                         try {
-                            val path = writeBackupToExternal(fileName, content)
+                            val path = writeBackup(fileName, content)
+                            Log.d(TAG, "Backup written to: $path")
                             result.success(path)
                         } catch (error: Exception) {
+                            Log.e(TAG, "Backup write failed", error)
                             result.error("SAVE_BACKUP_FAILED", error.message, null)
                         }
                     }
@@ -51,13 +56,11 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    /**
-     * Write backup to app-specific external storage (no permissions needed).
-     * Path: /Android/data/com.azrng.myitems/files/Download/MyItems/
-     * Visible via USB file transfer on all Android versions.
-     */
-    private fun writeBackupToExternal(fileName: String, content: String): String {
+    private fun writeBackup(fileName: String, content: String): String {
         val safeName = fileName.replace(Regex("""[\\/:*?"<>|]"""), "_")
+        val bytes = content.toByteArray(Charsets.UTF_8)
+
+        // Write to app-specific external Downloads (always works, no permissions)
         val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             ?: throw IllegalStateException("External storage not available")
         val myDir = File(dir, "MyItems")
@@ -65,7 +68,7 @@ class MainActivity : FlutterActivity() {
             throw IllegalStateException("Cannot create directory: ${myDir.absolutePath}")
         }
         val file = File(myDir, safeName)
-        FileOutputStream(file).use { it.write(content.toByteArray(Charsets.UTF_8)) }
+        FileOutputStream(file).use { it.write(bytes) }
         return file.absolutePath
     }
 }
