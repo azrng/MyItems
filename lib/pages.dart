@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'app_store.dart';
@@ -29,7 +30,17 @@ class _RootPageState extends State<RootPage> {
       animation: store,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: Text(_title)),
+          appBar: AppBar(
+            title: Text(_title),
+            actions: [
+              if (_index == 0)
+                IconButton(
+                  tooltip: '添加物品',
+                  icon: const Icon(Icons.add),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddItemPage())),
+                ),
+            ],
+          ),
           drawer: AppDrawer(onNavigate: (target) {
             Navigator.pop(context);
             if (target == DrawerTarget.add) {
@@ -249,7 +260,23 @@ class LibraryPage extends StatelessWidget {
                 const EmptyState(icon: Icons.inventory_2_outlined, title: '暂无物品', subtitle: '点击右下角按钮添加第一件物品。'),
               ...store.libraryItems.map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: ItemCard(display: item),
+                    child: Dismissible(
+                      key: ValueKey('item-dismiss-${item.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: const SizedBox.shrink(),
+                      secondaryBackground: const SwipeDeleteBackground(label: '移除'),
+                      confirmDismiss: (_) async {
+                        final confirmed = await showConfirm(context, '移除物品', '确定移除「${item.name}」吗？');
+                        if (!confirmed) return false;
+                        try {
+                          await store.archiveItem(item.id);
+                        } catch (error) {
+                          if (context.mounted) showSnack(context, error.toString());
+                        }
+                        return false;
+                      },
+                      child: ItemCard(display: item),
+                    ),
                   )),
             ],
           ),
@@ -411,6 +438,32 @@ class StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(text, style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+class SwipeDeleteBackground extends StatelessWidget {
+  const SwipeDeleteBackground({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.error,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          const Icon(Icons.delete_outline, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }
@@ -693,41 +746,62 @@ class _CategoryPageState extends State<CategoryPage> {
               },
               itemBuilder: (context, index) {
                 final category = store.categories[index];
-                return Padding(
-                  key: ValueKey(category.id),
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text(category.icon ?? defaultCategoryIcon)),
-                      title: Text(category.name),
-                      subtitle: Text(category.isPreset ? '预置分类' : '自定义分类'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!category.isPreset)
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () async {
-                                try {
-                                  await store.deleteCategory(category);
-                                } catch (error) {
-                                  if (context.mounted) showSnack(context, error.toString());
-                                }
-                              },
-                            )
-                          else
-                            const Icon(Icons.lock_outline),
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Icon(Icons.drag_handle),
-                            ),
+                var tile = Card(
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text(category.icon ?? defaultCategoryIcon)),
+                    title: Text(category.name),
+                    subtitle: Text(category.isPreset ? '预置分类' : '自定义分类'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (category.isPreset) const Icon(Icons.lock_outline),
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.drag_handle),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
+                );
+                if (!category.isPreset) {
+                  tile = Card(
+                    child: Dismissible(
+                      key: ValueKey('category-dismiss-${category.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: const SizedBox.shrink(),
+                      secondaryBackground: const SwipeDeleteBackground(label: '删除'),
+                      confirmDismiss: (_) async {
+                        final confirmed = await showConfirm(context, '删除分类', '确定删除「${category.name}」吗？');
+                        if (!confirmed) return false;
+                        try {
+                          await store.deleteCategory(category);
+                        } catch (error) {
+                          if (context.mounted) showSnack(context, error.toString());
+                        }
+                        return false;
+                      },
+                      child: ListTile(
+                        leading: CircleAvatar(child: Text(category.icon ?? defaultCategoryIcon)),
+                        title: Text(category.name),
+                        subtitle: const Text('自定义分类'),
+                        trailing: ReorderableDragStartListener(
+                          index: index,
+                          child: const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.drag_handle),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return Padding(
+                  key: ValueKey('category-row-${category.id}'),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: tile,
                 );
               },
             ),
@@ -771,13 +845,7 @@ class StoragePage extends StatefulWidget {
 }
 
 class _StoragePageState extends State<StoragePage> {
-  final _importPath = TextEditingController();
-
-  @override
-  void dispose() {
-    _importPath.dispose();
-    super.dispose();
-  }
+  String? _selectedImportPath;
 
   @override
   Widget build(BuildContext context) {
@@ -789,94 +857,108 @@ class _StoragePageState extends State<StoragePage> {
           appBar: AppBar(title: const Text('存储管理')),
           body: Stack(
             children: [
-              ListView(
+              SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                children: [
-                  const Center(child: Text('💾', style: TextStyle(fontSize: 52))),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Text('管理你的数据，随时导入导出', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                  ),
-                  const SizedBox(height: 18),
-                  SectionCard(
-                    title: '数据导出与导入',
-                    children: [
-                      StorageActionTile(
-                        icon: '📤',
-                        title: '导出 CSV',
-                        subtitle: '将所有物品数据导出为 CSV 文件',
-                        buttonText: '导出数据',
-                        onPressed: () async {
-                          try {
-                            final path = await store.exportToCsv();
-                            if (context.mounted) showSnack(context, '已导出：$path');
-                          } catch (error) {
-                            if (context.mounted) showSnack(context, '导出失败：$error');
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _importPath,
-                        decoration: const InputDecoration(
-                          labelText: 'CSV 文件路径',
-                          hintText: r'D:\path\my_items_export.csv',
-                          prefixIcon: Icon(Icons.folder_open_outlined),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      StorageActionTile(
-                        icon: '📥',
-                        title: '导入 CSV',
-                        subtitle: '从 CSV 文件导入物品数据',
-                        buttonText: '导入数据',
-                        onPressed: () async {
-                          final path = _importPath.text.trim();
-                          if (path.isEmpty) {
-                            showSnack(context, '请先填写 CSV 文件路径');
-                            return;
-                          }
-                          final confirmed = await showConfirm(context, '导入 CSV', '将从 CSV 文件导入物品数据，确认继续？');
-                          if (!confirmed) return;
-                          try {
-                            final result = await store.importFromCsv(path);
-                            if (context.mounted) {
-                              showSnack(context, '导入完成：成功 ${result.$1} 条，失败 ${result.$2} 条');
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(child: Text('💾', style: TextStyle(fontSize: 52))),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text('管理你的数据，随时导入导出', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+                    ),
+                    const SizedBox(height: 18),
+                    SectionCard(
+                      title: '数据导出与导入',
+                      children: [
+                        StorageActionTile(
+                          icon: '📤',
+                          title: '导出 CSV',
+                          subtitle: '将所有物品数据导出为 CSV 文件',
+                          buttonText: '导出数据',
+                          onPressed: () async {
+                            try {
+                              final path = await store.exportToCsv();
+                              if (context.mounted) showSnack(context, '已导出：$path');
+                            } catch (error) {
+                              if (context.mounted) showSnack(context, '导出失败：$error');
                             }
-                          } catch (error) {
-                            if (context.mounted) showSnack(context, '导入失败：$error');
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SectionCard(
-                    title: '危险操作',
-                    children: [
-                      StorageActionTile(
-                        icon: '🗑️',
-                        title: '清空所有数据',
-                        subtitle: '删除所有物品和自定义分类，此操作不可恢复',
-                        buttonText: '清空数据',
-                        danger: true,
-                        onPressed: () async {
-                          final confirmed = await showConfirm(context, '清空数据', '将删除所有物品数据，此操作不可恢复。确定继续？');
-                          if (!confirmed) return;
-                          if (!context.mounted) return;
-                          final secondConfirmed = await showConfirm(context, '二次确认', '真的要清空所有数据吗？');
-                          if (!secondConfirmed) return;
-                          try {
-                            await store.clearAllData();
-                            if (context.mounted) showSnack(context, '所有数据已清空');
-                          } catch (error) {
-                            if (context.mounted) showSnack(context, '清空失败：$error');
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            final result = await FilePicker.platform.pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: const ['csv'],
+                              dialogTitle: '选择 CSV 文件',
+                            );
+                            final path = result?.files.single.path;
+                            if (path == null || path.trim().isEmpty) return;
+                            setState(() => _selectedImportPath = path);
+                          },
+                          icon: const Icon(Icons.folder_open_outlined),
+                          label: const Text('选择 CSV 文件'),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _selectedImportPath ?? '尚未选择文件',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 8),
+                        StorageActionTile(
+                          icon: '📥',
+                          title: '导入 CSV',
+                          subtitle: '从 CSV 文件导入物品数据',
+                          buttonText: '导入数据',
+                          onPressed: () async {
+                            final path = _selectedImportPath?.trim() ?? '';
+                            if (path.isEmpty) {
+                              showSnack(context, '请先选择 CSV 文件');
+                              return;
+                            }
+                            final confirmed = await showConfirm(context, '导入 CSV', '将从 CSV 文件导入物品数据，确认继续？');
+                            if (!confirmed) return;
+                            try {
+                              final result = await store.importFromCsv(path);
+                              if (context.mounted) {
+                                showSnack(context, '导入完成：成功 ${result.$1} 条，失败 ${result.$2} 条');
+                              }
+                            } catch (error) {
+                              if (context.mounted) showSnack(context, '导入失败：$error');
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SectionCard(
+                      title: '危险操作',
+                      children: [
+                        StorageActionTile(
+                          icon: '🗑️',
+                          title: '清空所有数据',
+                          subtitle: '删除所有物品和自定义分类，此操作不可恢复',
+                          buttonText: '清空数据',
+                          danger: true,
+                          onPressed: () async {
+                            final confirmed = await showConfirm(context, '清空数据', '将删除所有物品数据，此操作不可恢复。确定继续？');
+                            if (!confirmed) return;
+                            if (!context.mounted) return;
+                            final secondConfirmed = await showConfirm(context, '二次确认', '真的要清空所有数据吗？');
+                            if (!secondConfirmed) return;
+                            try {
+                              await store.clearAllData();
+                              if (context.mounted) showSnack(context, '所有数据已清空');
+                            } catch (error) {
+                              if (context.mounted) showSnack(context, '清空失败：$error');
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               if (store.isLoading) const LinearProgressIndicator(minHeight: 2),
             ],

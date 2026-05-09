@@ -43,6 +43,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byIcon(Icons.drag_handle), findsWidgets);
+    expect(find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
 
     await tester.tap(find.text('图标'));
     await tester.pump();
@@ -50,6 +51,19 @@ void main() {
 
     expect(find.text('选择分类图标'), findsOneWidget);
     expect(find.text('🍔'), findsWidgets);
+  });
+
+  testWidgets('library item supports swipe delete action', (tester) async {
+    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('物品库'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('测试物品'), findsOneWidget);
+    expect(find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
   });
 
   testWidgets('drawer opens storage management page', (tester) async {
@@ -67,7 +81,21 @@ void main() {
     expect(find.text('存储管理'), findsWidgets);
     expect(find.text('导出 CSV'), findsOneWidget);
     expect(find.text('导入 CSV'), findsOneWidget);
+    expect(find.text('选择 CSV 文件'), findsOneWidget);
+    expect(find.text('CSV 文件路径'), findsNothing);
     expect(find.text('清空所有数据'), findsOneWidget);
+  });
+
+  testWidgets('home app bar add button opens add item page', (tester) async {
+    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('添加物品'), findsOneWidget);
   });
 }
 
@@ -75,7 +103,9 @@ class FakeNavigationRepository extends ItemRepository {
   final _categories = [
     const Category(id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
     const Category(id: 'daily', name: '日用品', icon: '🧴', sortOrder: 2, isPreset: true),
+    const Category(id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
   ];
+  final _today = DateTime(2026, 5, 9);
 
   @override
   Future<void> initialize() async {}
@@ -87,7 +117,16 @@ class FakeNavigationRepository extends ItemRepository {
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async => const [];
 
   @override
-  Future<List<ItemDisplay>> getItemDisplays({ItemQuery query = const ItemQuery()}) async => const [];
+  Future<List<ItemDisplay>> getItemDisplays({ItemQuery query = const ItemQuery()}) async {
+    final item = Item(
+      id: 'test-item',
+      name: '测试物品',
+      categoryId: 'food',
+      createdAt: _today,
+      updatedAt: _today,
+    );
+    return [ItemDisplay.fromItem(item: item, category: _categories.first, today: _today)];
+  }
 
   @override
   Future<List<ItemDisplay>> getHomeItemDisplays({String? searchText, int limit = 1000}) async => const [];
