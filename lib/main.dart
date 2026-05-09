@@ -46,7 +46,7 @@ class _MyItemsAppState extends State<MyItemsApp> {
           backgroundColor: colorScheme.primary,
           foregroundColor: Colors.white,
         ),
-        cardTheme: const CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 0,
           color: Colors.white,
           margin: EdgeInsets.zero,

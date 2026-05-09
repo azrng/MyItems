@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_store.dart';
 import 'main.dart';
 import 'models.dart';
+import 'models.dart' as my;
 
 class RootPage extends StatefulWidget {
   const RootPage({super.key});
@@ -262,7 +263,7 @@ class CategoryChips extends StatelessWidget {
     required this.onSelected,
   });
 
-  final List<Category> categories;
+  final List<my.Category> categories;
   final String? selectedCategoryId;
   final ValueChanged<String?> onSelected;
 
@@ -494,9 +495,14 @@ class _AddItemPageState extends State<AddItemPage> {
                 children: [
                   TextField(controller: _name, decoration: const InputDecoration(labelText: '物品名称 *')),
                   DropdownButtonFormField<String>(
-                    value: _form.categoryId,
+                    initialValue: _form.categoryId,
                     decoration: const InputDecoration(labelText: '分类 *'),
-                    items: store.categories.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.icon ?? '📦'} ${c.name}'))).toList(),
+                    items: store.categories
+                        .map<DropdownMenuItem<String>>((c) => DropdownMenuItem<String>(
+                              value: c.id,
+                              child: Text('${c.icon ?? '📦'} ${c.name}'),
+                            ))
+                        .toList(),
                     onChanged: (value) => setState(() => _form.categoryId = value),
                   ),
                   TextField(controller: _brand, decoration: const InputDecoration(labelText: '品牌')),
@@ -860,4 +866,4 @@ void showSnack(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-const fallbackDisplayCategory = Category(id: 'other', name: '其他', icon: '📦', sortOrder: 999, isPreset: true);
+const fallbackDisplayCategory = my.Category(id: 'other', name: '其他', icon: '📦', sortOrder: 999, isPreset: true);
