@@ -104,6 +104,20 @@ CREATE TABLE IF NOT EXISTS items (
     await db.insert('categories', category.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> updateCategoryOrder(List<Category> categories) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (final category in categories) {
+        await txn.update(
+          'categories',
+          {'sort_order': category.sortOrder},
+          where: 'id = ?',
+          whereArgs: [category.id],
+        );
+      }
+    });
+  }
+
   Future<bool> categoryHasItems(String categoryId) async {
     final db = await database;
     final rows = await db.rawQuery(

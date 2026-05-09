@@ -355,9 +355,7 @@ DateTime? parseDate(String? value) {
 }
 
 String formatDate(DateTime value) {
-  final month = value.month.toString().padLeft(2, '0');
-  final day = value.day.toString().padLeft(2, '0');
-  return '${value.year}-$month-$day';
+  return '${value.year}年${value.month}月${value.day}日';
 }
 
 String emptyToFallback(String? value, String fallback) {

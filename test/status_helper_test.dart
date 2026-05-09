@@ -3,6 +3,10 @@ import 'package:my_items/models.dart';
 
 void main() {
   group('Expiry status', () {
+    test('formats date with mainland China style', () {
+      expect(formatDate(DateTime(2026, 5, 9)), '2026年5月9日');
+    });
+
     test('classifies expired expiring safe and no-expiry items', () {
       final today = DateTime(2026, 5, 9);
 

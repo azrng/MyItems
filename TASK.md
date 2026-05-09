@@ -73,6 +73,7 @@
 | T052 | Flutter Android 迁移 | 在 flutter 分支新增 Flutter Android 工程，迁移核心物品管理、分类、SQLite 存储和主要页面 | 阶段 3 | Codex | DONE | P0 | 2026-05-09 |
 | T053 | Flutter 运行命令文档归属调整 | 将本项目快速运行命令从公共环境配置指南移入 README，保持环境文档可复用 | 阶段 3 | Codex | DONE | P1 | 2026-05-09 |
 | T054 | Flutter 新增物品页 AppScope 崩溃修复 | 修复从导航进入 AddItemPage 时因新 Route 不在 AppScope 下导致的断言崩溃 | 阶段 3 | Codex | DONE | P0 | 2026-05-09 |
+| T055 | Flutter 中文日期与分类管理增强 | 将日期选择与日期展示调整为中文国内风格，并支持分类图标选择和拖拽排序 | 阶段 3 | Codex | DONE | P0 | 2026-05-09 |
 
 ---
 

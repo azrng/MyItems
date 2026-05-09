@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_store.dart';
 import 'pages.dart';
@@ -38,6 +39,15 @@ class _MyItemsAppState extends State<MyItemsApp> {
       child: MaterialApp(
         title: '我的物品',
         debugShowCheckedModeBanner: false,
+        locale: const Locale('zh', 'CN'),
+        supportedLocales: const [
+          Locale('zh', 'CN'),
+        ],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         theme: ThemeData(
           colorScheme: colorScheme,
           useMaterial3: true,

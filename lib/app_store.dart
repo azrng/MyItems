@@ -138,6 +138,26 @@ class AppStore extends ChangeNotifier {
     });
   }
 
+  Future<void> reorderCategory(int oldIndex, int newIndex) async {
+    if (oldIndex < 0 || oldIndex >= categories.length) return;
+    final nextCategories = List<Category>.of(categories);
+    var targetIndex = newIndex;
+    if (targetIndex > nextCategories.length) targetIndex = nextCategories.length;
+    if (oldIndex < targetIndex) targetIndex -= 1;
+    final moved = nextCategories.removeAt(oldIndex);
+    nextCategories.insert(targetIndex, moved);
+
+    categories = [
+      for (var index = 0; index < nextCategories.length; index++)
+        nextCategories[index].copyWith(sortOrder: index + 1),
+    ];
+    notifyListeners();
+    await _run(() async {
+      await repository.updateCategoryOrder(categories);
+      await refreshAll();
+    }, setLoading: false);
+  }
+
   Future<void> deleteCategory(Category category) async {
     await _run(() async {
       await repository.deleteCategory(category);
