@@ -5,6 +5,24 @@ enum ExpiryStatus {
   noExpiry,
 }
 
+enum ThemePreference {
+  system('system', '跟随系统'),
+  light('light', '浅色'),
+  dark('dark', '深色');
+
+  const ThemePreference(this.value, this.label);
+
+  final String value;
+  final String label;
+
+  static ThemePreference fromValue(String? value) {
+    return ThemePreference.values.firstWhere(
+      (preference) => preference.value == value,
+      orElse: () => ThemePreference.system,
+    );
+  }
+}
+
 class Category {
   const Category({
     required this.id,
@@ -206,8 +224,11 @@ class ItemDisplay {
   String get categoryIcon => category.icon ?? '📦';
   String get locationDisplay => emptyToFallback(item.defaultLocation, '未填写');
   String get brandDisplay => emptyToFallback(item.brand, '未填写');
-  String get priceText => item.purchasePrice == null ? '未记录' : '¥${item.purchasePrice!.toStringAsFixed(1)}';
-  String get expiryDateText => item.expiryDate == null ? '无保质期' : formatDate(item.expiryDate!);
+  String get priceText => item.purchasePrice == null
+      ? '未记录'
+      : '¥${item.purchasePrice!.toStringAsFixed(1)}';
+  String get expiryDateText =>
+      item.expiryDate == null ? '无保质期' : formatDate(item.expiryDate!);
   String get notesDisplay => emptyToFallback(item.notes, '暂无备注');
 
   static ItemDisplay fromItem({
@@ -218,7 +239,8 @@ class ItemDisplay {
     final baseDate = dateOnly(today ?? DateTime.now());
     final status = calculateExpiryStatus(item.expiryDate, baseDate);
     final holdingDays = getHoldingDays(item.purchaseDate, baseDate);
-    final dailyCost = calculateDailyCost(item.purchasePrice, item.quantity, item.purchaseDate, baseDate);
+    final dailyCost = calculateDailyCost(
+        item.purchasePrice, item.quantity, item.purchaseDate, baseDate);
 
     return ItemDisplay(
       item: item,
@@ -227,7 +249,8 @@ class ItemDisplay {
       expiryStatusText: getExpiryStatusText(status, item.expiryDate, baseDate),
       holdingDays: holdingDays,
       dailyCost: dailyCost,
-      dailyCostText: item.trackDailyCost ? '¥${dailyCost.toStringAsFixed(2)}/天' : '',
+      dailyCostText:
+          item.trackDailyCost ? '¥${dailyCost.toStringAsFixed(2)}/天' : '',
       holdingText: holdingDays == 0 ? '今天购入' : '持有 $holdingDays 天',
     );
   }
@@ -274,7 +297,8 @@ class LibraryStatistics {
   final int totalItems;
   final int validItems;
 
-  static const empty = LibraryStatistics(totalSpent: 0, totalItems: 0, validItems: 0);
+  static const empty =
+      LibraryStatistics(totalSpent: 0, totalItems: 0, validItems: 0);
 }
 
 class ItemQuery {
@@ -302,18 +326,25 @@ ExpiryStatus calculateExpiryStatus(DateTime? expiryDate, [DateTime? today]) {
   final baseDate = dateOnly(today ?? DateTime.now());
   final expiry = dateOnly(expiryDate);
   if (expiry.isBefore(baseDate)) return ExpiryStatus.expired;
-  if (!expiry.isAfter(baseDate.add(const Duration(days: 7)))) return ExpiryStatus.expiring;
+  if (!expiry.isAfter(baseDate.add(const Duration(days: 7)))) {
+    return ExpiryStatus.expiring;
+  }
   return ExpiryStatus.safe;
 }
 
-String getExpiryStatusText(ExpiryStatus status, DateTime? expiryDate, [DateTime? today]) {
+String getExpiryStatusText(ExpiryStatus status, DateTime? expiryDate,
+    [DateTime? today]) {
   final baseDate = dateOnly(today ?? DateTime.now());
   final expiry = expiryDate == null ? null : dateOnly(expiryDate);
   switch (status) {
     case ExpiryStatus.expired:
-      return expiry == null ? '已过期' : '过期 ${baseDate.difference(expiry).inDays} 天';
+      return expiry == null
+          ? '已过期'
+          : '过期 ${baseDate.difference(expiry).inDays} 天';
     case ExpiryStatus.expiring:
-      return expiry == null ? '临期' : '临期 ${expiry.difference(baseDate).inDays} 天';
+      return expiry == null
+          ? '临期'
+          : '临期 ${expiry.difference(baseDate).inDays} 天';
     case ExpiryStatus.safe:
     case ExpiryStatus.noExpiry:
       return '';
@@ -336,18 +367,22 @@ String getGroupIcon(ExpiryStatus status) => switch (status) {
 
 int getHoldingDays(DateTime? purchaseDate, [DateTime? today]) {
   if (purchaseDate == null) return 0;
-  final days = dateOnly(today ?? DateTime.now()).difference(dateOnly(purchaseDate)).inDays;
+  final days = dateOnly(today ?? DateTime.now())
+      .difference(dateOnly(purchaseDate))
+      .inDays;
   return days > 0 ? days : 1;
 }
 
-double calculateDailyCost(double? price, int quantity, DateTime? purchaseDate, [DateTime? today]) {
+double calculateDailyCost(double? price, int quantity, DateTime? purchaseDate,
+    [DateTime? today]) {
   if (price == null || purchaseDate == null) return 0;
   final days = getHoldingDays(purchaseDate, today);
   if (days <= 0) return price;
   return price / days;
 }
 
-DateTime dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+DateTime dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 
 DateTime? parseDate(String? value) {
   if (value == null || value.trim().isEmpty) return null;

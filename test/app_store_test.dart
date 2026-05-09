@@ -111,9 +111,18 @@ class FakeCategoryRepository extends ItemRepository {
 
   List<Category> _categories;
   List<Category> persistedOrder = [];
+  ThemePreference _themePreference = ThemePreference.system;
 
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<ThemePreference> getThemePreference() async => _themePreference;
+
+  @override
+  Future<void> saveThemePreference(ThemePreference preference) async {
+    _themePreference = preference;
+  }
 
   @override
   Future<List<Category>> getCategories() async => _categories;
@@ -148,9 +157,18 @@ class FakeHomeRepository extends ItemRepository {
   final List<Item> _items;
   final _category = const Category(
       id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true);
+  ThemePreference _themePreference = ThemePreference.system;
 
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<ThemePreference> getThemePreference() async => _themePreference;
+
+  @override
+  Future<void> saveThemePreference(ThemePreference preference) async {
+    _themePreference = preference;
+  }
 
   @override
   Future<List<Category>> getCategories() async => [_category];

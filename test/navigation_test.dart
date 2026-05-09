@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_items/app_store.dart';
 import 'package:my_items/main.dart';
 import 'package:my_items/models.dart';
+import 'package:my_items/pages.dart';
 import 'package:my_items/repository.dart';
 
 void main() {
@@ -49,7 +50,9 @@ void main() {
     expect(
         find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
 
-    await tester.tap(find.text('图标'));
+    expect(find.text('图标'), findsNothing);
+
+    await tester.tap(find.byType(IconPreviewButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -105,6 +108,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('添加物品'), findsOneWidget);
+    expect(find.text('扫码录入'), findsNothing);
+    expect(find.byIcon(Icons.qr_code_scanner), findsNothing);
   });
 
   testWidgets('add item page has purchase date field', (tester) async {
@@ -120,6 +125,28 @@ void main() {
     expect(find.text('购买日期'), findsOneWidget);
     expect(find.text('未记录'), findsOneWidget);
   });
+
+  testWidgets('about page exposes project link and theme choices',
+      (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('关于'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('技术栈'), findsNothing);
+    expect(find.text('github.com/azrng/MyItems'), findsOneWidget);
+    expect(find.text('主题模式'), findsOneWidget);
+    expect(find.text('跟随系统'), findsOneWidget);
+    expect(find.text('浅色'), findsOneWidget);
+    expect(find.text('深色'), findsOneWidget);
+  });
 }
 
 class FakeNavigationRepository extends ItemRepository {
@@ -132,9 +159,18 @@ class FakeNavigationRepository extends ItemRepository {
         id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
   ];
   final _today = DateTime(2026, 5, 9);
+  ThemePreference _themePreference = ThemePreference.system;
 
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<ThemePreference> getThemePreference() async => _themePreference;
+
+  @override
+  Future<void> saveThemePreference(ThemePreference preference) async {
+    _themePreference = preference;
+  }
 
   @override
   Future<List<Category>> getCategories() async => _categories;

@@ -35,6 +35,29 @@ class ItemRepository {
     await database;
   }
 
+  Future<ThemePreference> getThemePreference() async {
+    final db = await database;
+    final rows = await db.query(
+      'settings',
+      columns: ['value'],
+      where: 'key = ?',
+      whereArgs: ['theme_preference'],
+      limit: 1,
+    );
+    return rows.isEmpty
+        ? ThemePreference.system
+        : ThemePreference.fromValue(rows.first['value'] as String?);
+  }
+
+  Future<void> saveThemePreference(ThemePreference preference) async {
+    final db = await database;
+    await db.insert(
+      'settings',
+      {'key': 'theme_preference', 'value': preference.value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<void> _createSchema(Database db) async {
     await db.execute('''
 CREATE TABLE IF NOT EXISTS version_log (
@@ -74,9 +97,18 @@ CREATE TABLE IF NOT EXISTS items (
   updated_at TEXT NOT NULL
 )
 ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_archived ON items(is_archived)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_expiry ON items(expiry_date)');
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+)
+''');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_items_archived ON items(is_archived)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_items_expiry ON items(expiry_date)');
   }
 
   Future<void> _seedPresetCategories(Database db) async {
@@ -101,7 +133,8 @@ CREATE TABLE IF NOT EXISTS items (
 
   Future<void> saveCategory(Category category) async {
     final db = await database;
-    await db.insert('categories', category.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('categories', category.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateCategoryOrder(List<Category> categories) async {
@@ -135,7 +168,8 @@ CREATE TABLE IF NOT EXISTS items (
       throw RepositoryException('该分类下还有物品，无法删除');
     }
     final db = await database;
-    await db.update('categories', {'is_active': 0}, where: 'id = ?', whereArgs: [category.id]);
+    await db.update('categories', {'is_active': 0},
+        where: 'id = ?', whereArgs: [category.id]);
   }
 
   Future<List<Item>> getItems() async {
@@ -150,13 +184,15 @@ CREATE TABLE IF NOT EXISTS items (
 
   Future<Item?> getItem(String id) async {
     final db = await database;
-    final rows = await db.query('items', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows =
+        await db.query('items', where: 'id = ?', whereArgs: [id], limit: 1);
     return rows.isEmpty ? null : Item.fromMap(rows.first);
   }
 
   Future<String> saveItem(Item item) async {
     final db = await database;
-    await db.insert('items', item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('items', item.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
     return item.id;
   }
 
@@ -170,19 +206,22 @@ CREATE TABLE IF NOT EXISTS items (
     );
   }
 
-  Future<List<ItemDisplay>> getItemDisplays({ItemQuery query = const ItemQuery()}) async {
+  Future<List<ItemDisplay>> getItemDisplays(
+      {ItemQuery query = const ItemQuery()}) async {
     final categories = await getCategories();
     final lookup = {for (final category in categories) category.id: category};
     final items = await getItems();
     final displays = items
-        .where((item) => query.categoryId == null || item.categoryId == query.categoryId)
+        .where((item) =>
+            query.categoryId == null || item.categoryId == query.categoryId)
         .map((item) => ItemDisplay.fromItem(
               item: item,
               category: lookup[item.categoryId] ?? fallbackCategory,
             ))
         .where((display) => display.matchesKeyword(query.searchText ?? ''))
         .where((display) => !query.hasExpiry || display.item.expiryDate != null)
-        .where((display) => !query.onlyExpired || display.expiryStatus == ExpiryStatus.expired)
+        .where((display) =>
+            !query.onlyExpired || display.expiryStatus == ExpiryStatus.expired)
         .where((display) =>
             !query.onlyExpiring ||
             display.expiryStatus == ExpiryStatus.expired ||
@@ -200,7 +239,8 @@ CREATE TABLE IF NOT EXISTS items (
     return displays.skip(query.offset).take(query.limit).toList();
   }
 
-  Future<List<ItemDisplay>> getHomeItemDisplays({String? searchText, int limit = 1000}) async {
+  Future<List<ItemDisplay>> getHomeItemDisplays(
+      {String? searchText, int limit = 1000}) async {
     final categories = await getCategories();
     final lookup = {for (final category in categories) category.id: category};
     final displays = (await getItems())
@@ -224,17 +264,25 @@ CREATE TABLE IF NOT EXISTS items (
               status: status,
               title: getGroupTitle(status),
               icon: getGroupIcon(status),
-              items: displays.where((item) => item.expiryStatus == status).toList(),
+              items: displays
+                  .where((item) => item.expiryStatus == status)
+                  .toList(),
             ))
         .toList();
   }
 
   Future<LibraryStatistics> getStatistics() async {
-    final displays = await getItemDisplays(query: const ItemQuery(limit: 10000));
+    final displays =
+        await getItemDisplays(query: const ItemQuery(limit: 10000));
     final valid = displays
         .where((item) => item.expiryStatus != ExpiryStatus.expired)
-        .fold<double>(0, (sum, item) => sum + (item.item.purchasePrice ?? 0) * item.item.quantity);
-    final validCount = displays.where((item) => item.expiryStatus != ExpiryStatus.expired).length;
+        .fold<double>(
+            0,
+            (sum, item) =>
+                sum + (item.item.purchasePrice ?? 0) * item.item.quantity);
+    final validCount = displays
+        .where((item) => item.expiryStatus != ExpiryStatus.expired)
+        .length;
     return LibraryStatistics(
       totalSpent: valid,
       totalItems: displays.length,
@@ -248,8 +296,21 @@ CREATE TABLE IF NOT EXISTS items (
     final categories = await getCategories();
     final items = await getItems();
     final rows = <List<Object?>>[
-      ['type', 'id', 'name', 'category_id', 'icon', 'brand', 'location', 'price', 'expiry_date', 'quantity', 'notes'],
-      ...categories.map((c) => ['category', c.id, c.name, '', c.icon, '', '', '', '', '', '']),
+      [
+        'type',
+        'id',
+        'name',
+        'category_id',
+        'icon',
+        'brand',
+        'location',
+        'price',
+        'expiry_date',
+        'quantity',
+        'notes'
+      ],
+      ...categories.map((c) =>
+          ['category', c.id, c.name, '', c.icon, '', '', '', '', '', '']),
       ...items.map((i) => [
             'item',
             i.id,
@@ -268,7 +329,8 @@ CREATE TABLE IF NOT EXISTS items (
     return file.path;
   }
 
-  Future<(int successCount, int failureCount, List<String> errors)> importFromCsv(String filePath) async {
+  Future<(int successCount, int failureCount, List<String> errors)>
+      importFromCsv(String filePath) async {
     final file = File(filePath);
     if (!await file.exists()) {
       return (0, 1, ['文件不存在：$filePath']);
@@ -350,9 +412,16 @@ const fallbackCategory = Category(
 
 const presetCategories = [
   Category(id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
-  Category(id: 'beauty', name: '化妆品/护肤品', icon: '💄', sortOrder: 2, isPreset: true),
-  Category(id: 'medicine', name: '药品/保健品', icon: '💊', sortOrder: 3, isPreset: true),
+  Category(
+      id: 'beauty', name: '化妆品/护肤品', icon: '💄', sortOrder: 2, isPreset: true),
+  Category(
+      id: 'medicine', name: '药品/保健品', icon: '💊', sortOrder: 3, isPreset: true),
   Category(id: 'daily', name: '日用品', icon: '🧴', sortOrder: 4, isPreset: true),
-  Category(id: 'electronics', name: '电子产品', icon: '💻', sortOrder: 5, isPreset: true),
+  Category(
+      id: 'electronics',
+      name: '电子产品',
+      icon: '💻',
+      sortOrder: 5,
+      isPreset: true),
   fallbackCategory,
 ];

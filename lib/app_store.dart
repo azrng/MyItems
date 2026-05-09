@@ -18,12 +18,20 @@ class AppStore extends ChangeNotifier {
   List<ExpiryGroup> expiryGroups = [];
   List<ItemDisplay> libraryItems = [];
   LibraryStatistics statistics = LibraryStatistics.empty;
+  ThemePreference themePreference = ThemePreference.system;
 
   Future<void> initialize() async {
     await _run(() async {
       await repository.initialize();
+      themePreference = await repository.getThemePreference();
       await refreshAll();
     });
+  }
+
+  Future<void> setThemePreference(ThemePreference preference) async {
+    themePreference = preference;
+    notifyListeners();
+    await repository.saveThemePreference(preference);
   }
 
   Future<void> refreshAll() async {

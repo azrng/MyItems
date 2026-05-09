@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_store.dart';
 import 'main.dart';
@@ -704,13 +705,6 @@ class _AddItemPageState extends State<AddItemPage> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
             children: [
-              FilledButton.tonalIcon(
-                onPressed: () => showSnack(
-                    context, '扫码录入将在 Flutter 后续迭代接入相机与 Open Food Facts。'),
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('扫码录入'),
-              ),
-              const SizedBox(height: 12),
               SectionCard(
                 title: '基础信息',
                 children: [
@@ -999,16 +993,10 @@ class IconPreviewButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        fixedSize: const Size(76, 56),
+        fixedSize: const Size(56, 56),
         padding: EdgeInsets.zero,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 22)),
-          const Text('图标', style: TextStyle(fontSize: 12)),
-        ],
-      ),
+      child: Text(icon, style: const TextStyle(fontSize: 24)),
     );
   }
 }
@@ -1240,40 +1228,127 @@ class StorageActionTile extends StatelessWidget {
   }
 }
 
-class AboutPage extends StatelessWidget {
+class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
 
   @override
+  State<AboutPage> createState() => _AboutPageState();
+}
+
+class _AboutPageState extends State<AboutPage> {
+  @override
   Widget build(BuildContext context) {
+    final store = AppScope.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('关于')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          Center(child: Text('📦', style: TextStyle(fontSize: 54))),
-          SizedBox(height: 8),
-          Center(
-              child: Text('我的物品',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-          SizedBox(height: 4),
-          Center(child: Text('版本 1.0.0')),
-          SizedBox(height: 18),
-          SectionCard(
-            title: '简介',
+      body: AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Text('个人/家庭自用的物品管理 App，用于跟踪保质期、存放位置、购买价格和分类信息。'),
+              const Center(child: Text('📦', style: TextStyle(fontSize: 54))),
+              const SizedBox(height: 8),
+              const Center(
+                  child: Text('我的物品',
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 4),
+              const Center(child: Text('版本 1.0.0')),
+              const SizedBox(height: 18),
+              const SectionCard(
+                title: '简介',
+                children: [
+                  Text('个人/家庭自用的物品管理 App，用于跟踪保质期、存放位置、购买价格和分类信息。'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SectionCard(
+                title: '信息',
+                children: const [
+                  DetailTile(label: '作者', value: 'azrng'),
+                  ProjectLinkTile(
+                    label: '项目地址',
+                    value: 'github.com/azrng/MyItems',
+                    url: 'https://github.com/azrng/MyItems',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SectionCard(
+                title: '主题模式',
+                children: [
+                  SegmentedButton<ThemePreference>(
+                    segments: ThemePreference.values
+                        .map((preference) => ButtonSegment<ThemePreference>(
+                              value: preference,
+                              label: Text(preference.label),
+                            ))
+                        .toList(),
+                    selected: {store.themePreference},
+                    onSelectionChanged: (values) {
+                      store.setThemePreference(values.first);
+                    },
+                  ),
+                ],
+              ),
             ],
-          ),
-          SizedBox(height: 12),
-          SectionCard(
-            title: '信息',
-            children: [
-              DetailTile(label: '作者', value: 'azrng'),
-              DetailTile(label: '技术栈', value: 'Flutter + SQLite'),
-              DetailTile(label: '项目地址', value: 'github.com/azrng/MyItems'),
-            ],
-          ),
-        ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ProjectLinkTile extends StatelessWidget {
+  const ProjectLinkTile({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.url,
+  });
+
+  final String label;
+  final String value;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        try {
+          await const MethodChannel('my_items/system').invokeMethod<void>(
+            'openUrl',
+            {'url': url},
+          );
+        } catch (error) {
+          if (context.mounted) {
+            showSnack(context, '无法打开项目地址：$error');
+          }
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 84,
+              child: Text(label, style: const TextStyle(color: Colors.black54)),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            const Icon(Icons.open_in_new, size: 18),
+          ],
+        ),
       ),
     );
   }
