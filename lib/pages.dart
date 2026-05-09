@@ -20,6 +20,7 @@ class _RootPageState extends State<RootPage> {
     final store = AppScope.of(context);
     final pages = [
       const HomePage(),
+      const ExpiringPage(),
       const LibraryPage(),
       const CategoryPage(),
     ];
@@ -47,12 +48,13 @@ class _RootPageState extends State<RootPage> {
             selectedIndex: _index,
             onDestinationSelected: (value) => setState(() => _index = value),
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.notifications_none), selectedIcon: Icon(Icons.notifications), label: '主页'),
+              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: '主页'),
+              NavigationDestination(icon: Icon(Icons.notifications_none), selectedIcon: Icon(Icons.notifications), label: '临期'),
               NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2), label: '物品库'),
               NavigationDestination(icon: Icon(Icons.category_outlined), selectedIcon: Icon(Icons.category), label: '分类'),
             ],
           ),
-          floatingActionButton: _index == 1
+          floatingActionButton: _index == 2
               ? FloatingActionButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddItemPage())),
                   child: const Icon(Icons.add),
@@ -65,7 +67,8 @@ class _RootPageState extends State<RootPage> {
 
   String get _title => switch (_index) {
         0 => '我的物品',
-        1 => '物品库',
+        1 => '临期提醒',
+        2 => '物品库',
         _ => '分类管理',
       };
 }
@@ -168,6 +171,38 @@ class ExpiryGroupSection extends StatelessWidget {
               )),
         ],
       ),
+    );
+  }
+}
+
+class ExpiringPage extends StatelessWidget {
+  const ExpiringPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        return RefreshIndicator(
+          onRefresh: store.refreshAll,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              SearchField(
+                hint: '搜索临期或已过期物品',
+                initialValue: store.homeSearch,
+                onChanged: store.setHomeSearch,
+              ),
+              const SizedBox(height: 12),
+              if (store.errorMessage != null) ErrorBanner(message: store.errorMessage!),
+              if (store.expiryGroups.every((group) => group.items.isEmpty))
+                const EmptyState(icon: Icons.event_available_outlined, title: '暂无临期提醒', subtitle: '已过期和 7 天内到期的物品会显示在这里。'),
+              ...store.expiryGroups.map((group) => ExpiryGroupSection(group: group)),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -12,9 +12,9 @@
 - Dart SDK（随 Flutter SDK 提供）
 - Java 17
 - Android SDK
-- Android Studio 或等价 Android 构建工具链
+- Android SDK Command-line Tools 或 Android Studio
 
-当前命令行环境尚未安装 `flutter`、`dart`、`java`、`gradle` 和 Android SDK，因此本分支只完成源码级迁移，尚未完成 `flutter test` 或 APK 构建验证。
+当前已验证 Flutter、Dart、Java、Android SDK、ADB 和魅族 16th 真机识别。详细安装与排错说明见 [Flutter Android 环境配置指南](doc/Flutter-Android-环境配置.md)。
 
 ### 目录说明
 
@@ -35,13 +35,23 @@ test/                  # Flutter 单元测试
 安装 Flutter 和 Android 构建链后，在仓库根目录执行：
 
 ```bash
-flutter create --platforms=android .
 flutter pub get
 flutter test
 flutter build apk --debug
 ```
 
-如果 `flutter create` 提示已有文件，保留当前 `lib/`、`test/`、`pubspec.yaml`，只让 Flutter 工具补齐缺失的 Android 模板和 Gradle Wrapper。
+连接 Android 真机调试：
+
+```powershell
+flutter devices
+flutter run -d <device-id> --debug
+```
+
+本机魅族 16th 的设备 ID 示例：
+
+```powershell
+flutter run -d 882QAETJEYG3S --debug
+```
 
 ## 数据库迁移
 

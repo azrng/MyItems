@@ -637,6 +637,51 @@ flutter run -d ABCDEF123456
 
 成功后，手机上会自动安装并打开 App，终端中会停在调试会话。
 
+### 本项目快速运行命令
+
+如果你是在本仓库调试 `flutter` 分支，项目目录是：
+
+```text
+D:\GitHub\MyItems
+```
+
+已连接并授权 Android 手机后，可以直接运行下面这组命令：
+
+```powershell
+cd D:\GitHub\MyItems
+
+$env:Path = (([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) -join ';'
+$env:JAVA_HOME = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
+$env:ANDROID_SDK_ROOT = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'User')
+$env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User')
+$env:PUB_HOSTED_URL = 'https://pub.flutter-io.cn'
+$env:FLUTTER_STORAGE_BASE_URL = 'https://storage.flutter-io.cn'
+
+flutter pub get
+flutter devices
+flutter run -d 882QAETJEYG3S --debug
+```
+
+其中 `882QAETJEYG3S` 是本机当前识别到的魅族 16th 设备 ID。换手机后，先执行：
+
+```powershell
+flutter devices
+```
+
+再把启动命令里的设备 ID 替换成新的设备 ID。
+
+如果只想构建 APK，不进入驻留调试会话，执行：
+
+```powershell
+flutter build apk --debug
+```
+
+构建产物路径：
+
+```text
+build\app\outputs\flutter-apk\app-debug.apk
+```
+
 ## 第 13 步：调试时怎么操作
 
 `flutter run` 运行后，不要马上关闭 PowerShell。这个窗口就是调试控制台。
