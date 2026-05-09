@@ -335,50 +335,102 @@ class StatisticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-                child: StatItem(
-                    label: '有效花费',
-                    value: '¥${statistics.totalSpent.toStringAsFixed(1)}')),
-            Expanded(
-                child: StatItem(
-                    label: '有效商品', value: '${statistics.validItems} 件')),
-            Expanded(
-                child:
-                    StatItem(label: '全部', value: '${statistics.totalItems} 件')),
-          ],
-        ),
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const ValueKey('library-metric-strip'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant.withAlpha(140)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: StatItem(
+              key: const ValueKey('library-metric-spent'),
+              icon: Icons.payments_outlined,
+              label: '有效花费',
+              value: '¥${statistics.totalSpent.toStringAsFixed(1)}',
+            ),
+          ),
+          const MetricDivider(),
+          Expanded(
+            child: StatItem(
+              key: const ValueKey('library-metric-valid'),
+              icon: Icons.inventory_2_outlined,
+              label: '有效商品',
+              value: '${statistics.validItems} 件',
+            ),
+          ),
+          const MetricDivider(),
+          Expanded(
+            child: StatItem(
+              key: const ValueKey('library-metric-total'),
+              icon: Icons.all_inbox_outlined,
+              label: '全部',
+              value: '${statistics.totalItems} 件',
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class StatItem extends StatelessWidget {
-  const StatItem({super.key, required this.label, required this.value});
+class MetricDivider extends StatelessWidget {
+  const MetricDivider({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 34,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      color: Theme.of(context).colorScheme.outlineVariant.withAlpha(160),
+    );
+  }
+}
+
+class StatItem extends StatelessWidget {
+  const StatItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
       children: [
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: Colors.black54)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
+        Icon(icon, size: 18, color: colorScheme.primary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      )),
+              const SizedBox(height: 2),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      )),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -990,13 +1042,20 @@ class IconPreviewButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        fixedSize: const Size(56, 56),
-        padding: EdgeInsets.zero,
+    return Material(
+      color: Theme.of(context).colorScheme.primaryContainer.withAlpha(95),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: Center(
+            child: Text(icon, style: const TextStyle(fontSize: 24)),
+          ),
+        ),
       ),
-      child: Text(icon, style: const TextStyle(fontSize: 24)),
     );
   }
 }

@@ -51,6 +51,7 @@ void main() {
         find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
 
     expect(find.text('图标'), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
 
     await tester.tap(find.byType(IconPreviewButton));
     await tester.pump();
@@ -74,6 +75,22 @@ void main() {
     expect(
         find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
     expect(find.text('¥0.00/天'), findsNothing);
+  });
+
+  testWidgets('library overview uses compact metric strip', (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('物品库'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const ValueKey('library-metric-strip')), findsOneWidget);
+    expect(find.byKey(const ValueKey('library-metric-spent')), findsOneWidget);
+    expect(find.byKey(const ValueKey('library-metric-valid')), findsOneWidget);
+    expect(find.byKey(const ValueKey('library-metric-total')), findsOneWidget);
   });
 
   testWidgets('drawer opens storage management page', (tester) async {
