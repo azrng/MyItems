@@ -34,23 +34,53 @@ test/                  # Flutter 单元测试
 
 安装 Flutter 和 Android 构建链后，在仓库根目录执行：
 
-```bash
+```powershell
 flutter pub get
 flutter test
 flutter build apk --debug
 ```
 
-连接 Android 真机调试：
+### 本项目快速运行命令
+
+已连接并授权 Android 手机后，在 PowerShell 中执行：
+
+```powershell
+cd D:\GitHub\MyItems
+
+$env:Path = (([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) -join ';'
+$env:JAVA_HOME = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
+$env:ANDROID_SDK_ROOT = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'User')
+$env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User')
+$env:PUB_HOSTED_URL = 'https://pub.flutter-io.cn'
+$env:FLUTTER_STORAGE_BASE_URL = 'https://storage.flutter-io.cn'
+
+flutter pub get
+flutter devices
+flutter run -d 882QAETJEYG3S --debug
+```
+
+其中 `882QAETJEYG3S` 是本机当前识别到的魅族 16th 设备 ID。换手机后，先执行：
 
 ```powershell
 flutter devices
+```
+
+再把启动命令里的设备 ID 替换成新的设备 ID：
+
+```powershell
 flutter run -d <device-id> --debug
 ```
 
-本机魅族 16th 的设备 ID 示例：
+如果只想构建 Debug APK，不进入驻留调试会话，执行：
 
 ```powershell
-flutter run -d 882QAETJEYG3S --debug
+flutter build apk --debug
+```
+
+构建产物路径：
+
+```text
+build\app\outputs\flutter-apk\app-debug.apk
 ```
 
 ## 数据库迁移
