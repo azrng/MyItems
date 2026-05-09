@@ -17,7 +17,8 @@ void main() {
     expect(find.text('分类'), findsOneWidget);
   });
 
-  testWidgets('add item page opened from library can access app scope', (tester) async {
+  testWidgets('add item page opened from library can access app scope',
+      (tester) async {
     await tester.pumpWidget(MyItemsApp(store: AppStore(ItemRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -33,8 +34,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('category page supports icon picker and drag handles', (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+  testWidgets('category page supports icon picker and drag handles',
+      (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -43,7 +46,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byIcon(Icons.drag_handle), findsWidgets);
-    expect(find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('category-dismiss-custom')), findsOneWidget);
 
     await tester.tap(find.text('图标'));
     await tester.pump();
@@ -54,7 +58,8 @@ void main() {
   });
 
   testWidgets('library item supports swipe delete action', (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -63,12 +68,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('测试物品'), findsOneWidget);
-    expect(find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
     expect(find.text('¥0.00/天'), findsNothing);
   });
 
   testWidgets('drawer opens storage management page', (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -88,7 +95,8 @@ void main() {
   });
 
   testWidgets('home app bar add button opens add item page', (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -98,13 +106,30 @@ void main() {
 
     expect(find.text('添加物品'), findsOneWidget);
   });
+
+  testWidgets('add item page has purchase date field', (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('购买日期'), findsOneWidget);
+    expect(find.text('未记录'), findsOneWidget);
+  });
 }
 
 class FakeNavigationRepository extends ItemRepository {
   final _categories = [
-    const Category(id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
-    const Category(id: 'daily', name: '日用品', icon: '🧴', sortOrder: 2, isPreset: true),
-    const Category(id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
+    const Category(
+        id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
+    const Category(
+        id: 'daily', name: '日用品', icon: '🧴', sortOrder: 2, isPreset: true),
+    const Category(
+        id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
   ];
   final _today = DateTime(2026, 5, 9);
 
@@ -115,10 +140,12 @@ class FakeNavigationRepository extends ItemRepository {
   Future<List<Category>> getCategories() async => _categories;
 
   @override
-  Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async => const [];
+  Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async =>
+      const [];
 
   @override
-  Future<List<ItemDisplay>> getItemDisplays({ItemQuery query = const ItemQuery()}) async {
+  Future<List<ItemDisplay>> getItemDisplays(
+      {ItemQuery query = const ItemQuery()}) async {
     final item = Item(
       id: 'test-item',
       name: '测试物品',
@@ -126,11 +153,16 @@ class FakeNavigationRepository extends ItemRepository {
       createdAt: _today,
       updatedAt: _today,
     );
-    return [ItemDisplay.fromItem(item: item, category: _categories.first, today: _today)];
+    return [
+      ItemDisplay.fromItem(
+          item: item, category: _categories.first, today: _today)
+    ];
   }
 
   @override
-  Future<List<ItemDisplay>> getHomeItemDisplays({String? searchText, int limit = 1000}) async => const [];
+  Future<List<ItemDisplay>> getHomeItemDisplays(
+          {String? searchText, int limit = 1000}) async =>
+      const [];
 
   @override
   Future<LibraryStatistics> getStatistics() async => LibraryStatistics.empty;

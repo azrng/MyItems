@@ -29,14 +29,15 @@ class AppStore extends ChangeNotifier {
   Future<void> refreshAll() async {
     categories = await repository.getCategories();
     homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
-    expiryGroups = await repository.getExpiryGroups(searchText: homeSearch);
-    libraryItems = await repository.getItemDisplays(
+    expiryGroups = _sortExpiryGroupsByExpiryAsc(
+        await repository.getExpiryGroups(searchText: homeSearch));
+    libraryItems = _sortByCreatedDesc(await repository.getItemDisplays(
       query: ItemQuery(
         categoryId: selectedCategoryId,
         searchText: librarySearch,
         limit: 1000,
       ),
-    );
+    ));
     statistics = await repository.getStatistics();
     notifyListeners();
   }
@@ -45,7 +46,8 @@ class AppStore extends ChangeNotifier {
     homeSearch = value;
     await _run(() async {
       homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
-      expiryGroups = await repository.getExpiryGroups(searchText: homeSearch);
+      expiryGroups = _sortExpiryGroupsByExpiryAsc(
+          await repository.getExpiryGroups(searchText: homeSearch));
       notifyListeners();
     }, setLoading: false);
   }
@@ -62,13 +64,13 @@ class AppStore extends ChangeNotifier {
 
   Future<void> refreshLibrary({bool setLoading = true}) async {
     await _run(() async {
-      libraryItems = await repository.getItemDisplays(
+      libraryItems = _sortByCreatedDesc(await repository.getItemDisplays(
         query: ItemQuery(
           categoryId: selectedCategoryId,
           searchText: librarySearch,
           limit: 1000,
         ),
-      );
+      ));
       statistics = await repository.getStatistics();
       notifyListeners();
     }, setLoading: setLoading);
@@ -145,7 +147,9 @@ class AppStore extends ChangeNotifier {
     if (oldIndex < 0 || oldIndex >= categories.length) return;
     final nextCategories = List<Category>.of(categories);
     var targetIndex = newIndex;
-    if (targetIndex > nextCategories.length) targetIndex = nextCategories.length;
+    if (targetIndex > nextCategories.length) {
+      targetIndex = nextCategories.length;
+    }
     if (oldIndex < targetIndex) targetIndex -= 1;
     final moved = nextCategories.removeAt(oldIndex);
     nextCategories.insert(targetIndex, moved);
@@ -170,7 +174,8 @@ class AppStore extends ChangeNotifier {
 
   Future<String> exportToCsv() => repository.exportToCsv();
 
-  Future<(int successCount, int failureCount, List<String> errors)> importFromCsv(String filePath) async {
+  Future<(int successCount, int failureCount, List<String> errors)>
+      importFromCsv(String filePath) async {
     final result = await repository.importFromCsv(filePath);
     await refreshAll();
     return result;
@@ -183,7 +188,8 @@ class AppStore extends ChangeNotifier {
     });
   }
 
-  Future<void> _run(Future<void> Function() action, {bool setLoading = true}) async {
+  Future<void> _run(Future<void> Function() action,
+      {bool setLoading = true}) async {
     try {
       if (setLoading) {
         isLoading = true;
@@ -206,6 +212,27 @@ class AppStore extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  List<ItemDisplay> _sortByCreatedDesc(List<ItemDisplay> items) {
+    return [...items]
+      ..sort((a, b) => b.item.createdAt.compareTo(a.item.createdAt));
+  }
+
+  List<ExpiryGroup> _sortExpiryGroupsByExpiryAsc(List<ExpiryGroup> groups) {
+    return groups
+        .map((group) => ExpiryGroup(
+              status: group.status,
+              title: group.title,
+              icon: group.icon,
+              isExpanded: group.isExpanded,
+              items: [...group.items]..sort((a, b) {
+                  final aExpiry = a.item.expiryDate ?? DateTime(9999);
+                  final bExpiry = b.item.expiryDate ?? DateTime(9999);
+                  return aExpiry.compareTo(bExpiry);
+                }),
+            ))
+        .toList();
   }
 }
 
