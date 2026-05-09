@@ -805,17 +805,145 @@ adb devices -l
 3. 重新插线。
 4. 再执行 `adb devices -l`。
 
-### 首次 `flutter run` 或 `flutter build apk` 很慢
+### 首次 `flutter run` 或 `flutter build apk` 很慢 / 构建超时
 
-首次构建会下载 Gradle 和 Maven 依赖，慢是正常的。
+首次构建会下载 Gradle、Maven 依赖和 NDK，慢是正常的。但国内网络环境下，部分下载会超时失败。
 
-如果超过 10 到 15 分钟没有明显进展，用详细日志查看卡在哪里：
+#### 哪些步骤需要科学上网
+
+| 下载内容 | 默认地址 | 是否需要科学上网 | 国内替代方案 |
+| --- | --- | --- | --- |
+| Flutter Pub 包 | `pub.dev` | 需要 | 配置 `PUB_HOSTED_URL` 镜像（第 3 步已配置） |
+| Gradle Wrapper 发行包 | `services.gradle.org` → 重定向到 GitHub | 需要 | 配置腾讯 Gradle 镜像（见下方） |
+| Maven / Google 仓库依赖 | `dl.google.com`、`repo.maven.apache.org` | 需要 | 配置 `FLUTTER_STORAGE_BASE_URL` 镜像（第 3 步已配置） |
+| NDK 自动下载 | `dl.google.com` | 需要 | 提前用 `sdkmanager` 安装（见下方） |
+| Android Command-line Tools | `dl.google.com` | 部分需要 | 浏览器手动下载（第 5 步） |
+
+#### 用详细日志定位卡在哪里
 
 ```powershell
 flutter build apk --debug -v
 ```
 
-如果确认卡在 Maven / Gradle 依赖下载，可以考虑配置 Gradle 镜像。镜像会影响整个团队的依赖解析来源，建议团队统一确认后再配置。
+常见卡住位置：
+
+- `Download https://services.gradle.org/distributions/gradle-xxx-all.zip` — Gradle Wrapper 下载卡住，见下方修复。
+- `Could not resolve com.android.tools.build:gradle:xxx` — Maven 依赖下载卡住，检查网络或配置 Gradle 镜像。
+- `[CXX1101] NDK ... did not have a source.properties file` — NDK 下载损坏，见上方 NDK 问题章节。
+
+#### 配置 Gradle Wrapper 国内镜像
+
+Gradle Wrapper 是构建时第一个下载的东西，默认从 `services.gradle.org` 下载，会重定向到 GitHub，国内直连经常超时。
+
+解决方法：修改项目中的 `android/gradle/wrapper/gradle-wrapper.properties`，将 `distributionUrl` 改为国内镜像。
+
+修改前：
+
+```properties
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-all.zip
+```
+
+修改后（腾讯 Gradle 镜像）：
+
+```properties
+distributionUrl=https\://mirrors.cloud.tencent.com/gradle/gradle-8.9-all.zip
+```
+
+> 注意：版本号 `8.9` 要和项目实际使用的 Gradle 版本一致，不要随意更改。
+
+#### 构建前刷新环境变量
+
+如果在已有 PowerShell 窗口中执行构建，先刷新环境变量确保 Flutter 和 Java 都能找到：
+
+```powershell
+$env:Path = (([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) -join ';'
+$env:JAVA_HOME = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
+$env:ANDROID_SDK_ROOT = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'User')
+$env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User')
+$env:PUB_HOSTED_URL = 'https://pub.flutter-io.cn'
+$env:FLUTTER_STORAGE_BASE_URL = 'https://storage.flutter-io.cn'
+```
+
+然后再运行：
+
+```powershell
+flutter run
+```
+
+如果只想先验证能不能构建，不启动驻留调试：
+
+```powershell
+flutter build apk --debug
+```
+
+#### 提前安装 NDK 避免构建时自动下载失败
+
+如果不想在构建过程中等待 NDK 下载（或下载频繁失败），可以提前安装：
+
+```powershell
+sdkmanager "ndk;28.2.13676358"
+```
+
+版本号取决于 Flutter SDK 要求的 NDK 版本，可以通过 `flutter doctor -v` 查看提示。
+
+#### Gradle 依赖下载慢的替代方案
+
+如果确认卡在 Maven / Google 仓库依赖下载，可以考虑在项目的 `android/build.gradle` 中配置国内 Maven 镜像。镜像会影响整个团队的依赖解析来源，建议团队统一确认后再配置。
+
+### 构建报错 `[CXX1101] NDK ... did not have a source.properties file`
+
+完整错误示例：
+
+```text
+[CXX1101] NDK at D:\Soft\Android\Sdk\ndk\28.2.13676358 did not have a source.properties file
+```
+
+原因：NDK 下载不完整或文件损坏，导致 Gradle 无法读取 NDK 版本信息。
+
+处理：删除损坏的 NDK 目录，让 Android Gradle Plugin 自动重新下载。
+
+```powershell
+Remove-Item -LiteralPath "D:\Soft\Android\Sdk\ndk\28.2.13676358" -Recurse -Force
+```
+
+删除后重新构建项目，Gradle 会自动下载所需 NDK：
+
+```powershell
+flutter run
+```
+
+如果网络不好导致自动下载失败，也可以手动安装指定版本：
+
+```powershell
+sdkmanager "ndk;28.2.13676358"
+```
+
+### 构建警告 Kotlin 版本过低
+
+警告示例：
+
+```text
+Warning: Flutter support for your project's Kotlin version (2.0.20) will soon be dropped.
+Please upgrade your Kotlin version to a version of at least 2.1.0 soon.
+```
+
+原因：项目 `android/settings.gradle` 中 Kotlin 版本低于 Flutter 要求的最低版本。
+
+处理：打开项目的 `android/settings.gradle`，找到 Kotlin 插件声明，将版本号改为 `2.1.0` 或更高。
+
+修改前：
+
+```groovy
+id "org.jetbrains.kotlin.android" version "2.0.20" apply false
+```
+
+修改后（版本号可根据 Flutter 提示或 Kotlin 最新稳定版调整）：
+
+```groovy
+id "org.jetbrains.kotlin.android" version "2.1.21" apply false
+```
+
+修改后重新构建即可。
 
 ### 手机提示禁止 USB 安装
 
