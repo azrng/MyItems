@@ -1,5 +1,4 @@
 using MyItems.ViewModels;
-using System.Diagnostics;
 
 namespace MyItems.Views;
 
@@ -15,25 +14,27 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
+        Shell.SetNavBarIsVisible(this, false);
         Shell.SetTabBarIsVisible(this, false);
+        NavigationPage.SetHasNavigationBar(this, false);
         Loaded += OnLoaded;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        Shell.SetNavBarIsVisible(this, false);
         Shell.SetTabBarIsVisible(this, false);
+        NavigationPage.SetHasNavigationBar(this, false);
 
         await _viewModel.OnAppearingAsync();
         SynchronizeNativeControlsFromViewModel();
-        LogLayoutMetrics("appearing");
     }
 
     private async void OnLoaded(object? sender, EventArgs e)
     {
         await _viewModel.ApplyDeferredUiHydrationAsync();
         SynchronizeNativeControlsFromViewModel();
-        LogLayoutMetrics("loaded");
     }
 
     public string? ItemIdQuery
@@ -58,6 +59,11 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
             await _viewModel.SaveCommand.ExecuteAsync(null);
     }
 
+    private async void OnBackClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("..");
+    }
+
     private void SynchronizeNativeControlsFromViewModel()
     {
         var snapshot = _viewModel.CurrentFormSnapshot;
@@ -73,13 +79,6 @@ public partial class AddItemPage : ContentPage, IQueryAttributable
         NoExpiryCheckBox.IsChecked = snapshot.NoExpiry;
         TrackDailyCostSwitch.IsToggled = snapshot.TrackDailyCost;
         NotesEditor.Text = snapshot.Notes;
-
-        Debug.WriteLine($"[AddItemPage] Sync controls itemName={ItemNameEntry.Text}, category={(CategoryPicker.SelectedItem as Models.Category)?.Name ?? "null"}, quantity={QuantityLabel.Text}");
-    }
-
-    private void LogLayoutMetrics(string phase)
-    {
-        Debug.WriteLine($"[AddItemPage] Layout {phase}: page=({X:0.##},{Y:0.##},{Width:0.##},{Height:0.##}), content=({Content?.X:0.##},{Content?.Y:0.##},{Content?.Width:0.##},{Content?.Height:0.##})");
     }
 
     private void ApplyNativeControlsToViewModel()

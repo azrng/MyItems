@@ -6,9 +6,11 @@
     xmlns:viewmodels="clr-namespace:MyItems.ViewModels"
     x:Class="MyItems.Views.AddItemPage"
     x:DataType="viewmodels:AddItemViewModel"
+    Shell.NavBarIsVisible="False"
     Shell.TabBarIsVisible="False"
+    NavigationPage.HasNavigationBar="False"
     Title="{Binding PageTitle}"
-    Padding="0"
+    SafeAreaEdges="None"
     Style="{StaticResource PageStyle}">
 
     <ContentPage.Resources>
@@ -86,9 +88,41 @@
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="16,12,16,28"
-                             Spacing="10">
+    <Grid RowDefinitions="68,*">
+        <Grid
+              Grid.Row="0"
+              ColumnDefinitions="48,*"
+              ColumnSpacing="8"
+              Padding="16,0"
+              BackgroundColor="{DynamicResource ModernPrimary}">
+            <Button Grid.Column="0"
+                    Text="‹"
+                    BackgroundColor="Transparent"
+                    TextColor="{DynamicResource ModernTextInverse}"
+                    FontSize="34"
+                    FontAttributes="None"
+                    Padding="0"
+                    WidthRequest="48"
+                    HeightRequest="48"
+                    Clicked="OnBackClicked" />
+            <Label Grid.Column="1"
+                   Text="{Binding PageTitle}"
+                   FontFamily="{DynamicResource ModernDisplayFont}"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource ModernTextInverse}"
+                   MaxLines="1"
+                   LineBreakMode="TailTruncation"
+                   VerticalOptions="Center" />
+        </Grid>
+
+        <ScrollView
+            Grid.Row="1"
+            Margin="0"
+            Padding="0">
+        <VerticalStackLayout
+            Padding="16,8,16,96"
+            Spacing="10">
             <ActivityIndicator
                 IsRunning="{Binding IsLoadingItem}"
                 IsVisible="{Binding IsLoadingItem}"
@@ -100,64 +134,6 @@
                    FontSize="14"
                    HorizontalOptions="Center"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNullOrEmpty}}" />
-
-            <Frame
-                Style="{StaticResource ModernCardStyle}"
-                Margin="0"
-                Padding="16"
-                IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
-                <Grid ColumnDefinitions="Auto,*"
-                      RowDefinitions="Auto,Auto"
-                      ColumnSpacing="14"
-                      RowSpacing="12">
-                    <Frame Grid.RowSpan="2"
-                           WidthRequest="72"
-                           HeightRequest="72"
-                           CornerRadius="36"
-                           BackgroundColor="{DynamicResource ModernPrimary}"
-                           HasShadow="False"
-                           Padding="0"
-                           VerticalOptions="Start">
-                        <Label Text="{Binding HeaderIcon}"
-                               FontSize="34"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center" />
-                    </Frame>
-
-                    <VerticalStackLayout Grid.Column="1"
-                                         Spacing="4">
-                        <Label Text="{Binding PageTitle}"
-                               Style="{StaticResource ModernHeadlineLabel}"
-                               FontSize="22"
-                               MaxLines="1"
-                               LineBreakMode="TailTruncation" />
-                        <Label Text="{Binding FormSubtitle}"
-                               Style="{StaticResource DetailCaption}"
-                               FontSize="14" />
-                    </VerticalStackLayout>
-
-                    <Grid Grid.Row="1"
-                          Grid.Column="1"
-                          ColumnDefinitions="Auto,*"
-                          ColumnSpacing="8">
-                        <Frame Grid.Column="0"
-                               CornerRadius="12"
-                               Padding="10,4"
-                               HasShadow="False"
-                               BackgroundColor="{DynamicResource ModernPrimaryLight}">
-                            <Label Text="{Binding SaveButtonText}"
-                                   FontSize="12"
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource ModernPrimary}"
-                                   MaxLines="1" />
-                        </Frame>
-                        <Label Grid.Column="1"
-                               Text="{Binding SelectedCategory.Name}"
-                               Style="{StaticResource DetailCaption}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                </Grid>
-            </Frame>
 
             <Label Text="{Binding ItemNameError}"
                    Style="{StaticResource FieldErrorLabel}"
@@ -339,13 +315,22 @@
                 </VerticalStackLayout>
             </Frame>
 
+        </VerticalStackLayout>
+        </ScrollView>
+
+        <Frame
+               Grid.Row="1"
+               Style="{StaticResource ModernCardStyle}"
+               Margin="16,8,16,16"
+               Padding="12,10"
+               VerticalOptions="End"
+               ZIndex="2"
+               IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}">
             <Button Text="{Binding SaveButtonText}"
                     Style="{StaticResource ModernPrimaryButton}"
                     HeightRequest="46"
-                    Margin="0,2,0,0"
-                    IsVisible="{Binding IsLoadingItem, Converter={StaticResource InvertedBool}}"
                     Clicked="OnSaveClicked"
                     IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBool}}" />
-        </VerticalStackLayout>
-    </ScrollView>
+        </Frame>
+    </Grid>
 </ContentPage>
