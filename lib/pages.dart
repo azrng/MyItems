@@ -157,7 +157,7 @@ class AppDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.place_outlined),
-              title: const Text('存储位置'),
+              title: const Text('存放位置'),
               onTap: () => onNavigate(DrawerTarget.locations),
             ),
             ListTile(
@@ -1234,7 +1234,7 @@ class _LocationPageState extends State<LocationPage> {
   Widget build(BuildContext context) {
     final store = AppScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('存储位置')),
+      appBar: AppBar(title: const Text('存放位置')),
       body: AnimatedBuilder(
         animation: store,
         builder: (context, _) {
@@ -1438,12 +1438,12 @@ class _StoragePageState extends State<StoragePage> {
                         StorageActionTile(
                           icon: '📤',
                           title: '导出完整备份',
-                          subtitle: '一键导出分类、存储位置、物品、消耗记录和设置',
+                          subtitle: '一键导出分类、存放位置、物品、消耗记录和设置',
                           buttonText: '导出备份',
                           onPressed: () async {
                             try {
                               final backup = await store.buildBackupFile();
-                              final path = await const MethodChannel(
+                              await const MethodChannel(
                                       'my_items/system')
                                   .invokeMethod<String>(
                                 'saveBackupToDownloads',
@@ -1453,7 +1453,22 @@ class _StoragePageState extends State<StoragePage> {
                                 },
                               );
                               if (context.mounted) {
-                                showSnack(context, '已导出：$path');
+                                showDialog<void>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('导出成功'),
+                                    content: const Text(
+                                      '备份已保存到：\nDownload/MyItems\n\n'
+                                      '请在系统文件管理器的「下载」中查找。',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text('知道了'),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               }
                             } catch (error) {
                               if (context.mounted) {

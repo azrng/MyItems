@@ -139,11 +139,11 @@ void main() {
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('存储位置'));
+    await tester.tap(find.text('存放位置'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('存储位置'), findsWidgets);
+    expect(find.text('存放位置'), findsWidgets);
     expect(find.text('新增位置'), findsOneWidget);
     expect(find.text('冰箱'), findsOneWidget);
   });

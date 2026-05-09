@@ -48,6 +48,7 @@ bld/
 .packages
 build/
 android/local.properties
+android/key.properties
 android/.gradle/
 android/app/generated/
 

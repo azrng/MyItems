@@ -3,7 +3,7 @@ name: release-android
 on:
   push:
     branches:
-      - main
+      - flutter
   workflow_dispatch:
 
 permissions:
@@ -15,12 +15,9 @@ concurrency:
 
 env:
   VERSION_FILE: VERSION
-  APP_PROJECT_PATH: src/MyItems/MyItems.csproj
-  APK_NAME: MyItems-android.apk
-  MANIFEST_NAME: versions.json
 
 jobs:
-  publish-release:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,118 +26,76 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
-          dotnet-version: 10.0.x
+          distribution: temurin
+          java-version: 17
 
-      - name: Install MAUI workload
-        run: dotnet workload install maui-android
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
 
-      - name: Resolve release metadata
-        id: release_meta
-        shell: pwsh
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Flutter test
+        run: flutter test
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/upload-keystore.jks
+
+      - name: Create key.properties
         run: |
-          $versionFilePath = Join-Path "${{ github.workspace }}" "${{ env.VERSION_FILE }}"
-          $legacyVersion = ""
-          if (Test-Path -LiteralPath $versionFilePath) {
-            $legacyVersion = (Get-Content -LiteralPath $versionFilePath -Raw -Encoding UTF8).Trim()
-          }
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=/tmp/upload-keystore.jks
+          EOF
 
-          if ($legacyVersion -match '^\d+\.\d+\.\d+(?:\.\d+)?$') {
-            $version = $legacyVersion
-          }
-          else {
-            $version = (Get-Date).ToUniversalTime().ToString("yyyy.M.d.HH")
-          }
-
-          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-          $shortSha = "${{ github.sha }}".Substring(0, 7)
-          $tag = "v$version-build-$timestamp-$shortSha"
-          $releaseName = "MyItems $version ($timestamp)"
-          $apkPath = Join-Path "${{ github.workspace }}" "publish" "${{ env.APK_NAME }}"
-          $manifestPath = Join-Path "${{ github.workspace }}" "${{ env.MANIFEST_NAME }}"
-          $apkUrl = "https://github.com/${{ github.repository }}/releases/latest/download/${{ env.APK_NAME }}"
-          $packetName = [System.IO.Path]::GetFileNameWithoutExtension("${{ env.APK_NAME }}")
-
-          "version=$version" >> $env:GITHUB_OUTPUT
-          "tag_name=$tag" >> $env:GITHUB_OUTPUT
-          "release_name=$releaseName" >> $env:GITHUB_OUTPUT
-          "apk_path=$apkPath" >> $env:GITHUB_OUTPUT
-          "manifest_path=$manifestPath" >> $env:GITHUB_OUTPUT
-          "apk_url=$apkUrl" >> $env:GITHUB_OUTPUT
-          "packet_name=$packetName" >> $env:GITHUB_OUTPUT
-
-      - name: Restore
-        run: dotnet restore ${{ env.APP_PROJECT_PATH }}
-
-      - name: Build Android APK
-        shell: pwsh
+      - name: Resolve version
+        id: version
         run: |
-          $version = "${{ steps.release_meta.outputs.version }}"
+          VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION=$(date -u +%Y.%-m.%-d)
+          fi
+          TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG="v${VERSION}-build-${TIMESTAMP}-${SHORT_SHA}"
+          APK_NAME="MyItems-${VERSION}-${TIMESTAMP}.apk"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
 
-          dotnet publish "${{ env.APP_PROJECT_PATH }}" `
-            -c Release `
-            -f net10.0-android `
-            -p:ApplicationDisplayVersion=$version `
-            -p:ApplicationVersion=1 `
-            -p:AndroidPackageFormat=apk `
-            -p:AndroidSigningKeyStore="" `
-            -p:AndroidSigningKeyAlias="" `
-            -p:AndroidSigningKeyPass="" `
-            -p:AndroidSigningStorePass=""
+      - name: Build release APK
+        run: flutter build apk --release
 
-      - name: Copy APK and build manifest
-        shell: pwsh
+      - name: Prepare artifacts
         run: |
-          $publishDir = "src/MyItems/bin/Release/net10.0-android/publish"
-          $apkPath = "${{ steps.release_meta.outputs.apk_path }}"
-          $manifestPath = "${{ steps.release_meta.outputs.manifest_path }}"
-          $packetName = "${{ steps.release_meta.outputs.packet_name }}"
-
-          New-Item -ItemType Directory -Path (Split-Path $apkPath) -Force | Out-Null
-
-          # Find the APK file
-          $apk = Get-ChildItem -Path $publishDir -Filter "*.apk" -File | Select-Object -First 1
-          if ($apk) {
-            Copy-Item $apk.FullName $apkPath -Force
-          }
-          else {
-            Write-Error "No APK found in $publishDir"
-            exit 1
-          }
-
-          $hash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash.ToLowerInvariant()
-          $manifest = @(
-            [ordered]@{
-              PacketName = $packetName
-              Hash = $hash
-              Version = "${{ steps.release_meta.outputs.version }}"
-              Url = "${{ steps.release_meta.outputs.apk_url }}"
-              PubTime = (Get-Date).ToUniversalTime().ToString("o")
-            }
-          ) | ConvertTo-Json -Depth 5 -AsArray
-
-          Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding UTF8
+          mkdir -p publish
+          cp build/app/outputs/flutter-apk/app-release.apk "publish/${{ steps.version.outputs.apk_name }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: MyItems-android-release
-          path: |
-            ${{ steps.release_meta.outputs.apk_path }}
-            ${{ steps.release_meta.outputs.manifest_path }}
+          path: publish/${{ steps.version.outputs.apk_name }}
           retention-days: 30
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release_meta.outputs.tag_name }}
-          name: ${{ steps.release_meta.outputs.release_name }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "MyItems ${{ steps.version.outputs.version }}"
           target_commitish: ${{ github.sha }}
-          files: |
-            ${{ steps.release_meta.outputs.apk_path }}
-            ${{ steps.release_meta.outputs.manifest_path }}
+          files: publish/${{ steps.version.outputs.apk_name }}
           draft: false
           prerelease: false
           generate_release_notes: true
