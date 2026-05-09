@@ -120,8 +120,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('存储管理'), findsWidgets);
-    expect(find.text('导出 CSV'), findsOneWidget);
-    expect(find.text('导入 CSV'), findsOneWidget);
+    expect(find.text('导出完整备份'), findsOneWidget);
+    expect(find.text('恢复完整备份'), findsOneWidget);
+    expect(find.text('选择备份文件'), findsOneWidget);
+    expect(find.text('导出 CSV'), findsNWidgets(2));
+    expect(find.text('导入 CSV'), findsNWidgets(2));
     expect(find.text('选择 CSV 文件'), findsOneWidget);
     expect(find.text('CSV 文件路径'), findsNothing);
     expect(find.text('清空所有数据'), findsOneWidget);
@@ -143,6 +146,39 @@ void main() {
     expect(find.text('存储位置'), findsWidgets);
     expect(find.text('新增位置'), findsOneWidget);
     expect(find.text('冰箱'), findsOneWidget);
+  });
+
+  testWidgets('drawer opens archive and consumption record pages',
+      (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('耗尽归档'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('耗尽归档'), findsWidgets);
+    expect(find.text('消耗完成物品'), findsOneWidget);
+
+    Navigator.of(tester.element(find.text('耗尽归档').first)).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('消耗记录'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('消耗记录'), findsWidgets);
+    expect(find.text('用掉一件'), findsOneWidget);
+    expect(find.text('消耗完成物品'), findsOneWidget);
+    expect(find.textContaining('物品 ID'), findsNothing);
   });
 
   testWidgets('home app bar add button opens add item page', (tester) async {
@@ -228,10 +264,13 @@ class FakeNavigationRepository extends ItemRepository {
   }
 
   @override
-  Future<List<Category>> getCategories() async => _categories;
+  Future<List<Category>> getCategories({bool includeInactive = false}) async =>
+      _categories;
 
   @override
-  Future<List<StorageLocation>> getLocations() async => _locations;
+  Future<List<StorageLocation>> getLocations(
+          {bool includeInactive = false}) async =>
+      _locations;
 
   @override
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async =>
@@ -265,4 +304,49 @@ class FakeNavigationRepository extends ItemRepository {
   Future<void> deleteItem(String itemId) async {
     deletedItemIds.add(itemId);
   }
+
+  @override
+  Future<List<ItemDisplay>> getArchivedItemDisplays() async {
+    final item = Item(
+      id: 'archived-item',
+      name: '消耗完成物品',
+      categoryId: 'food',
+      isArchived: true,
+      quantity: 1,
+      initialQuantity: 1,
+      remainingQuantity: 0,
+      createdAt: _today,
+      updatedAt: _today,
+    );
+    return [
+      ItemDisplay.fromItem(
+          item: item, category: _categories.first, today: _today)
+    ];
+  }
+
+  @override
+  Future<List<ConsumptionRecord>> getAllConsumptionRecords() async => [
+        ConsumptionRecord(
+          id: 'record-1',
+          itemId: 'archived-item',
+          quantity: 1,
+          type: ConsumptionType.consumeOne,
+          consumedAt: _today,
+        ),
+      ];
+
+  @override
+  Future<List<ConsumptionRecordDisplay>> getConsumptionRecordDisplays() async =>
+      [
+        ConsumptionRecordDisplay(
+          record: ConsumptionRecord(
+            id: 'record-1',
+            itemId: 'archived-item',
+            quantity: 1,
+            type: ConsumptionType.consumeOne,
+            consumedAt: _today,
+          ),
+          itemName: '消耗完成物品',
+        ),
+      ];
 }

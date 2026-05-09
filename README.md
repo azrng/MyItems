@@ -21,10 +21,10 @@
 ```text
 lib/
 ├── main.dart          # 应用入口、主题和全局 Store 注入
-├── models.dart        # 物品、分类、展示 DTO 和过期状态计算
-├── repository.dart    # SQLite 初始化、CRUD、统计、CSV 导入导出
-├── app_store.dart     # 页面状态、保存、筛选、分类管理
-└── pages.dart         # 主页、物品库、详情、添加编辑、分类、关于
+├── models.dart        # 物品、分类、消耗记录、展示 DTO 和过期状态计算
+├── repository.dart    # SQLite 初始化、CRUD、统计、完整备份和 CSV 兼容导入导出
+├── app_store.dart     # 页面状态、保存、筛选、分类与存储位置管理
+└── pages.dart         # 主页、物品库、详情、添加编辑、分类、存储管理、归档、关于
 
 android/               # Flutter Android 壳工程
 test/                  # Flutter 单元测试

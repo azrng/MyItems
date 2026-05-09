@@ -185,6 +185,20 @@ class AppStore extends ChangeNotifier {
     return repository.getConsumptionRecords(itemId);
   }
 
+  Future<List<ConsumptionRecord>> getAllConsumptionRecords() {
+    return repository.getAllConsumptionRecords();
+  }
+
+  Future<List<ConsumptionRecordDisplay>> getConsumptionRecordDisplays() {
+    return repository.getConsumptionRecordDisplays();
+  }
+
+  Future<List<ItemDisplay>> getArchivedItemDisplays() async {
+    final items = await repository.getArchivedItemDisplays();
+    items.sort((a, b) => b.item.updatedAt.compareTo(a.item.updatedAt));
+    return items;
+  }
+
   Future<void> addCategory(String name, String icon) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -283,6 +297,18 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<String> exportToCsv() => repository.exportToCsv();
+
+  Future<String> exportBackup() => repository.exportBackup();
+
+  Future<(String fileName, String content)> buildBackupFile() =>
+      repository.buildBackupFile();
+
+  Future<(int successCount, int failureCount, List<String> errors)>
+      importBackup(String filePath) async {
+    final result = await repository.importBackup(filePath);
+    await refreshAll();
+    return result;
+  }
 
   Future<(int successCount, int failureCount, List<String> errors)>
       importFromCsv(String filePath) async {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
@@ -202,11 +203,11 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
     }
   }
 
-  Future<List<StorageLocation>> getLocations() async {
+  Future<List<StorageLocation>> getLocations({bool includeInactive = false}) async {
     final db = await database;
     final rows = await db.query(
       'locations',
-      where: 'is_active = 1',
+      where: includeInactive ? null : 'is_active = 1',
       orderBy: 'sort_order ASC, name ASC',
     );
     return rows.map(StorageLocation.fromMap).toList();
@@ -230,11 +231,11 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
         where: 'id = ?', whereArgs: [location.id]);
   }
 
-  Future<List<Category>> getCategories() async {
+  Future<List<Category>> getCategories({bool includeInactive = false}) async {
     final db = await database;
     final rows = await db.query(
       'categories',
-      where: 'is_active = 1',
+      where: includeInactive ? null : 'is_active = 1',
       orderBy: 'sort_order ASC, name ASC',
     );
     return rows.map(Category.fromMap).toList();
@@ -292,9 +293,12 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
         where: 'id = ?', whereArgs: [category.id]);
   }
 
-  Future<List<Item>> getItems({ItemQuery query = const ItemQuery()}) async {
+  Future<List<Item>> getItems({
+    ItemQuery query = const ItemQuery(),
+    bool includeArchived = false,
+  }) async {
     final db = await database;
-    final where = <String>['is_archived = 0'];
+    final where = <String>[if (!includeArchived) 'is_archived = 0'];
     final args = <Object?>[];
     if (query.categoryId != null) {
       where.add('category_id = ?');
@@ -311,7 +315,7 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
     }
     final rows = await db.query(
       'items',
-      where: where.join(' AND '),
+      where: where.isEmpty ? null : where.join(' AND '),
       whereArgs: args,
       orderBy: 'created_at DESC',
       limit: query.onlyExpiring || query.onlyExpired || query.hasExpiry
@@ -408,6 +412,37 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
     return rows.map(ConsumptionRecord.fromMap).toList();
   }
 
+  Future<List<ConsumptionRecord>> getAllConsumptionRecords() async {
+    final db = await database;
+    final rows = await db.query(
+      'consumption_records',
+      orderBy: 'consumed_at DESC',
+    );
+    return rows.map(ConsumptionRecord.fromMap).toList();
+  }
+
+  Future<List<ConsumptionRecordDisplay>> getConsumptionRecordDisplays() async {
+    final db = await database;
+    final rows = await db.rawQuery('''
+SELECT
+  r.id,
+  r.item_id,
+  r.quantity,
+  r.type,
+  r.consumed_at,
+  COALESCE(i.name, '已删除物品') AS item_name
+FROM consumption_records r
+LEFT JOIN items i ON i.id = r.item_id
+ORDER BY r.consumed_at DESC
+''');
+    return rows.map((row) {
+      return ConsumptionRecordDisplay(
+        record: ConsumptionRecord.fromMap(row),
+        itemName: row['item_name'] as String,
+      );
+    }).toList();
+  }
+
   Future<List<ItemDisplay>> getItemDisplays(
       {ItemQuery query = const ItemQuery()}) async {
     final categories = await getCategories();
@@ -439,6 +474,20 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
     });
 
     return displays.take(query.limit).toList();
+  }
+
+  Future<List<ItemDisplay>> getArchivedItemDisplays() async {
+    final categories = await getCategories(includeInactive: true);
+    final lookup = {for (final category in categories) category.id: category};
+    final items = (await getItems(includeArchived: true))
+        .where((item) => item.isArchived)
+        .toList();
+    return items
+        .map((item) => ItemDisplay.fromItem(
+              item: item,
+              category: lookup[item.categoryId] ?? fallbackCategory,
+            ))
+        .toList();
   }
 
   Future<List<ItemDisplay>> getHomeItemDisplays(
@@ -564,6 +613,94 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
     return file.path;
   }
 
+  Future<String> exportBackup() async {
+    final backup = await buildBackupFile();
+    final docs = await getApplicationDocumentsDirectory();
+    final file = File(p.join(docs.path, backup.$1));
+    await file.writeAsString(backup.$2);
+    return file.path;
+  }
+
+  Future<(String fileName, String content)> buildBackupFile() async {
+    final exportedAt = DateTime.now();
+    final timestamp = backupTimestamp(exportedAt);
+    final db = await database;
+    final settingsRows = await db.query('settings');
+    final settings = {
+      for (final row in settingsRows)
+        row['key'] as String: row['value'] as String,
+    };
+    final payload = buildBackupPayload(
+      categories: await getCategories(includeInactive: true),
+      locations: await getLocations(includeInactive: true),
+      items: await getItems(includeArchived: true),
+      consumptionRecords: await getAllConsumptionRecords(),
+      settings: settings,
+      exportedAt: exportedAt,
+    );
+    return (
+      'my_items_backup_$timestamp.myitems.json',
+      const JsonEncoder.withIndent('  ').convert(payload),
+    );
+  }
+
+  Future<(int successCount, int failureCount, List<String> errors)> importBackup(
+      String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return (0, 1, ['文件不存在：$filePath']);
+    }
+    try {
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map<String, Object?>) {
+        return (0, 1, const ['备份文件格式不正确']);
+      }
+      final backup = parseBackupPayload(decoded);
+      final db = await database;
+      await db.transaction((txn) async {
+        await txn.delete('consumption_records');
+        await txn.delete('items');
+        await txn.delete('locations');
+        await txn.delete('categories');
+        await txn.delete('settings');
+
+        for (final category in backup.categories) {
+          await txn.insert('categories', category.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        for (final location in backup.locations) {
+          await txn.insert('locations', location.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        for (final item in backup.items) {
+          await txn.insert('items', item.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        for (final record in backup.consumptionRecords) {
+          await txn.insert('consumption_records', record.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        for (final entry in backup.settings.entries) {
+          await txn.insert(
+            'settings',
+            {'key': entry.key, 'value': entry.value},
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+      await _seedPresetCategories(db);
+      await _seedPresetLocations(db);
+      final success = backup.categories.length +
+          backup.locations.length +
+          backup.items.length +
+          backup.consumptionRecords.length +
+          backup.settings.length;
+      return (success, 0, <String>[]);
+    } catch (error) {
+      return (0, 1, ['导入备份失败：$error']);
+    }
+  }
+
   Future<(int successCount, int failureCount, List<String> errors)>
       importFromCsv(String filePath) async {
     final file = File(filePath);
@@ -608,8 +745,11 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('items');
+    await db.delete('consumption_records');
+    await db.delete('locations', where: 'is_active = 0');
     await db.delete('categories', where: 'is_preset = 0');
     await _seedPresetCategories(db);
+    await _seedPresetLocations(db);
   }
 }
 
@@ -655,6 +795,13 @@ String csvValue(
 bool csvBool(String value) {
   final normalized = value.trim().toLowerCase();
   return normalized == '1' || normalized == 'true' || normalized == 'yes';
+}
+
+String backupTimestamp(DateTime value) {
+  return value
+      .toIso8601String()
+      .replaceAll(':', '')
+      .replaceAll('.', '-');
 }
 
 Item itemFromCsvRow(List<dynamic> row, List<String> header, DateTime now) {
@@ -711,6 +858,91 @@ Item itemFromCsvRow(List<dynamic> row, List<String> header, DateTime now) {
     updatedAt: parseDate(csvValue(row, columns, const ['updated_at'])) ?? now,
     isArchived: csvBool(csvValue(row, columns, const ['is_archived'])),
   );
+}
+
+const myItemsBackupFormat = 'azrng.my_items.backup';
+const myItemsBackupSchemaVersion = 2;
+
+class MyItemsBackup {
+  const MyItemsBackup({
+    required this.categories,
+    required this.locations,
+    required this.items,
+    required this.consumptionRecords,
+    required this.settings,
+  });
+
+  final List<Category> categories;
+  final List<StorageLocation> locations;
+  final List<Item> items;
+  final List<ConsumptionRecord> consumptionRecords;
+  final Map<String, String> settings;
+}
+
+Map<String, Object?> buildBackupPayload({
+  required List<Category> categories,
+  required List<StorageLocation> locations,
+  required List<Item> items,
+  required List<ConsumptionRecord> consumptionRecords,
+  required Map<String, String> settings,
+  required DateTime exportedAt,
+}) {
+  return {
+    'format': myItemsBackupFormat,
+    'schemaVersion': myItemsBackupSchemaVersion,
+    'exportedAt': exportedAt.toIso8601String(),
+    'app': {
+      'name': '我的物品',
+      'platform': 'flutter_android',
+    },
+    'categories': categories.map((category) => category.toMap()).toList(),
+    'locations': locations.map((location) => location.toMap()).toList(),
+    'items': items.map((item) => item.toMap()).toList(),
+    'consumptionRecords':
+        consumptionRecords.map((record) => record.toMap()).toList(),
+    'settings': settings,
+  };
+}
+
+MyItemsBackup parseBackupPayload(Map<String, Object?> payload) {
+  if (payload['format'] != myItemsBackupFormat) {
+    throw const RepositoryException('不是有效的我的物品备份文件');
+  }
+  final schemaVersion = (payload['schemaVersion'] as num?)?.toInt();
+  if (schemaVersion == null || schemaVersion > myItemsBackupSchemaVersion) {
+    throw RepositoryException('备份版本不受支持：$schemaVersion');
+  }
+  return MyItemsBackup(
+    categories: mapList(payload['categories']).map(Category.fromMap).toList(),
+    locations:
+        mapList(payload['locations']).map(StorageLocation.fromMap).toList(),
+    items: mapList(payload['items']).map(Item.fromMap).toList(),
+    consumptionRecords: mapList(payload['consumptionRecords'])
+        .map(ConsumptionRecord.fromMap)
+        .toList(),
+    settings: stringMap(payload['settings']),
+  );
+}
+
+List<Map<String, Object?>> mapList(Object? value) {
+  if (value == null) return const [];
+  if (value is! List) {
+    throw const RepositoryException('备份数据列表格式不正确');
+  }
+  return value.map((entry) {
+    if (entry is! Map) {
+      throw const RepositoryException('备份数据项格式不正确');
+    }
+    return entry.map((key, value) => MapEntry(key.toString(), value));
+  }).toList();
+}
+
+Map<String, String> stringMap(Object? value) {
+  if (value == null) return const {};
+  if (value is! Map) {
+    throw const RepositoryException('备份设置格式不正确');
+  }
+  return value.map((key, value) => MapEntry(key.toString(), value.toString()));
 }
 
 const fallbackCategory = Category(

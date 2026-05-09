@@ -101,6 +101,16 @@ class ConsumptionRecord {
       );
 }
 
+class ConsumptionRecordDisplay {
+  const ConsumptionRecordDisplay({
+    required this.record,
+    required this.itemName,
+  });
+
+  final ConsumptionRecord record;
+  final String itemName;
+}
+
 class Category {
   const Category({
     required this.id,

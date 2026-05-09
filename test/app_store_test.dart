@@ -213,14 +213,17 @@ class FakeCategoryRepository extends ItemRepository {
   }
 
   @override
-  Future<List<Category>> getCategories() async => _categories;
+  Future<List<Category>> getCategories({bool includeInactive = false}) async =>
+      _categories;
 
   @override
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async =>
       const [];
 
   @override
-  Future<List<StorageLocation>> getLocations() async => const [];
+  Future<List<StorageLocation>> getLocations(
+          {bool includeInactive = false}) async =>
+      const [];
 
   @override
   Future<List<ItemDisplay>> getItemDisplays(
@@ -266,10 +269,13 @@ class FakeHomeRepository extends ItemRepository {
   }
 
   @override
-  Future<List<Category>> getCategories() async => [_category];
+  Future<List<Category>> getCategories({bool includeInactive = false}) async =>
+      [_category];
 
   @override
-  Future<List<StorageLocation>> getLocations() async => const [];
+  Future<List<StorageLocation>> getLocations(
+          {bool includeInactive = false}) async =>
+      const [];
 
   @override
   Future<List<ExpiryGroup>> getExpiryGroups({String? searchText}) async {

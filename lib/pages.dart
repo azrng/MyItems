@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,6 +56,14 @@ class _RootPageState extends State<RootPage> {
             } else if (target == DrawerTarget.locations) {
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const LocationPage()));
+            } else if (target == DrawerTarget.archived) {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const ArchivedItemsPage()));
+            } else if (target == DrawerTarget.consumptionRecords) {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ConsumptionRecordsPage()));
             } else {
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const AboutPage()));
@@ -107,7 +117,7 @@ class _RootPageState extends State<RootPage> {
       };
 }
 
-enum DrawerTarget { add, storage, locations, about }
+enum DrawerTarget { add, storage, locations, archived, consumptionRecords, about }
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, required this.onNavigate});
@@ -151,6 +161,16 @@ class AppDrawer extends StatelessWidget {
               leading: const Icon(Icons.place_outlined),
               title: const Text('存储位置'),
               onTap: () => onNavigate(DrawerTarget.locations),
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('耗尽归档'),
+              onTap: () => onNavigate(DrawerTarget.archived),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history_outlined),
+              title: const Text('消耗记录'),
+              onTap: () => onNavigate(DrawerTarget.consumptionRecords),
             ),
             ListTile(
               leading: const Icon(Icons.info_outline),
@@ -718,57 +738,75 @@ class ItemDetailPage extends StatelessWidget {
           ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => AddItemPage(item: item)));
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('编辑'),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: item.remainingQuantity <= 0
-                      ? null
-                      : () async {
-                          await store.consumeOne(item.id);
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => AddItemPage(item: item)));
                           if (context.mounted) Navigator.pop(context);
                         },
-                  icon: const Icon(Icons.remove_circle_outline),
-                  label: const Text('用掉一件'),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('编辑'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: item.remainingQuantity <= 0
+                            ? null
+                            : () async {
+                                await store.consumeOne(item.id);
+                                if (context.mounted) Navigator.pop(context);
+                              },
+                        icon: const Icon(Icons.remove_circle_outline),
+                        label: const Text('用掉一件'),
+                      ),
+                    ),
+                  ],
                 ),
-                FilledButton.tonalIcon(
-                  onPressed: item.remainingQuantity <= 0
-                      ? null
-                      : () async {
-                          final confirmed = await showConfirm(
-                              context, '消耗完成', '确认将「${item.name}」剩余数量全部消耗完成？');
-                          if (!confirmed) return;
-                          await store.consumeAll(item.id);
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: item.remainingQuantity <= 0
+                            ? null
+                            : () async {
+                                final confirmed = await showConfirm(context,
+                                    '消耗完成', '确认将「${item.name}」剩余数量全部消耗完成？');
+                                if (!confirmed) return;
+                                await store.consumeAll(item.id);
+                                if (context.mounted) Navigator.pop(context);
+                              },
+                        icon: const Icon(Icons.done_all_outlined),
+                        label: const Text('消耗完成'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          final confirmed = await showConfirm(context, '删除物品',
+                              '确定永久删除「${item.name}」吗？该操作不可恢复。');
+                          if (!confirmed || !context.mounted) return;
+                          final secondConfirmed =
+                              await showConfirm(context, '二次确认', '真的永久删除这个物品吗？');
+                          if (!secondConfirmed) return;
+                          await store.deleteItem(item.id);
                           if (context.mounted) Navigator.pop(context);
                         },
-                  icon: const Icon(Icons.done_all_outlined),
-                  label: const Text('消耗完成'),
-                ),
-                FilledButton.icon(
-                  onPressed: () async {
-                    final confirmed = await showConfirm(
-                        context, '删除物品', '确定永久删除「${item.name}」吗？该操作不可恢复。');
-                    if (!confirmed || !context.mounted) return;
-                    final secondConfirmed =
-                        await showConfirm(context, '二次确认', '真的永久删除这个物品吗？');
-                    if (!secondConfirmed) return;
-                    await store.deleteItem(item.id);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('删除'),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('删除'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1280,7 +1318,91 @@ class _LocationPageState extends State<LocationPage> {
   }
 }
 
+class ArchivedItemsPage extends StatelessWidget {
+  const ArchivedItemsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('耗尽归档')),
+      body: FutureBuilder<List<ItemDisplay>>(
+        future: store.getArchivedItemDisplays(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final items = snapshot.data ?? const <ItemDisplay>[];
+          if (items.isEmpty) {
+            return const EmptyState(
+              icon: Icons.archive_outlined,
+              title: '暂无耗尽物品',
+              subtitle: '消耗完成的物品会出现在这里。',
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              ...items.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: ItemCard(display: item),
+                  )),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ConsumptionRecordsPage extends StatelessWidget {
+  const ConsumptionRecordsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('消耗记录')),
+      body: FutureBuilder<List<ConsumptionRecordDisplay>>(
+        future: store.getConsumptionRecordDisplays(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final records = snapshot.data ?? const <ConsumptionRecordDisplay>[];
+          if (records.isEmpty) {
+            return const EmptyState(
+              icon: Icons.history_outlined,
+              title: '暂无消耗记录',
+              subtitle: '用掉一件或消耗完成后会记录在这里。',
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            itemCount: records.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final display = records[index];
+              final record = display.record;
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.history_outlined),
+                  title: Text(record.type.label),
+                  subtitle: Text(display.itemName),
+                  trailing: Text('${record.quantity} 件\n${formatDate(record.consumedAt)}',
+                      textAlign: TextAlign.right),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _StoragePageState extends State<StoragePage> {
+  String? _selectedBackupPath;
   String? _selectedImportPath;
 
   @override
@@ -1313,13 +1435,109 @@ class _StoragePageState extends State<StoragePage> {
                     ),
                     const SizedBox(height: 18),
                     SectionCard(
-                      title: '数据导出与导入',
+                      title: '完整备份与恢复',
                       children: [
                         StorageActionTile(
                           icon: '📤',
+                          title: '导出完整备份',
+                          subtitle: '一键导出分类、存储位置、物品、消耗记录和设置',
+                          buttonText: '导出备份',
+                          onPressed: () async {
+                            try {
+                              final backup = await store.buildBackupFile();
+                              final path = await FilePicker.platform.saveFile(
+                                dialogTitle: '保存我的物品备份',
+                                fileName: backup.$1,
+                                type: FileType.custom,
+                                allowedExtensions: const ['json'],
+                                bytes: Uint8List.fromList(
+                                    utf8.encode(backup.$2)),
+                              );
+                              if (path == null) {
+                                if (context.mounted) {
+                                  showSnack(context, '已取消导出备份');
+                                }
+                                return;
+                              }
+                              if (context.mounted) {
+                                showSnack(context, '已导出：$path');
+                              }
+                            } catch (error) {
+                              if (context.mounted) {
+                                showSnack(context, '导出备份失败：$error');
+                              }
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            final result = await FilePicker.platform.pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: const ['json'],
+                              dialogTitle: '选择我的物品备份文件',
+                            );
+                            final path = result?.files.single.path;
+                            if (path == null || path.trim().isEmpty) return;
+                            setState(() => _selectedBackupPath = path);
+                          },
+                          icon: const Icon(Icons.folder_open_outlined),
+                          label: const Text('选择备份文件'),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _selectedBackupPath ?? '尚未选择备份文件',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 8),
+                        StorageActionTile(
+                          icon: '📥',
+                          title: '恢复完整备份',
+                          subtitle: '将备份恢复到当前手机，现有数据会被备份内容覆盖',
+                          buttonText: '恢复备份',
+                          onPressed: () async {
+                            final path = _selectedBackupPath?.trim() ?? '';
+                            if (path.isEmpty) {
+                              showSnack(context, '请先选择备份文件');
+                              return;
+                            }
+                            final confirmed = await showConfirm(
+                                context, '恢复备份', '将用备份文件覆盖当前手机数据，确认继续？');
+                            if (!confirmed) return;
+                            if (!context.mounted) return;
+                            final secondConfirmed = await showConfirm(
+                                context, '二次确认', '恢复后当前数据会被替换，真的继续吗？');
+                            if (!secondConfirmed) return;
+                            try {
+                              final result = await store.importBackup(path);
+                              if (context.mounted) {
+                                showSnack(context,
+                                    '恢复完成：成功 ${result.$1} 条，失败 ${result.$2} 条');
+                              }
+                            } catch (error) {
+                              if (context.mounted) {
+                                showSnack(context, '恢复失败：$error');
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SectionCard(
+                      title: 'CSV 兼容工具',
+                      children: [
+                        StorageActionTile(
+                          icon: '📄',
                           title: '导出 CSV',
-                          subtitle: '将所有物品数据导出为 CSV 文件',
-                          buttonText: '导出数据',
+                          subtitle: '导出物品和分类表格，适合人工查看，不作为完整迁移备份',
+                          buttonText: '导出 CSV',
                           onPressed: () async {
                             try {
                               final path = await store.exportToCsv();
@@ -1328,7 +1546,7 @@ class _StoragePageState extends State<StoragePage> {
                               }
                             } catch (error) {
                               if (context.mounted) {
-                                showSnack(context, '导出失败：$error');
+                                showSnack(context, '导出 CSV 失败：$error');
                               }
                             }
                           },
@@ -1350,7 +1568,7 @@ class _StoragePageState extends State<StoragePage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _selectedImportPath ?? '尚未选择文件',
+                          _selectedImportPath ?? '尚未选择 CSV 文件',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -1363,8 +1581,8 @@ class _StoragePageState extends State<StoragePage> {
                         StorageActionTile(
                           icon: '📥',
                           title: '导入 CSV',
-                          subtitle: '从 CSV 文件导入物品数据',
-                          buttonText: '导入数据',
+                          subtitle: '兼容导入旧 CSV 数据，不包含消耗记录和设置',
+                          buttonText: '导入 CSV',
                           onPressed: () async {
                             final path = _selectedImportPath?.trim() ?? '';
                             if (path.isEmpty) {
@@ -1382,7 +1600,7 @@ class _StoragePageState extends State<StoragePage> {
                               }
                             } catch (error) {
                               if (context.mounted) {
-                                showSnack(context, '导入失败：$error');
+                                showSnack(context, '导入 CSV 失败：$error');
                               }
                             }
                           },
