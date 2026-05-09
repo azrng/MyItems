@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1445,20 +1443,15 @@ class _StoragePageState extends State<StoragePage> {
                           onPressed: () async {
                             try {
                               final backup = await store.buildBackupFile();
-                              final path = await FilePicker.platform.saveFile(
-                                dialogTitle: '保存我的物品备份',
-                                fileName: backup.$1,
-                                type: FileType.custom,
-                                allowedExtensions: const ['json'],
-                                bytes: Uint8List.fromList(
-                                    utf8.encode(backup.$2)),
+                              final path = await const MethodChannel(
+                                      'my_items/system')
+                                  .invokeMethod<String>(
+                                'saveBackupToDownloads',
+                                {
+                                  'fileName': backup.$1,
+                                  'content': backup.$2,
+                                },
                               );
-                              if (path == null) {
-                                if (context.mounted) {
-                                  showSnack(context, '已取消导出备份');
-                                }
-                                return;
-                              }
                               if (context.mounted) {
                                 showSnack(context, '已导出：$path');
                               }

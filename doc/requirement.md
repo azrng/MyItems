@@ -442,7 +442,8 @@ Flutter Android 版本提供两类导出：
 - 文件名：`my_items_backup_时间.myitems.json`
 - 格式标识：`azrng.my_items.backup`
 - schema 版本：`2`
-- 导出位置：通过系统保存文件流程写入用户可见位置，通常选择或保存到手机「下载 / Download」目录。
+- 导出位置：写入手机公共「下载 / Download/MyItems」目录，便于文件管理器查找和拷贝。
+- 权限说明：Android 9 及以下设备导出到公共下载目录时，需要在用户触发导出后申请写入存储权限。
 - 内容范围：
   - `categories`：全部分类，包含预置、自定义和停用状态
   - `locations`：全部存储位置，包含停用状态
