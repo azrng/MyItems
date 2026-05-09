@@ -2,9 +2,7 @@
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
-import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
@@ -42,8 +40,8 @@ class MainActivity : FlutterActivity() {
                             return@setMethodCallHandler
                         }
                         try {
-                            saveAndShareBackup(fileName, content)
-                            result.success(fileName)
+                            val path = writeBackupToExternal(fileName, content)
+                            result.success(path)
                         } catch (error: Exception) {
                             result.error("SAVE_BACKUP_FAILED", error.message, null)
                         }
@@ -53,58 +51,21 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    private fun saveAndShareBackup(fileName: String, content: String) {
+    /**
+     * Write backup to app-specific external storage (no permissions needed).
+     * Path: /Android/data/com.azrng.myitems/files/Download/MyItems/
+     * Visible via USB file transfer on all Android versions.
+     */
+    private fun writeBackupToExternal(fileName: String, content: String): String {
         val safeName = fileName.replace(Regex("""[\\/:*?"<>|]"""), "_")
-        val bytes = content.toByteArray(Charsets.UTF_8)
-
-        // Try public Download/MyItems first (no permission needed on API 28-)
-        val savedPath = tryWriteToPublicDownloads(safeName, bytes)
-
-        // Always write to app cache as fallback / for sharing
-        val cacheFile = File(cacheDir, "backups").also { it.mkdirs() }
-        val shareFile = File(cacheFile, safeName)
-        FileOutputStream(shareFile).use { it.write(bytes) }
-
-        // Share via system chooser so user can save wherever they want
-        val uri = FileProvider.getUriForFile(
-            this,
-            "${packageName}.fileprovider",
-            shareFile
-        )
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            ?: throw IllegalStateException("External storage not available")
+        val myDir = File(dir, "MyItems")
+        if (!myDir.exists() && !myDir.mkdirs()) {
+            throw IllegalStateException("Cannot create directory: ${myDir.absolutePath}")
         }
-        startActivity(Intent.createChooser(shareIntent, "保存备份文件到..."))
-
-        // If direct write also succeeded, the file is in two places
-    }
-
-    private fun tryWriteToPublicDownloads(fileName: String, bytes: ByteArray): String? {
-        return try {
-            if (Build.VERSION.SDK_INT >= 29) {
-                // Android 10+: Use app-specific external directory (visible in file manager)
-                val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                    ?: return null
-                val myDir = File(dir, "MyItems")
-                if (!myDir.exists() && !myDir.mkdirs()) return null
-                val file = File(myDir, fileName)
-                FileOutputStream(file).use { it.write(bytes) }
-                file.absolutePath
-            } else {
-                // Android 9-: Direct write to public Downloads (no permission needed in app context)
-                val downloads = Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS
-                )
-                val myDir = File(downloads, "MyItems")
-                if (!myDir.exists() && !myDir.mkdirs()) return null
-                val file = File(myDir, fileName)
-                FileOutputStream(file).use { it.write(bytes) }
-                file.absolutePath
-            }
-        } catch (_: Exception) {
-            null
-        }
+        val file = File(myDir, safeName)
+        FileOutputStream(file).use { it.write(content.toByteArray(Charsets.UTF_8)) }
+        return file.absolutePath
     }
 }
