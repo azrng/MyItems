@@ -7,6 +7,9 @@ import 'main.dart';
 import 'models.dart';
 import 'models.dart' as my;
 
+const apkDownloadUrl =
+    'https://github.com/azrng/MyItems/releases/latest/download/app-release.apk';
+
 class RootPage extends StatefulWidget {
   const RootPage({super.key});
 
@@ -115,7 +118,14 @@ class _RootPageState extends State<RootPage> {
       };
 }
 
-enum DrawerTarget { add, storage, locations, archived, consumptionRecords, about }
+enum DrawerTarget {
+  add,
+  storage,
+  locations,
+  archived,
+  consumptionRecords,
+  about
+}
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, required this.onNavigate});
@@ -332,13 +342,11 @@ class LibraryPage extends StatelessWidget {
                           const SwipeDeleteBackground(label: '删除'),
                       confirmDismiss: (_) async {
                         final confirmed = await showConfirm(
-                            context,
-                            '删除物品',
-                            '确定永久删除「${item.name}」吗？该操作不可恢复。');
+                            context, '删除物品', '确定永久删除「${item.name}」吗？该操作不可恢复。');
                         if (!confirmed) return false;
                         if (!context.mounted) return false;
-                        final secondConfirmed = await showConfirm(
-                            context, '二次确认', '真的永久删除这个物品吗？');
+                        final secondConfirmed =
+                            await showConfirm(context, '二次确认', '真的永久删除这个物品吗？');
                         if (!secondConfirmed) return false;
                         try {
                           await store.deleteItem(item.id);
@@ -383,7 +391,7 @@ class StatisticsCard extends StatelessWidget {
               key: const ValueKey('library-metric-spent'),
               icon: Icons.payments_outlined,
               label: '有效花费',
-              value: '¥${statistics.totalSpent.toStringAsFixed(1)}',
+              value: formatCurrency(statistics.totalSpent),
             ),
           ),
           const MetricDivider(),
@@ -546,13 +554,9 @@ class ItemCard extends StatelessWidget {
                       '${display.brandDisplay} · ${display.categoryName} · ${display.locationDisplay}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 6),
                     Wrap(
@@ -692,47 +696,54 @@ class ItemDetailPage extends StatelessWidget {
         final display = ItemDisplay.fromItem(item: item, category: category);
         return Scaffold(
           appBar: AppBar(title: const Text('物品详情')),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              ItemCard(display: display),
-              const SizedBox(height: 12),
-              DetailTile(label: '分类', value: display.categoryName),
-              DetailTile(label: '品牌', value: display.brandDisplay),
-              DetailTile(
-                  label: '条码', value: emptyToFallback(item.barcode, '未填写')),
-              DetailTile(label: '存放位置', value: display.locationDisplay),
-              DetailTile(
-                  label: '购买日期',
-                  value: item.purchaseDate == null
-                      ? '未记录'
-                      : formatDate(item.purchaseDate!)),
-              DetailTile(label: '购入价格', value: display.priceText),
-              DetailTile(label: '保质期', value: display.expiryDateText),
-              DetailTile(label: '初始数量', value: '${item.initialQuantity}'),
-              DetailTile(label: '剩余数量', value: '${item.remainingQuantity}'),
-              DetailTile(label: '备注', value: display.notesDisplay),
-              const SizedBox(height: 12),
-              FutureBuilder<List<ConsumptionRecord>>(
-                future: store.getConsumptionRecords(item.id),
-                builder: (context, snapshot) {
-                  final records = snapshot.data ?? const <ConsumptionRecord>[];
-                  if (records.isEmpty) {
-                    return const DetailTile(label: '消耗记录', value: '暂无记录');
-                  }
-                  return SectionCard(
-                    title: '消耗记录',
-                    children: records
-                        .map((record) => DetailTile(
-                              label: record.type.label,
-                              value:
-                                  '${record.quantity} 件 · ${formatDate(record.consumedAt)}',
-                            ))
-                        .toList(),
-                  );
-                },
+          body: Center(
+            child: ConstrainedBox(
+              key: const ValueKey('item-detail-content'),
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  ItemCard(display: display),
+                  const SizedBox(height: 12),
+                  DetailTile(label: '分类', value: display.categoryName),
+                  DetailTile(label: '品牌', value: display.brandDisplay),
+                  DetailTile(
+                      label: '条码', value: emptyToFallback(item.barcode, '未填写')),
+                  DetailTile(label: '存放位置', value: display.locationDisplay),
+                  DetailTile(
+                      label: '购买日期',
+                      value: item.purchaseDate == null
+                          ? '未记录'
+                          : formatDate(item.purchaseDate!)),
+                  DetailTile(label: '购入价格', value: display.priceText),
+                  DetailTile(label: '保质期', value: display.expiryDateText),
+                  DetailTile(label: '初始数量', value: '${item.initialQuantity}'),
+                  DetailTile(label: '剩余数量', value: '${item.remainingQuantity}'),
+                  DetailTile(label: '备注', value: display.notesDisplay),
+                  const SizedBox(height: 12),
+                  FutureBuilder<List<ConsumptionRecord>>(
+                    future: store.getConsumptionRecords(item.id),
+                    builder: (context, snapshot) {
+                      final records =
+                          snapshot.data ?? const <ConsumptionRecord>[];
+                      if (records.isEmpty) {
+                        return const DetailTile(label: '消耗记录', value: '暂无记录');
+                      }
+                      return SectionCard(
+                        title: '消耗记录',
+                        children: records
+                            .map((record) => DetailTile(
+                                  label: record.type.label,
+                                  value:
+                                      '${record.quantity} 件 · ${formatDate(record.consumedAt)}',
+                                ))
+                            .toList(),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.all(16),
@@ -794,8 +805,8 @@ class ItemDetailPage extends StatelessWidget {
                           final confirmed = await showConfirm(context, '删除物品',
                               '确定永久删除「${item.name}」吗？该操作不可恢复。');
                           if (!confirmed || !context.mounted) return;
-                          final secondConfirmed =
-                              await showConfirm(context, '二次确认', '真的永久删除这个物品吗？');
+                          final secondConfirmed = await showConfirm(
+                              context, '二次确认', '真的永久删除这个物品吗？');
                           if (!secondConfirmed) return;
                           await store.deleteItem(item.id);
                           if (context.mounted) Navigator.pop(context);
@@ -1387,7 +1398,8 @@ class ConsumptionRecordsPage extends StatelessWidget {
                   leading: const Icon(Icons.history_outlined),
                   title: Text(record.type.label),
                   subtitle: Text(display.itemName),
-                  trailing: Text('${record.quantity} 件\n${formatDate(record.consumedAt)}',
+                  trailing: Text(
+                      '${record.quantity} 件\n${formatDate(record.consumedAt)}',
                       textAlign: TextAlign.right),
                 ),
               );
@@ -1443,8 +1455,7 @@ class _StoragePageState extends State<StoragePage> {
                           onPressed: () async {
                             try {
                               final backup = await store.buildBackupFile();
-                              await const MethodChannel(
-                                      'my_items/system')
+                              await const MethodChannel('my_items/system')
                                   .invokeMethod<String>(
                                 'saveBackupToDownloads',
                                 {
@@ -1680,9 +1691,7 @@ class StorageActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = danger
-        ? colorScheme.error
-        : colorScheme.primary;
+    final color = danger ? colorScheme.error : colorScheme.primary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1709,13 +1718,10 @@ class StorageActionTile extends StatelessWidget {
                             color: danger ? color : null)),
                     const SizedBox(height: 3),
                     Text(subtitle,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                                color: danger
-                                    ? colorScheme.onErrorContainer
-                                    : colorScheme.onSurfaceVariant)),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: danger
+                                ? colorScheme.onErrorContainer
+                                : colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -1775,12 +1781,21 @@ class _AboutPageState extends State<AboutPage> {
               const SizedBox(height: 12),
               SectionCard(
                 title: '信息',
-                children: const [
-                  DetailTile(label: '作者', value: 'azrng'),
-                  ProjectLinkTile(
+                children: [
+                  const DetailTile(label: '作者', value: 'azrng'),
+                  const ProjectLinkTile(
                     label: '项目地址',
                     value: 'github.com/azrng/MyItems',
                     url: 'https://github.com/azrng/MyItems',
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => openExternalUrl(
+                      context,
+                      apkDownloadUrl,
+                      failurePrefix: '无法打开 APK 下载地址',
+                    ),
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('下载 APK'),
                   ),
                 ],
               ),
@@ -1826,16 +1841,7 @@ class ProjectLinkTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
-        try {
-          await const MethodChannel('my_items/system').invokeMethod<void>(
-            'openUrl',
-            {'url': url},
-          );
-        } catch (error) {
-          if (context.mounted) {
-            showSnack(context, '无法打开项目地址：$error');
-          }
-        }
+        await openExternalUrl(context, url, failurePrefix: '无法打开项目地址');
       },
       borderRadius: BorderRadius.circular(8),
       child: Padding(
@@ -1863,6 +1869,23 @@ class ProjectLinkTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> openExternalUrl(
+  BuildContext context,
+  String url, {
+  required String failurePrefix,
+}) async {
+  try {
+    await const MethodChannel('my_items/system').invokeMethod<void>(
+      'openUrl',
+      {'url': url},
+    );
+  } catch (error) {
+    if (context.mounted) {
+      showSnack(context, '$failurePrefix：$error');
+    }
   }
 }
 
@@ -2046,8 +2069,8 @@ class ErrorBanner extends StatelessWidget {
         color: colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(message,
-          style: TextStyle(color: colorScheme.onErrorContainer)),
+      child:
+          Text(message, style: TextStyle(color: colorScheme.onErrorContainer)),
     );
   }
 }

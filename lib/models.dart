@@ -327,9 +327,8 @@ class ItemDisplay {
   String get categoryIcon => category.icon ?? '📦';
   String get locationDisplay => emptyToFallback(item.defaultLocation, '未填写');
   String get brandDisplay => emptyToFallback(item.brand, '未填写');
-  String get priceText => item.purchasePrice == null
-      ? '未记录'
-      : '¥${item.purchasePrice!.toStringAsFixed(1)}';
+  String get priceText =>
+      item.purchasePrice == null ? '未记录' : formatCurrency(item.purchasePrice!);
   String get stockText =>
       '剩余 ${item.remainingQuantity}/${item.initialQuantity} 件';
   String get expiryDateText =>
@@ -485,6 +484,8 @@ double calculateDailyCost(double? price, int quantity, DateTime? purchaseDate,
   if (days <= 0) return price;
   return price / days;
 }
+
+String formatCurrency(double value) => '¥${value.toStringAsFixed(2)}';
 
 DateTime dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);

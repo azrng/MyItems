@@ -77,8 +77,7 @@ void main() {
         find.byKey(const ValueKey('item-dismiss-test-item')), findsOneWidget);
     expect(find.text('¥0.00/天'), findsNothing);
 
-    await tester.drag(
-        find.byKey(const ValueKey('item-dismiss-test-item')),
+    await tester.drag(find.byKey(const ValueKey('item-dismiss-test-item')),
         const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(find.text('确定永久删除「测试物品」吗？该操作不可恢复。'), findsOneWidget);
@@ -229,10 +228,28 @@ void main() {
 
     expect(find.text('技术栈'), findsNothing);
     expect(find.text('github.com/azrng/MyItems'), findsOneWidget);
+    expect(find.text('下载 APK'), findsOneWidget);
     expect(find.text('主题模式'), findsOneWidget);
     expect(find.text('跟随系统'), findsOneWidget);
     expect(find.text('浅色'), findsOneWidget);
     expect(find.text('深色'), findsOneWidget);
+  });
+
+  testWidgets('item detail content is centered in a readable column',
+      (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('测试物品'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const ValueKey('item-detail-content')), findsOneWidget);
+    final constraint = tester.widget<ConstrainedBox>(
+        find.byKey(const ValueKey('item-detail-content')));
+    expect(constraint.constraints.maxWidth, 560);
   });
 }
 
@@ -304,6 +321,23 @@ class FakeNavigationRepository extends ItemRepository {
   Future<void> deleteItem(String itemId) async {
     deletedItemIds.add(itemId);
   }
+
+  @override
+  Future<Item?> getItem(String id) async {
+    if (id != 'test-item') return null;
+    return Item(
+      id: 'test-item',
+      name: '测试物品',
+      categoryId: 'food',
+      purchasePrice: 5.99,
+      createdAt: _today,
+      updatedAt: _today,
+    );
+  }
+
+  @override
+  Future<List<ConsumptionRecord>> getConsumptionRecords(String itemId) async =>
+      const [];
 
   @override
   Future<List<ItemDisplay>> getArchivedItemDisplays() async {
