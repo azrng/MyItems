@@ -235,6 +235,14 @@ void main() {
     expect(find.text('深色'), findsOneWidget);
   });
 
+  test('about page download entry opens GitHub releases page', () {
+    expect(apkDownloadUrl, 'https://github.com/azrng/MyItems/releases');
+  });
+
+  test('about page display version has a stable fallback', () {
+    expect(appDisplayVersion, '1.0.0');
+  });
+
   testWidgets('item detail content is centered in a readable column',
       (tester) async {
     await tester

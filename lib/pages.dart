@@ -8,7 +8,9 @@ import 'models.dart';
 import 'models.dart' as my;
 
 const apkDownloadUrl =
-    'https://github.com/azrng/MyItems/releases/latest/download/app-release.apk';
+    'https://github.com/azrng/MyItems/releases';
+const appDisplayVersion =
+    String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
 
 class RootPage extends StatefulWidget {
   const RootPage({super.key});
@@ -1770,7 +1772,7 @@ class _AboutPageState extends State<AboutPage> {
                       style: TextStyle(
                           fontSize: 24, fontWeight: FontWeight.bold))),
               const SizedBox(height: 4),
-              const Center(child: Text('版本 1.0.0')),
+              const Center(child: Text('版本 $appDisplayVersion')),
               const SizedBox(height: 18),
               const SectionCard(
                 title: '简介',

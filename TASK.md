@@ -84,6 +84,8 @@
 | T063 | Flutter 一键完整备份与恢复 | 新增完整 JSON 备份格式，支持一键导出分类、位置、物品、消耗记录和设置，并导入到另一台手机；补充耗尽归档和消耗记录页面 | 阶段 3 | Codex | DONE | P0 | 2026-05-09 |
 | T064 | Flutter 备份导出可见路径修复 | 修复部分 Android 设备使用 file_picker 保存备份时报 Bad mode 的问题，改为导出到公共 Download/MyItems 目录 | 阶段 3 | Codex | DONE | P0 | 2026-05-09 |
 | T065 | Flutter 价格显示与关于下载入口修复 | 价格统一显示两位小数，关于页增加 APK 下载入口，并让物品详情页内容居中 | 阶段 3 | Codex | DONE | P0 | 2026-05-14 |
+| T066 | Flutter 关于页下载入口地址修正 | 将关于页 APK 下载入口改为跳转 GitHub Releases 页面，避免依赖不稳定的 APK 文件名 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-15 |
+| T067 | Flutter 发布 APK 版本号修正 | 发布构建从 VERSION 注入 Android versionName，并使用 GitHub run number 注入递增 versionCode，确保升级安装识别新版本 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-15 |
 
 ---
 

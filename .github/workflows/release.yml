@@ -70,12 +70,18 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:7}"
           TAG="v${VERSION}-build-${TIMESTAMP}-${SHORT_SHA}"
           APK_NAME="MyItems-${VERSION}-${TIMESTAMP}.apk"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: >
+          flutter build apk --release
+          --build-name "${{ steps.version.outputs.version }}"
+          --build-number "${{ steps.version.outputs.build_number }}"
+          --dart-define "APP_VERSION=${{ steps.version.outputs.version }}"
 
       - name: Prepare artifacts
         run: |

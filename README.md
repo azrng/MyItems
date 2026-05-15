@@ -52,12 +52,13 @@ storeFile=<keystore 文件路径>
 然后执行：
 
 ```powershell
-flutter build apk
+$version = (Get-Content .\VERSION -Raw).Trim()
+flutter build apk --release --build-name $version --build-number 1 --dart-define "APP_VERSION=$version"
 ```
 
 产物路径：`build/app/outputs/flutter-apk/app-release.apk`
 
-> CI 构建通过 GitHub Actions 自动签名，密钥存储在仓库 Secrets 中。
+> CI 构建通过 GitHub Actions 自动签名，密钥存储在仓库 Secrets 中。发布时会读取 `VERSION` 作为 Android `versionName` 和关于页展示版本，并使用 GitHub Actions 的 `GITHUB_RUN_NUMBER` 作为递增 `versionCode`，确保手机覆盖安装时能识别为新版本。
 
 ### 本项目快速运行命令
 
