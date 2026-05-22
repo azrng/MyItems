@@ -111,6 +111,8 @@ class ConsumptionRecordDisplay {
   final String itemName;
 }
 
+const _sentinel = Object();
+
 class Category {
   const Category({
     required this.id,
@@ -131,7 +133,7 @@ class Category {
   Category copyWith({
     String? id,
     String? name,
-    String? icon,
+    Object? icon = _sentinel,
     int? sortOrder,
     bool? isPreset,
     bool? isActive,
@@ -139,7 +141,7 @@ class Category {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
-      icon: icon ?? this.icon,
+      icon: identical(icon, _sentinel) ? this.icon : icon as String?,
       sortOrder: sortOrder ?? this.sortOrder,
       isPreset: isPreset ?? this.isPreset,
       isActive: isActive ?? this.isActive,
@@ -213,20 +215,20 @@ class Item {
     String? id,
     String? name,
     String? categoryId,
-    String? barcode,
-    String? brand,
-    String? icon,
-    String? defaultLocation,
+    Object? barcode = _sentinel,
+    Object? brand = _sentinel,
+    Object? icon = _sentinel,
+    Object? defaultLocation = _sentinel,
     bool? isArchived,
     DateTime? purchaseDate,
     double? purchasePrice,
-    DateTime? expiryDate,
+    Object? expiryDate = _sentinel,
     int? quantity,
     int? initialQuantity,
     int? remainingQuantity,
     bool? trackDailyCost,
-    String? notes,
-    String? imagePath,
+    Object? notes = _sentinel,
+    Object? imagePath = _sentinel,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -234,20 +236,20 @@ class Item {
       id: id ?? this.id,
       name: name ?? this.name,
       categoryId: categoryId ?? this.categoryId,
-      barcode: barcode ?? this.barcode,
-      brand: brand ?? this.brand,
-      icon: icon ?? this.icon,
-      defaultLocation: defaultLocation ?? this.defaultLocation,
+      barcode: identical(barcode, _sentinel) ? this.barcode : barcode as String?,
+      brand: identical(brand, _sentinel) ? this.brand : brand as String?,
+      icon: identical(icon, _sentinel) ? this.icon : icon as String?,
+      defaultLocation: identical(defaultLocation, _sentinel) ? this.defaultLocation : defaultLocation as String?,
       isArchived: isArchived ?? this.isArchived,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       purchasePrice: purchasePrice ?? this.purchasePrice,
-      expiryDate: expiryDate ?? this.expiryDate,
+      expiryDate: identical(expiryDate, _sentinel) ? this.expiryDate : expiryDate as DateTime?,
       quantity: quantity ?? this.quantity,
       initialQuantity: initialQuantity ?? this.initialQuantity,
       remainingQuantity: remainingQuantity ?? this.remainingQuantity,
       trackDailyCost: trackDailyCost ?? this.trackDailyCost,
-      notes: notes ?? this.notes,
-      imagePath: imagePath ?? this.imagePath,
+      notes: identical(notes, _sentinel) ? this.notes : notes as String?,
+      imagePath: identical(imagePath, _sentinel) ? this.imagePath : imagePath as String?,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -504,4 +506,8 @@ String emptyToFallback(String? value, String fallback) {
   return trimmed == null || trimmed.isEmpty ? fallback : trimmed;
 }
 
-String newId() => DateTime.now().microsecondsSinceEpoch.toString();
+String newId() {
+  final ms = DateTime.now().microsecondsSinceEpoch;
+  final rand = DateTime.now().millisecondsSinceEpoch.hashCode ^ ms;
+  return '${ms}_${(rand & 0xFFFFFF).toRadixString(36).padLeft(5, '0')}';
+}

@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -16,7 +18,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     companion object {
@@ -25,7 +27,10 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_WRITE_STORAGE = 1001
     }
 
-    private var permissionFuture: CompletableFuture<Boolean>? = null
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var pendingBackup: PendingBackup? = null
+    private var pendingBackupResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -38,8 +43,14 @@ class MainActivity : FlutterActivity() {
                             result.error("INVALID_URL", "URL cannot be empty", null)
                             return@setMethodCallHandler
                         }
+                        val uri = Uri.parse(url)
+                        val scheme = uri.scheme?.lowercase()
+                        if (scheme != "http" && scheme != "https") {
+                            result.error("INVALID_URL", "Only http and https URLs are allowed", null)
+                            return@setMethodCallHandler
+                        }
                         try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                            startActivity(Intent(Intent.ACTION_VIEW, uri))
                             result.success(null)
                         } catch (error: Exception) {
                             result.error("OPEN_URL_FAILED", error.message, null)
@@ -53,49 +64,88 @@ class MainActivity : FlutterActivity() {
                             return@setMethodCallHandler
                         }
                         Log.d(TAG, "Backup fileName=$fileName contentLength=${content.length}")
-                        Thread {
-                            try {
-                                val path = writeBackup(fileName, content)
-                                Log.d(TAG, "Backup written to: $path")
-                                result.success(path)
-                            } catch (error: Exception) {
-                                Log.e(TAG, "Backup write failed", error)
-                                result.error("SAVE_BACKUP_FAILED", error.message, null)
-                            }
-                        }.start()
+                        saveBackupWithPermission(fileName, content, result)
                     }
                     else -> result.notImplemented()
                 }
             }
     }
 
-    private fun ensureWriteStoragePermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return true
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            == PackageManager.PERMISSION_GRANTED) return true
-
-        val future = CompletableFuture<Boolean>()
-        permissionFuture = future
-        runOnUiThread {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                REQUEST_WRITE_STORAGE
-            )
+    private fun saveBackupWithPermission(
+        fileName: String,
+        content: String,
+        result: MethodChannel.Result
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || hasWriteStoragePermission()) {
+            writeBackupAsync(fileName, content, result)
+            return
         }
-        return future.get()
+        if (pendingBackupResult != null) {
+            result.error("SAVE_BACKUP_BUSY", "Another backup export is already waiting for storage permission", null)
+            return
+        }
+        pendingBackup = PendingBackup(fileName, content)
+        pendingBackupResult = result
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            REQUEST_WRITE_STORAGE
+        )
+    }
+
+    private fun hasWriteStoragePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun writeBackupAsync(
+        fileName: String,
+        content: String,
+        result: MethodChannel.Result
+    ) {
+        executor.execute {
+            try {
+                val path = writeBackup(fileName, content)
+                Log.d(TAG, "Backup written to: $path")
+                mainHandler.post { result.success(path) }
+            } catch (error: Exception) {
+                Log.e(TAG, "Backup write failed", error)
+                mainHandler.post { result.error("SAVE_BACKUP_FAILED", error.message, null) }
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_WRITE_STORAGE) {
-            permissionFuture?.complete(
-                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            )
-            permissionFuture = null
+        if (requestCode != REQUEST_WRITE_STORAGE) return
+
+        val backup = pendingBackup
+        val result = pendingBackupResult
+        pendingBackup = null
+        pendingBackupResult = null
+        if (backup == null || result == null) return
+
+        val granted = grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            result.error("STORAGE_PERMISSION_DENIED", "存储权限被拒绝，请在系统设置中授权", null)
+            return
         }
+        writeBackupAsync(backup.fileName, backup.content, result)
+    }
+
+    override fun onDestroy() {
+        pendingBackupResult?.error("ACTIVITY_DESTROYED", "Activity destroyed before backup export completed", null)
+        pendingBackup = null
+        pendingBackupResult = null
+        executor.shutdownNow()
+        super.onDestroy()
     }
 
     private fun writeBackup(fileName: String, content: String): String {
@@ -103,7 +153,6 @@ class MainActivity : FlutterActivity() {
         val bytes = content.toByteArray(Charsets.UTF_8)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10+: MediaStore, no permission needed
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, safeName)
                 put(MediaStore.Downloads.MIME_TYPE, "application/json")
@@ -116,10 +165,6 @@ class MainActivity : FlutterActivity() {
             Log.d(TAG, "Backup saved via MediaStore: $uri")
             return uri.toString()
         } else {
-            // Android 9-: request WRITE_EXTERNAL_STORAGE, then write to public Downloads
-            if (!ensureWriteStoragePermission()) {
-                throw SecurityException("存储权限被拒绝，请在系统设置中授权")
-            }
             @Suppress("DEPRECATION")
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val myDir = File(dir, "MyItems")
@@ -132,4 +177,6 @@ class MainActivity : FlutterActivity() {
             return file.absolutePath
         }
     }
+
+    private data class PendingBackup(val fileName: String, val content: String)
 }

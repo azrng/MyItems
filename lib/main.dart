@@ -7,7 +7,7 @@ import 'pages.dart';
 import 'repository.dart';
 
 void main() {
-  runApp(MyItemsApp(store: AppStore(ItemRepository())));
+  runApp(MyItemsApp(store: AppStore(SqliteItemRepository())));
 }
 
 class MyItemsApp extends StatefulWidget {

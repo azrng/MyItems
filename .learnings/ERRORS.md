@@ -33,3 +33,36 @@ dotnet build .\src\MyItems\MyItems.csproj -f net10.0-windows10.0.19041.0 --no-re
 - **Notes**: 已通过项目级 restore 生成资产文件，随后 Windows target 构建通过。
 
 ---
+
+## [ERR-20260522-001] flutter_and_gradle_verification_unavailable
+
+**Logged**: 2026-05-22T15:48:17+08:00
+**Priority**: medium
+**Status**: pending
+**Area**: tests
+
+### Summary
+Flutter 测试命令不可用，Android Gradle wrapper 下载 Gradle 发行包时证书校验失败。
+
+### Error
+```text
+flutter : The term 'flutter' is not recognized as the name of a cmdlet, function, script file, or operable program.
+
+Exception in thread "main" javax.net.ssl.SSLHandshakeException:
+PKIX path building failed: unable to find valid certification path to requested target
+```
+
+### Context
+- Attempted `flutter test test/app_store_test.dart test/navigation_test.dart` from repo root.
+- Attempted `.\gradlew.bat :app:compileDebugKotlin` from `android/`.
+- `Get-Command flutter,dart,fvm` returned no available executables.
+- Gradle wrapper tried downloading `https://mirrors.cloud.tencent.com/gradle/gradle-8.9-all.zip`.
+
+### Suggested Fix
+Install/configure Flutter SDK on PATH and either fix the Java trust store for the Tencent Gradle mirror or use a reachable Gradle distribution URL with a trusted certificate.
+
+### Metadata
+- Reproducible: yes
+- Related Files: android/gradle/wrapper/gradle-wrapper.properties, pubspec.yaml
+
+---

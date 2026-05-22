@@ -100,10 +100,7 @@ class AppStore extends ChangeNotifier {
 
   Category? categoryById(String? id) {
     if (id == null) return null;
-    for (final category in categories) {
-      if (category.id == id) return category;
-    }
-    return null;
+    return {for (final c in categories) c.id: c}[id];
   }
 
   Future<String> saveItemFromForm(ItemFormData form) async {
@@ -167,11 +164,11 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> consumeAll(String itemId) async {
-    final item = await repository.getItem(itemId);
-    if (item == null) {
-      throw const StoreException('物品不存在');
-    }
     await _run(() async {
+      final item = await repository.getItem(itemId);
+      if (item == null) {
+        throw const StoreException('物品不存在');
+      }
       await repository.consumeItem(
         itemId,
         quantity: item.remainingQuantity,
@@ -350,10 +347,7 @@ class AppStore extends ChangeNotifier {
     }
   }
 
-  List<ItemDisplay> _sortByCreatedDesc(List<ItemDisplay> items) {
-    return [...items]
-      ..sort((a, b) => b.item.createdAt.compareTo(a.item.createdAt));
-  }
+  List<ItemDisplay> _sortByCreatedDesc(List<ItemDisplay> items) => items;
 
   List<ExpiryGroup> _sortExpiryGroupsByExpiryAsc(List<ExpiryGroup> groups) {
     return groups

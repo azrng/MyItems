@@ -129,6 +129,37 @@ void main() {
     expect(store.statistics.validItems, 1);
   });
 
+  test('statistics excludes items expired before today', () async {
+    final today = DateTime(2026, 5, 9);
+    final repository = FakeHomeRepository([
+      Item(
+        id: 'expired',
+        name: '过期面包',
+        categoryId: 'food',
+        purchasePrice: 5,
+        expiryDate: today.subtract(const Duration(days: 1)),
+        createdAt: today,
+        updatedAt: today,
+      ),
+      Item(
+        id: 'today',
+        name: '今日到期牛奶',
+        categoryId: 'food',
+        purchasePrice: 8,
+        expiryDate: today,
+        createdAt: today,
+        updatedAt: today,
+      ),
+    ]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+
+    expect(store.statistics.totalItems, 2);
+    expect(store.statistics.validItems, 1);
+    expect(store.statistics.totalSpent, 8);
+  });
+
   test('consumes one item and records consumption', () async {
     final today = DateTime(2026, 5, 9);
     final repository = FakeHomeRepository([
@@ -194,8 +225,8 @@ void main() {
   });
 }
 
-class FakeCategoryRepository extends ItemRepository {
-  FakeCategoryRepository(this._categories);
+class FakeCategoryRepository extends SqliteItemRepository {
+  FakeCategoryRepository(this._categories) : super();
 
   List<Category> _categories;
   List<Category> persistedOrder = [];
@@ -245,8 +276,8 @@ class FakeCategoryRepository extends ItemRepository {
   }
 }
 
-class FakeHomeRepository extends ItemRepository {
-  FakeHomeRepository(this._items);
+class FakeHomeRepository extends SqliteItemRepository {
+  FakeHomeRepository(this._items) : super();
 
   final List<Item> _items;
   List<Item> get items => _items;
@@ -321,7 +352,9 @@ class FakeHomeRepository extends ItemRepository {
     final displays =
         await getItemDisplays(query: const ItemQuery(limit: 10000));
     final valid = displays
-        .where((item) => item.expiryStatus != ExpiryStatus.expired)
+        .where((item) =>
+            item.item.expiryDate == null ||
+            !dateOnly(item.item.expiryDate!).isBefore(DateTime(2026, 5, 9)))
         .fold<double>(
             0,
             (sum, item) =>
@@ -331,7 +364,9 @@ class FakeHomeRepository extends ItemRepository {
       totalSpent: valid,
       totalItems: displays.length,
       validItems: displays
-          .where((item) => item.expiryStatus != ExpiryStatus.expired)
+          .where((item) =>
+              item.item.expiryDate == null ||
+              !dateOnly(item.item.expiryDate!).isBefore(DateTime(2026, 5, 9)))
           .length,
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_items/app_store.dart';
@@ -8,7 +10,7 @@ import 'package:my_items/repository.dart';
 
 void main() {
   testWidgets('root navigation includes expiring page entry', (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(ItemRepository())));
+    await tester.pumpWidget(MyItemsApp(store: AppStore(SqliteItemRepository())));
     await tester.pump();
 
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -20,7 +22,7 @@ void main() {
 
   testWidgets('add item page opened from library can access app scope',
       (tester) async {
-    await tester.pumpWidget(MyItemsApp(store: AppStore(ItemRepository())));
+    await tester.pumpWidget(MyItemsApp(store: AppStore(SqliteItemRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -212,6 +214,23 @@ void main() {
     expect(find.text('初始数量'), findsOneWidget);
   });
 
+  testWidgets('add item page selects first category after async load',
+      (tester) async {
+    final repository = DelayedCategoryRepository();
+    await tester.pumpWidget(MyItemsApp(store: AppStore(repository)));
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.pump();
+    expect(find.text('食品/饮料'), findsNothing);
+
+    repository.releaseCategories();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('🍔 食品/饮料'), findsOneWidget);
+  });
+
   testWidgets('about page exposes project link and theme choices',
       (tester) async {
     await tester
@@ -261,7 +280,8 @@ void main() {
   });
 }
 
-class FakeNavigationRepository extends ItemRepository {
+class FakeNavigationRepository extends SqliteItemRepository {
+  FakeNavigationRepository() : super();
   final _categories = [
     const Category(
         id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
@@ -391,4 +411,22 @@ class FakeNavigationRepository extends ItemRepository {
           itemName: '消耗完成物品',
         ),
       ];
+}
+
+class DelayedCategoryRepository extends FakeNavigationRepository {
+  Completer<void>? _categoriesReady = Completer<void>();
+
+  void releaseCategories() {
+    _categoriesReady?.complete();
+    _categoriesReady = null;
+  }
+
+  @override
+  Future<List<Category>> getCategories({bool includeInactive = false}) async {
+    final completer = _categoriesReady;
+    if (completer != null) {
+      await completer.future;
+    }
+    return super.getCategories(includeInactive: includeInactive);
+  }
 }
