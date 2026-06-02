@@ -24,7 +24,7 @@ class SqliteItemRepository extends ItemRepository {
     final dbPath = p.join(docs.path, 'my_items_flutter.db');
     _database = await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await createSchema(db);
         await runPendingMigrations(db);

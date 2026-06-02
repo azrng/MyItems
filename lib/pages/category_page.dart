@@ -9,7 +9,7 @@ import '../widgets/item_card.dart';
 const defaultCategoryIcon = '🏷️';
 
 const categoryIconOptions = [
-  '🍔', '🥛', '🍎', '💄', '🧴', '💊', '🧻', '🧼', '💻', '🔌',
+  '🍔', '🥛', '🍎', '💄', '🧻', '🧼', '💊', '💻', '🔌',
   '🏠', '👕', '🎒', '📚', '⚽', '🎁', '🐱', '🚗', '🧰', defaultCategoryIcon,
 ];
 

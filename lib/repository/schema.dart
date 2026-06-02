@@ -109,6 +109,18 @@ WHERE remaining_quantity IS NULL OR remaining_quantity < 0
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
+  if (!applied.contains(3)) {
+    await normalizePresetCategoryIcons(db);
+    await db.insert(
+      'schema_migrations',
+      {
+        'version': 3,
+        'description': 'normalize_daily_category_icon',
+        'applied_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
 }
 
 Future<void> _addColumnIfMissing(
@@ -128,13 +140,21 @@ const fallbackCategory = Category(
   isPreset: true,
 );
 
+const legacyDailyCategoryIcon = '🧴';
+const dailyCategoryIcon = '🏠';
+
 const presetCategories = [
   Category(id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
   Category(
       id: 'beauty', name: '化妆品/护肤品', icon: '💄', sortOrder: 2, isPreset: true),
   Category(
       id: 'medicine', name: '药品/保健品', icon: '💊', sortOrder: 3, isPreset: true),
-  Category(id: 'daily', name: '日用品', icon: '🧴', sortOrder: 4, isPreset: true),
+  Category(
+      id: 'daily',
+      name: '日用品',
+      icon: dailyCategoryIcon,
+      sortOrder: 4,
+      isPreset: true),
   Category(
       id: 'electronics',
       name: '电子产品',
@@ -159,6 +179,16 @@ Future<void> seedPresetCategories(Database db) async {
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
+  await normalizePresetCategoryIcons(db);
+}
+
+Future<void> normalizePresetCategoryIcons(Database db) async {
+  await db.update(
+    'categories',
+    {'icon': dailyCategoryIcon},
+    where: 'id = ? AND is_preset = 1 AND icon = ?',
+    whereArgs: ['daily', legacyDailyCategoryIcon],
+  );
 }
 
 Future<void> seedPresetLocations(Database db) async {

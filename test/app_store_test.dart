@@ -88,7 +88,7 @@ void main() {
       const Category(
           id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
       const Category(
-          id: 'daily', name: '日用品', icon: '🧴', sortOrder: 2, isPreset: true),
+          id: 'daily', name: '日用品', icon: '🏠', sortOrder: 2, isPreset: true),
       const Category(
           id: 'other', name: '其他', icon: '📦', sortOrder: 3, isPreset: true),
     ]);

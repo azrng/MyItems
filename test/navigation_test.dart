@@ -62,6 +62,7 @@ void main() {
 
     expect(find.text('选择分类图标'), findsOneWidget);
     expect(find.text('🍔'), findsWidgets);
+    expect(find.text('🧴'), findsNothing);
   });
 
   testWidgets('library item supports swipe delete action', (tester) async {
@@ -286,7 +287,7 @@ class FakeNavigationRepository extends SqliteItemRepository {
     const Category(
         id: 'food', name: '食品/饮料', icon: '🍔', sortOrder: 1, isPreset: true),
     const Category(
-        id: 'daily', name: '日用品', icon: '🧴', sortOrder: 2, isPreset: true),
+        id: 'daily', name: '日用品', icon: '🏠', sortOrder: 2, isPreset: true),
     const Category(
         id: 'custom', name: '自定义', icon: '🏷️', sortOrder: 3, isPreset: false),
   ];

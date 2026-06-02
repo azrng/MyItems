@@ -87,6 +87,7 @@
 | T066 | Flutter 关于页下载入口地址修正 | 将关于页 APK 下载入口改为跳转 GitHub Releases 页面，避免依赖不稳定的 APK 文件名 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-15 |
 | T067 | Flutter 发布 APK 版本号修正 | 发布构建从 VERSION 注入 Android versionName，并使用 GitHub run number 注入递增 versionCode，确保升级安装识别新版本 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-15 |
 | T068 | Flutter 审查问题修复 | 修复 Android 低版本备份导出权限、统计有效期边界和添加页异步分类默认选中问题 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-22 |
+| T069 | Flutter 日用品图标缺失修复 | 修复物品库日用品分类图标在 Android 上显示缺字方框，并确认分类页已有默认图标选择 | 阶段 3 | Codex | REVIEW | P0 | 2026-06-02 |
 
 ---
 
