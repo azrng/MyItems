@@ -1,0 +1,6 @@
+{
+  "name": "极简物品管理",
+  "description": "采用极简主义风格设计的物品与分类管理应用，以白色和淡蓝色调为主，具备清晰的层级感，支持到期提醒、分类管理和全文检索。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
