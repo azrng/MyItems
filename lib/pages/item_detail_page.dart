@@ -61,21 +61,76 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                 children: [
                   ItemCard(display: display),
                   const SizedBox(height: 12),
-                  DetailTile(label: '分类', value: display.categoryName),
-                  DetailTile(label: '品牌', value: display.brandDisplay),
-                  DetailTile(
-                      label: '条码', value: emptyToFallback(item.barcode, '未填写')),
-                  DetailTile(label: '存放位置', value: display.locationDisplay),
-                  DetailTile(
-                      label: '购买日期',
-                      value: item.purchaseDate == null
-                          ? '未记录'
-                          : formatDate(item.purchaseDate!)),
-                  DetailTile(label: '购入价格', value: display.priceText),
-                  DetailTile(label: '保质期', value: display.expiryDateText),
-                  DetailTile(label: '初始数量', value: '${item.initialQuantity}'),
-                  DetailTile(label: '剩余数量', value: '${item.remainingQuantity}'),
-                  DetailTile(label: '备注', value: display.notesDisplay),
+                  SoftCard(
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '归属分类',
+                                    value: display.categoryName)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '物品存放位置',
+                                    value: display.locationDisplay)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '保质截止日期',
+                                    value: display.expiryDateText)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '记录单价',
+                                    value: display.priceText,
+                                    highlight: true)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '初始数量',
+                                    value: '${item.initialQuantity}')),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: _DetailFact(
+                                    label: '剩余数量',
+                                    value: '${item.remainingQuantity}')),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SoftCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SoftSectionHeader(title: '备忘注解 / 功能功效说明'),
+                        const SizedBox(height: 8),
+                        Text(display.notesDisplay,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        const SizedBox(height: 10),
+                        DetailTile(label: '品牌', value: display.brandDisplay),
+                        DetailTile(
+                            label: '条码',
+                            value: emptyToFallback(item.barcode, '未填写')),
+                        DetailTile(
+                            label: '购买日期',
+                            value: item.purchaseDate == null
+                                ? '未记录'
+                                : formatDate(item.purchaseDate!)),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   FutureBuilder<List<ConsumptionRecord>>(
                     future: store.getConsumptionRecords(item.id),
@@ -178,6 +233,52 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _DetailFact extends StatelessWidget {
+  const _DetailFact({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withAlpha(90),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  )),
+          const SizedBox(height: 5),
+          Text(value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: highlight
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                  )),
+        ],
+      ),
     );
   }
 }

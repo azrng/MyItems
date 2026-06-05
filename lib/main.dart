@@ -29,16 +29,18 @@ class _MyItemsAppState extends State<MyItemsApp> {
   @override
   Widget build(BuildContext context) {
     final lightColorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFF6B6B),
-      primary: const Color(0xFFFF6B6B),
-      secondary: const Color(0xFF4ECDC4),
-      surface: const Color(0xFFF8FAFC),
+      seedColor: const Color(0xFF0EA5E9),
+      primary: const Color(0xFF0EA5E9),
+      secondary: const Color(0xFF22C55E),
+      tertiary: const Color(0xFFF59E0B),
+      surface: const Color(0xFFFFFFFF),
     );
     final darkColorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFF8A80),
+      seedColor: const Color(0xFF38BDF8),
       brightness: Brightness.dark,
-      primary: const Color(0xFFFF8A80),
-      secondary: const Color(0xFF4ECDC4),
+      primary: const Color(0xFF38BDF8),
+      secondary: const Color(0xFF4ADE80),
+      tertiary: const Color(0xFFFBBF24),
       surface: const Color(0xFF111827),
     );
 
@@ -60,7 +62,7 @@ class _MyItemsAppState extends State<MyItemsApp> {
               GlobalCupertinoLocalizations.delegate,
             ],
             themeMode: _themeModeOf(widget.store.themePreference),
-            theme: _buildTheme(lightColorScheme, const Color(0xFFF8FAFC)),
+            theme: _buildTheme(lightColorScheme, const Color(0xFFFAFBFD)),
             darkTheme: _buildTheme(darkColorScheme, const Color(0xFF0F172A)),
             home: const RootPage(),
           );
@@ -77,8 +79,9 @@ class _MyItemsAppState extends State<MyItemsApp> {
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        surfaceTintColor: Colors.transparent,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -86,6 +89,31 @@ class _MyItemsAppState extends State<MyItemsApp> {
         margin: EdgeInsets.zero,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        height: 68,
+        backgroundColor: colorScheme.surface.withAlpha(245),
+        indicatorColor: colorScheme.primaryContainer.withAlpha(150),
+        labelTextStyle: MaterialStatePropertyAll(
+          TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withAlpha(100),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
         ),
       ),
     );

@@ -6,6 +6,7 @@ import '../models.dart' as my;
 import '../models.dart';
 import '../widgets/common.dart';
 import '../widgets/item_card.dart';
+import 'add_item_page.dart';
 import 'item_detail_page.dart';
 
 class LibraryPage extends StatelessWidget {
@@ -23,18 +24,61 @@ class LibraryPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
             children: [
               SearchField(
-                hint: '搜索名称、品牌、分类或位置',
+                hint: '搜索全部物品',
                 initialValue: store.librarySearch,
                 onChanged: store.setLibrarySearch,
               ),
               const SizedBox(height: 12),
-              StatisticsCard(statistics: store.statistics),
+              SoftCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('我的物品',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w900)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '共收录 ${store.libraryItems.length} 个物品 · 已按条件过滤',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: '新增物品',
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AddItemPage())),
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               CategoryChips(
                 categories: store.categories,
                 selectedCategoryId: store.selectedCategoryId,
                 onSelected: store.selectCategory,
               ),
+              const SizedBox(height: 12),
+              LibraryStatusChips(
+                selected: store.selectedLibraryStatus,
+                items: store.libraryStatusSourceItems,
+                onSelected: store.selectLibraryStatus,
+              ),
+              const SizedBox(height: 12),
+              StatisticsCard(statistics: store.statistics),
               const SizedBox(height: 12),
               if (store.libraryItems.isEmpty)
                 const EmptyState(
@@ -206,27 +250,138 @@ class CategoryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: const Text('全部'),
+            child: FilterChip(
+              label: const Text('📦 全部分类'),
               selected: selectedCategoryId == null,
               onSelected: (_) => onSelected(null),
+              selectedColor: colorScheme.primary,
+              checkmarkColor: colorScheme.onPrimary,
+              labelStyle: TextStyle(
+                color: selectedCategoryId == null
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           ...categories.map((category) => Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
+                child: FilterChip(
                   label: Text('${category.icon ?? '📦'} ${category.name}'),
                   selected: selectedCategoryId == category.id,
                   onSelected: (_) => onSelected(category.id),
+                  selectedColor: colorScheme.primary,
+                  checkmarkColor: colorScheme.onPrimary,
+                  labelStyle: TextStyle(
+                    color: selectedCategoryId == category.id
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               )),
         ],
+      ),
+    );
+  }
+}
+
+class LibraryStatusChips extends StatelessWidget {
+  const LibraryStatusChips({
+    super.key,
+    required this.selected,
+    required this.items,
+    required this.onSelected,
+  });
+
+  final LibraryStatusFilter selected;
+  final List<ItemDisplay> items;
+  final ValueChanged<LibraryStatusFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final all = items.length;
+    final safe =
+        items.where((item) => item.expiryStatus == ExpiryStatus.safe).length;
+    final expiring = items
+        .where((item) => item.expiryStatus == ExpiryStatus.expiring)
+        .length;
+    final expired =
+        items.where((item) => item.expiryStatus == ExpiryStatus.expired).length;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _StatusFilterChip(
+            label: '全部状态 ($all)',
+            selected: selected == LibraryStatusFilter.all,
+            color: const Color(0xFF334155),
+            onTap: () => onSelected(LibraryStatusFilter.all),
+          ),
+          _StatusFilterChip(
+            label: '安全中 ($safe)',
+            selected: selected == LibraryStatusFilter.safe,
+            color: const Color(0xFF10B981),
+            onTap: () => onSelected(LibraryStatusFilter.safe),
+          ),
+          _StatusFilterChip(
+            label: '即将到期 ($expiring)',
+            selected: selected == LibraryStatusFilter.expiring,
+            color: const Color(0xFFF59E0B),
+            onTap: () => onSelected(LibraryStatusFilter.expiring),
+          ),
+          _StatusFilterChip(
+            label: '已过期 ($expired)',
+            selected: selected == LibraryStatusFilter.expired,
+            color: const Color(0xFFF43F5E),
+            onTap: () => onSelected(LibraryStatusFilter.expired),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusFilterChip extends StatelessWidget {
+  const _StatusFilterChip({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        label: Text(label),
+        onPressed: onTap,
+        backgroundColor: selected
+            ? color
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(90),
+        side: BorderSide(
+          color: selected
+              ? color
+              : Theme.of(context).colorScheme.outlineVariant.withAlpha(120),
+        ),
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Theme.of(context).colorScheme.outline,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }

@@ -16,11 +16,13 @@ class AppStore extends ChangeNotifier {
   String expirySearch = '';
   String librarySearch = '';
   String? selectedCategoryId;
+  LibraryStatusFilter selectedLibraryStatus = LibraryStatusFilter.all;
   List<Category> categories = [];
   List<StorageLocation> locations = [];
   List<ItemDisplay> homeItems = [];
   List<ExpiryGroup> expiryGroups = [];
   List<ItemDisplay> libraryItems = [];
+  List<ItemDisplay> libraryStatusSourceItems = [];
   LibraryStatistics statistics = LibraryStatistics.empty;
   ThemePreference themePreference = ThemePreference.system;
 
@@ -44,13 +46,14 @@ class AppStore extends ChangeNotifier {
     homeItems = await repository.getHomeItemDisplays(searchText: homeSearch);
     expiryGroups = _sortExpiryGroupsByExpiryAsc(
         await repository.getExpiryGroups(searchText: expirySearch));
-    libraryItems = _sortByCreatedDesc(await repository.getItemDisplays(
+    libraryStatusSourceItems = _sortByCreatedDesc(await repository.getItemDisplays(
       query: ItemQuery(
         categoryId: selectedCategoryId,
         searchText: librarySearch,
         limit: 1000,
       ),
     ));
+    libraryItems = _filterLibraryStatus(libraryStatusSourceItems);
     statistics = await repository.getStatistics();
     notifyListeners();
   }
@@ -82,15 +85,22 @@ class AppStore extends ChangeNotifier {
     await refreshLibrary(setLoading: false);
   }
 
+  Future<void> selectLibraryStatus(LibraryStatusFilter status) async {
+    selectedLibraryStatus = status;
+    await refreshLibrary(setLoading: false);
+  }
+
   Future<void> refreshLibrary({bool setLoading = true}) async {
     await _run(() async {
-      libraryItems = _sortByCreatedDesc(await repository.getItemDisplays(
+      libraryStatusSourceItems =
+          _sortByCreatedDesc(await repository.getItemDisplays(
         query: ItemQuery(
           categoryId: selectedCategoryId,
           searchText: librarySearch,
           limit: 1000,
         ),
       ));
+      libraryItems = _filterLibraryStatus(libraryStatusSourceItems);
       statistics = await repository.getStatistics();
       notifyListeners();
     }, setLoading: setLoading);
@@ -348,6 +358,20 @@ class AppStore extends ChangeNotifier {
   }
 
   List<ItemDisplay> _sortByCreatedDesc(List<ItemDisplay> items) => items;
+
+  List<ItemDisplay> _filterLibraryStatus(List<ItemDisplay> items) {
+    return switch (selectedLibraryStatus) {
+      LibraryStatusFilter.all => items,
+      LibraryStatusFilter.safe =>
+        items.where((item) => item.expiryStatus == ExpiryStatus.safe).toList(),
+      LibraryStatusFilter.expiring => items
+          .where((item) => item.expiryStatus == ExpiryStatus.expiring)
+          .toList(),
+      LibraryStatusFilter.expired => items
+          .where((item) => item.expiryStatus == ExpiryStatus.expired)
+          .toList(),
+    };
+  }
 
   List<ExpiryGroup> _sortExpiryGroupsByExpiryAsc(List<ExpiryGroup> groups) {
     return groups

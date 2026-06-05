@@ -39,87 +39,102 @@ class _CategoryPageState extends State<CategoryPage> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            SectionCard(
-              title: '新增分类',
-              children: [
-                Row(
-                  children: [
-                    IconPreviewButton(
-                      icon: _selectedIcon,
-                      onPressed: () async {
-                        final icon = await showCategoryIconPicker(
-                            context, _selectedIcon);
-                        if (icon != null) setState(() => _selectedIcon = icon);
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                        child: TextField(
-                            controller: _name,
-                            decoration:
-                                const InputDecoration(labelText: '分类名称'))),
-                    const SizedBox(width: 12),
-                    IconButton.filled(
-                      onPressed: () async {
-                        try {
-                          await store.addCategory(_name.text, _selectedIcon);
-                          _name.clear();
-                          setState(() => _selectedIcon = defaultCategoryIcon);
-                        } catch (error) {
-                          if (context.mounted) {
-                            showSnack(context, error.toString());
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
-              itemCount: store.categories.length,
-              onReorder: (oldIndex, newIndex) async {
-                try {
-                  await store.reorderCategory(oldIndex, newIndex);
-                } catch (error) {
-                  if (context.mounted) showSnack(context, error.toString());
-                }
-              },
-              itemBuilder: (context, index) {
-                final category = store.categories[index];
-                final listTile = ListTile(
-                  leading: CircleAvatar(
-                      child: Text(category.icon ?? defaultCategoryIcon)),
-                  title: Text(category.name),
-                  subtitle: Text(category.isPreset ? '预置分类' : '自定义分类'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+            SoftCard(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SoftSectionHeader(
+                    title: '新增分类',
+                    subtitle: '划分存储区块，支持自定义标签',
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      if (category.isPreset) const Icon(Icons.lock_outline),
-                      IconButton(
-                        tooltip: '编辑分类',
-                        icon: const Icon(Icons.edit_outlined),
+                      IconPreviewButton(
+                        icon: _selectedIcon,
                         onPressed: () async {
-                          await showCategoryEditDialog(context, category, store);
+                          final icon = await showCategoryIconPicker(
+                              context, _selectedIcon);
+                          if (icon != null) {
+                            setState(() => _selectedIcon = icon);
+                          }
                         },
                       ),
-                      ReorderableDragStartListener(
-                        index: index,
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(Icons.drag_handle),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: TextField(
+                          controller: _name,
+                          decoration: const InputDecoration(
+                            hintText: '分类名称',
+                            border: UnderlineInputBorder(),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF0EA5E9)),
+                            ),
+                            filled: false,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: IconButton.filled(
+                          onPressed: () async {
+                            try {
+                              await store.addCategory(
+                                  _name.text, _selectedIcon);
+                              _name.clear();
+                              setState(
+                                  () => _selectedIcon = defaultCategoryIcon);
+                            } catch (error) {
+                              if (context.mounted) {
+                                showSnack(context, error.toString());
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.add),
                         ),
                       ),
                     ],
                   ),
-                );
-                Widget tile = Card(
-                  child: category.isPreset
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            SoftCard(
+              padding: EdgeInsets.zero,
+              child: ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: store.categories.length,
+                onReorder: (oldIndex, newIndex) async {
+                  try {
+                    await store.reorderCategory(oldIndex, newIndex);
+                  } catch (error) {
+                    if (context.mounted) showSnack(context, error.toString());
+                  }
+                },
+                itemBuilder: (context, index) {
+                  final category = store.categories[index];
+                  final listTile = _CategoryTile(
+                    category: category,
+                    onEdit: () async {
+                      await showCategoryEditDialog(context, category, store);
+                    },
+                    dragHandle: ReorderableDragStartListener(
+                      index: index,
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.drag_handle),
+                      ),
+                    ),
+                  );
+                  Widget tile = category.isPreset
                       ? listTile
                       : Dismissible(
                           key: ValueKey('category-dismiss-${category.id}'),
@@ -141,18 +156,96 @@ class _CategoryPageState extends State<CategoryPage> {
                             return false;
                           },
                           child: listTile,
+                        );
+                  return Container(
+                    key: ValueKey('category-row-${category.id}'),
+                    decoration: BoxDecoration(
+                      border: index == store.categories.length - 1
+                          ? null
+                          : Border(
+                              bottom: BorderSide(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant
+                                    .withAlpha(120),
+                              ),
+                            ),
                         ),
-                );
-                return Padding(
-                  key: ValueKey('category-row-${category.id}'),
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: tile,
-                );
-              },
+                    child: tile,
+                  );
+                },
+              ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.category,
+    required this.onEdit,
+    required this.dragHandle,
+  });
+
+  final Category category;
+  final VoidCallback onEdit;
+  final Widget dragHandle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      leading: Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest
+              .withAlpha(120),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Text(
+          category.icon ?? defaultCategoryIcon,
+          style: const TextStyle(fontSize: 21),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(category.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(category.isPreset ? '预置' : '自定义',
+                style:
+                    const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+      subtitle: Text(category.isPreset ? '预置分类' : '自定义分类'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (category.isPreset) const Icon(Icons.lock_outline, size: 19),
+          IconButton(
+            tooltip: '编辑分类',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: onEdit,
+          ),
+          dragHandle,
+        ],
+      ),
     );
   }
 }

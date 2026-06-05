@@ -223,6 +223,52 @@ void main() {
     expect(repository.lastHomeSearch, '面包');
     expect(repository.lastExpirySearch, '牛奶');
   });
+
+  test('library status filter keeps safe expiring and expired items separate',
+      () async {
+    final today = DateTime(2026, 5, 9);
+    final repository = FakeHomeRepository([
+      Item(
+        id: 'safe',
+        name: '安全物品',
+        categoryId: 'food',
+        expiryDate: today.add(const Duration(days: 30)),
+        createdAt: today,
+        updatedAt: today,
+      ),
+      Item(
+        id: 'warning',
+        name: '临期物品',
+        categoryId: 'food',
+        expiryDate: today.add(const Duration(days: 3)),
+        createdAt: today,
+        updatedAt: today,
+      ),
+      Item(
+        id: 'expired',
+        name: '过期物品',
+        categoryId: 'food',
+        expiryDate: today.subtract(const Duration(days: 1)),
+        createdAt: today,
+        updatedAt: today,
+      ),
+    ]);
+    final store = AppStore(repository);
+
+    await store.initialize();
+    await store.selectLibraryStatus(LibraryStatusFilter.safe);
+    expect(store.libraryItems.map((item) => item.id), ['safe']);
+
+    await store.selectLibraryStatus(LibraryStatusFilter.expiring);
+    expect(store.libraryItems.map((item) => item.id), ['warning']);
+
+    await store.selectLibraryStatus(LibraryStatusFilter.expired);
+    expect(store.libraryItems.map((item) => item.id), ['expired']);
+
+    await store.selectLibraryStatus(LibraryStatusFilter.all);
+    expect(store.libraryItems.map((item) => item.id),
+        ['safe', 'warning', 'expired']);
+  });
 }
 
 class FakeCategoryRepository extends SqliteItemRepository {

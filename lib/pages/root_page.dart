@@ -40,15 +40,54 @@ class _RootPageState extends State<RootPage> {
       builder: (context, _) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(_title),
-            actions: [
-              if (_index == 0)
-                IconButton(
-                  tooltip: '添加物品',
-                  icon: const Icon(Icons.add),
-                  onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const AddItemPage())),
+            titleSpacing: 0,
+            shape: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.primaryContainer
+                    .withAlpha(90),
+              ),
+            ),
+            title: const Row(
+              children: [
+                Text('🗃️', style: TextStyle(fontSize: 18)),
+                SizedBox(width: 8),
+                Text(
+                  '极简物品管理',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
+              ],
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                          .withAlpha(90),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withAlpha(35),
+                      ),
+                    ),
+                    child: Text(
+                      _title,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           drawer: AppDrawer(onNavigate: (target) {
@@ -103,20 +142,13 @@ class _RootPageState extends State<RootPage> {
                   label: '分类'),
             ],
           ),
-          floatingActionButton: _index == 2
-              ? FloatingActionButton(
-                  onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const AddItemPage())),
-                  child: const Icon(Icons.add),
-                )
-              : null,
         );
       },
     );
   }
 
   String get _title => switch (_index) {
-        0 => '我的物品',
+        0 => '主页',
         1 => '临期提醒',
         2 => '物品库',
         _ => '分类管理',
@@ -140,58 +172,110 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      width: 292,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
-              color: Theme.of(context).colorScheme.primary,
-              child: const Column(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withAlpha(120),
+                  ),
+                ),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('📦 我的物品',
+                  const Text('🥛 美学整理指南',
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold)),
-                  SizedBox(height: 6),
-                  Text('物品管理助手', style: TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 10),
+                  Text(
+                    '物归原位，优先处理临期物品，保持库存轻盈可见。',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.45,
+                    ),
+                  ),
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.add_box_outlined),
-              title: const Text('添加'),
-              onTap: () => onNavigate(DrawerTarget.add),
-            ),
-            ListTile(
-              leading: const Icon(Icons.storage_outlined),
-              title: const Text('存储管理'),
-              onTap: () => onNavigate(DrawerTarget.storage),
-            ),
-            ListTile(
-              leading: const Icon(Icons.place_outlined),
-              title: const Text('存放位置'),
-              onTap: () => onNavigate(DrawerTarget.locations),
-            ),
-            ListTile(
-              leading: const Icon(Icons.archive_outlined),
-              title: const Text('耗尽归档'),
-              onTap: () => onNavigate(DrawerTarget.archived),
-            ),
-            ListTile(
-              leading: const Icon(Icons.history_outlined),
-              title: const Text('消耗记录'),
-              onTap: () => onNavigate(DrawerTarget.consumptionRecords),
-            ),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('关于'),
-              onTap: () => onNavigate(DrawerTarget.about),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                children: [
+                  _DrawerAction(
+                    icon: Icons.add_box_outlined,
+                    title: '添加',
+                    onTap: () => onNavigate(DrawerTarget.add),
+                  ),
+                  _DrawerAction(
+                    icon: Icons.storage_outlined,
+                    title: '存储管理',
+                    onTap: () => onNavigate(DrawerTarget.storage),
+                  ),
+                  _DrawerAction(
+                    icon: Icons.place_outlined,
+                    title: '存放位置',
+                    onTap: () => onNavigate(DrawerTarget.locations),
+                  ),
+                  _DrawerAction(
+                    icon: Icons.archive_outlined,
+                    title: '耗尽归档',
+                    onTap: () => onNavigate(DrawerTarget.archived),
+                  ),
+                  _DrawerAction(
+                    icon: Icons.history_outlined,
+                    title: '消耗记录',
+                    onTap: () => onNavigate(DrawerTarget.consumptionRecords),
+                  ),
+                  _DrawerAction(
+                    icon: Icons.info_outline,
+                    title: '关于',
+                    onTap: () => onNavigate(DrawerTarget.about),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DrawerAction extends StatelessWidget {
+  const _DrawerAction({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        title: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        tileColor: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withAlpha(70),
+        onTap: onTap,
       ),
     );
   }

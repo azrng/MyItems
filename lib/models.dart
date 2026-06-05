@@ -5,6 +5,13 @@ enum ExpiryStatus {
   noExpiry,
 }
 
+enum LibraryStatusFilter {
+  all,
+  safe,
+  expiring,
+  expired,
+}
+
 enum ThemePreference {
   system('system', '跟随系统'),
   light('light', '浅色'),

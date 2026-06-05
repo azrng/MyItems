@@ -88,6 +88,7 @@
 | T067 | Flutter 发布 APK 版本号修正 | 发布构建从 VERSION 注入 Android versionName，并使用 GitHub run number 注入递增 versionCode，确保升级安装识别新版本 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-15 |
 | T068 | Flutter 审查问题修复 | 修复 Android 低版本备份导出权限、统计有效期边界和添加页异步分类默认选中问题 | 阶段 3 | Codex | REVIEW | P0 | 2026-05-22 |
 | T069 | Flutter 日用品图标缺失修复 | 修复物品库日用品分类图标在 Android 上显示缺字方框，并确认分类页已有默认图标选择 | 阶段 3 | Codex | REVIEW | P0 | 2026-06-02 |
+| T070 | Flutter sample UI 风格转译 | 基于 sample 原型优化主页、物品库、临期、分类、添加编辑页与抽屉视觉，默认仍进入主页且不新增快速续保/数量加减业务 | 阶段 3 | Codex | REVIEW | P0 | 2026-06-05 |
 
 ---
 

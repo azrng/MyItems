@@ -66,3 +66,59 @@ Install/configure Flutter SDK on PATH and either fix the Java trust store for th
 - Related Files: android/gradle/wrapper/gradle-wrapper.properties, pubspec.yaml
 
 ---
+## [ERR-20260605-001] flutter_command_missing
+
+**Logged**: 2026-06-05T13:56:00+08:00
+**Priority**: medium
+**Status**: pending
+**Area**: tests
+
+### Summary
+PowerShell 无法直接执行 Flutter 测试命令，因为 `flutter` 不在当前 PATH 中。
+
+### Error
+```text
+flutter : The term 'flutter' is not recognized as the name of a cmdlet, function, script file, or operable program.
+```
+
+### Context
+- Command attempted: `flutter test test\app_store_test.dart --plain-name "..."`
+- Project: `C:\Work\github\MyItems`
+- Follow-up checks: `where.exe flutter` 未找到，`dart` 也未找到。
+
+### Suggested Fix
+确认本机 Flutter SDK 安装路径，或在项目文档中补充 Windows 下可用的 Flutter 命令入口。
+
+### Metadata
+- Reproducible: yes
+- Related Files: `pubspec.yaml`
+
+---
+
+## [ERR-20260605-002] powershell_set_content_used_for_source_edit
+
+**Logged**: 2026-06-05T14:08:00+08:00
+**Priority**: low
+**Status**: pending
+**Area**: docs
+
+### Summary
+一次测试文件替换使用了 PowerShell `Set-Content`，不符合项目优先使用 `apply_patch` 且避免隐式编码改写的规则。
+
+### Error
+```text
+(Get-Content ... -Encoding UTF8) -replace ... | Set-Content ... -Encoding UTF8
+```
+
+### Context
+- File edited: `test/navigation_test.dart`
+- Follow-up: 已立即用 UTF-8 回读关键中文，确认 `放新物品` 等文本显示正常。
+
+### Suggested Fix
+后续源码与测试文件手工编辑统一使用 `apply_patch`；如出现中文文件变更，变更后回读关键中文。
+
+### Metadata
+- Reproducible: yes
+- Related Files: `test/navigation_test.dart`
+
+---

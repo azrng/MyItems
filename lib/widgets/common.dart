@@ -39,18 +39,229 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextField(
       controller: _controller,
       decoration: InputDecoration(
         hintText: widget.hint,
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+        suffixIcon: _controller.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: '清除',
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () {
+                  _debounce?.cancel();
+                  _controller.clear();
+                  widget.onChanged('');
+                  setState(() {});
+                },
+              ),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        fillColor: colorScheme.surface,
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: colorScheme.primaryContainer),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: colorScheme.primaryContainer),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+        ),
       ),
-      onChanged: _onChanged,
+      onChanged: (value) {
+        setState(() {});
+        _onChanged(value);
+      },
+    );
+  }
+}
+
+class SoftCard extends StatelessWidget {
+  const SoftCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.onTap,
+    this.borderColor,
+    this.backgroundColor,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final VoidCallback? onTap;
+  final Color? borderColor;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final content = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderColor ?? colorScheme.primaryContainer.withAlpha(120),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withAlpha(12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: content,
+      ),
+    );
+  }
+}
+
+class SoftSectionHeader extends StatelessWidget {
+  const SoftSectionHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                      )),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(subtitle!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        )),
+              ],
+            ],
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class MetricTile extends StatelessWidget {
+  const MetricTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      borderColor: color.withAlpha(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(24),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const Spacer(),
+              Icon(Icons.arrow_outward,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.outline.withAlpha(160)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  )),
+          const SizedBox(height: 3),
+          Text(value,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                  )),
+        ],
+      ),
+    );
+  }
+}
+
+class StatusBadge extends StatelessWidget {
+  const StatusBadge({
+    super.key,
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          )),
     );
   }
 }

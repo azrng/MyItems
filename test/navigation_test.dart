@@ -20,6 +20,17 @@ void main() {
     expect(find.text('分类'), findsOneWidget);
   });
 
+  testWidgets('root opens the sample-style home overview by default',
+      (tester) async {
+    await tester
+        .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('空间整理清单'), findsOneWidget);
+    expect(find.textContaining('已按条件过滤'), findsNothing);
+  });
+
   testWidgets('add item page opened from library can access app scope',
       (tester) async {
     await tester.pumpWidget(MyItemsApp(store: AppStore(SqliteItemRepository())));
@@ -183,13 +194,13 @@ void main() {
     expect(find.textContaining('物品 ID'), findsNothing);
   });
 
-  testWidgets('home app bar add button opens add item page', (tester) async {
+  testWidgets('home overview add button opens add item page', (tester) async {
     await tester
         .pumpWidget(MyItemsApp(store: AppStore(FakeNavigationRepository())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.tap(find.text('放新物品'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -204,7 +215,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.tap(find.text('放新物品'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -218,10 +229,12 @@ void main() {
   testWidgets('add item page selects first category after async load',
       (tester) async {
     final repository = DelayedCategoryRepository();
-    await tester.pumpWidget(MyItemsApp(store: AppStore(repository)));
-    await tester.pump();
-
-    await tester.tap(find.byIcon(Icons.add).first);
+    final store = AppStore(repository);
+    await tester.pumpWidget(AppScope(
+      store: store,
+      child: const MaterialApp(home: AddItemPage()),
+    ));
+    unawaited(store.initialize());
     await tester.pump();
     expect(find.text('食品/饮料'), findsNothing);
 

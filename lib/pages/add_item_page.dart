@@ -46,123 +46,144 @@ class _AddItemPageState extends State<AddItemPage> {
         return Scaffold(
           appBar: AppBar(title: Text(isEditing ? '编辑物品' : '添加物品')),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: [
-              SectionCard(
-                title: '基础信息',
-                children: [
-                  TextField(
-                      controller: _name,
-                      decoration: const InputDecoration(labelText: '物品名称 *')),
-                  DropdownButtonFormField<String>(
-                    value: _form.categoryId,
-                    decoration: const InputDecoration(labelText: '分类 *'),
-                    items: store.categories
-                        .map<DropdownMenuItem<String>>(
-                            (c) => DropdownMenuItem<String>(
-                                  value: c.id,
-                                  child: Text('${c.icon ?? '📦'} ${c.name}'),
-                                ))
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _form.categoryId = value),
-                  ),
-                  TextField(
-                      controller: _brand,
-                      decoration: const InputDecoration(labelText: '品牌')),
-                ],
+              SoftCard(
+                child: SoftSectionHeader(
+                  title: isEditing ? '修改物品属性' : '放新物品入库',
+                  subtitle: '填写名称、分类、保质期和存放信息，保持库存清晰可查。',
+                ),
               ),
               const SizedBox(height: 12),
-              SectionCard(
-                title: '批次信息',
-                children: [
-                  TextField(
-                      controller: _price,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: '单价')),
-                  DropdownButtonFormField<String>(
-                    value: _form.location?.trim().isEmpty ?? true
-                        ? null
-                        : _form.location,
-                    decoration: const InputDecoration(labelText: '存放位置'),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text('未选择'),
-                      ),
-                      ...store.locations.map(
-                        (location) => DropdownMenuItem<String>(
-                          value: location.name,
-                          child: Text(location.name),
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SoftSectionHeader(title: '基础信息'),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: _name,
+                        decoration:
+                            const InputDecoration(labelText: '物品名称 *')),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _form.categoryId,
+                      decoration: const InputDecoration(labelText: '分类 *'),
+                      items: store.categories
+                          .map<DropdownMenuItem<String>>(
+                              (c) => DropdownMenuItem<String>(
+                                    value: c.id,
+                                    child: Text('${c.icon ?? '📦'} ${c.name}'),
+                                  ))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _form.categoryId = value),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: _brand,
+                        decoration:
+                            const InputDecoration(labelText: '品牌/存放补充')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SoftSectionHeader(title: '批次信息'),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: _price,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: '单价')),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _form.location?.trim().isEmpty ?? true
+                          ? null
+                          : _form.location,
+                      decoration: const InputDecoration(labelText: '存放位置'),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('未选择'),
                         ),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _form.location = value ?? ''),
-                  ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('购买日期'),
-                    subtitle: Text(_form.purchaseDate == null
-                        ? '未记录'
-                        : formatDate(_form.purchaseDate!)),
-                    trailing: const Icon(Icons.calendar_month),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _form.purchaseDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(() => _form.purchaseDate = picked);
-                      }
-                    },
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('无保质期'),
-                    value: _form.noExpiry,
-                    onChanged: (value) =>
-                        setState(() => _form.noExpiry = value),
-                  ),
-                  if (!_form.noExpiry)
+                        ...store.locations.map(
+                          (location) => DropdownMenuItem<String>(
+                            value: location.name,
+                            child: Text(location.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _form.location = value ?? ''),
+                    ),
+                    const SizedBox(height: 6),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('保质期'),
-                      subtitle: Text(formatDate(_form.expiryDate!)),
+                      title: const Text('购买日期'),
+                      subtitle: Text(_form.purchaseDate == null
+                          ? '未记录'
+                          : formatDate(_form.purchaseDate!)),
                       trailing: const Icon(Icons.calendar_month),
                       onTap: () async {
                         final picked = await showDatePicker(
                           context: context,
-                          initialDate: _form.expiryDate ?? DateTime.now(),
+                          initialDate: _form.purchaseDate ?? DateTime.now(),
                           firstDate: DateTime(2000),
                           lastDate: DateTime(2100),
                         );
                         if (picked != null) {
-                          setState(() => _form.expiryDate = picked);
+                          setState(() => _form.purchaseDate = picked);
                         }
                       },
                     ),
-                  StepperRow(
-                    label: '初始数量',
-                    value: _form.quantity,
-                    onChanged: (value) =>
-                        setState(() => _form.quantity = value),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('记录日均成本'),
-                    value: _form.trackDailyCost,
-                    onChanged: (value) =>
-                        setState(() => _form.trackDailyCost = value),
-                  ),
-                  TextField(
-                      controller: _notes,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(labelText: '备注')),
-                ],
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('无保质期'),
+                      value: _form.noExpiry,
+                      onChanged: (value) =>
+                          setState(() => _form.noExpiry = value),
+                    ),
+                    if (!_form.noExpiry)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('保质期'),
+                        subtitle: Text(formatDate(_form.expiryDate!)),
+                        trailing: const Icon(Icons.calendar_month),
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _form.expiryDate ?? DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() => _form.expiryDate = picked);
+                          }
+                        },
+                      ),
+                    StepperRow(
+                      label: '初始数量',
+                      value: _form.quantity,
+                      onChanged: (value) =>
+                          setState(() => _form.quantity = value),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('记录日均成本'),
+                      value: _form.trackDailyCost,
+                      onChanged: (value) =>
+                          setState(() => _form.trackDailyCost = value),
+                    ),
+                    TextField(
+                        controller: _notes,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: const InputDecoration(labelText: '备注')),
+                  ],
+                ),
               ),
             ],
           ),
