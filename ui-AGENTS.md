@@ -1,26 +1,27 @@
 ---
 rule_id: ui-agents
-version: 1.0.0
-last_updated: 2026-05-02
+version: 1.3.1
+last_updated: 2026-06-05
 dependencies: [agents-root]
 ---
 
-# AGENTS.md
+# 界面规则
 
 ## 适用范围
 
-- 作用域：页面、布局、导航、样式、交互、移动端适配、界面测试
-- 触发场景：涉及 ContentPage、Shell 导航、布局、控件、交互、样式、移动端适配、UI smoke test 时阅读
+- 作用域：页面、布局、导航、样式、交互、动效、移动端适配、界面测试
+- 触发场景：涉及 Widget、GoRouter 导航、布局、交互、样式、动效、移动端适配、UI smoke test 时阅读
 
 ### 阅读摘要
-- 建议阅读：新增页面、改导航、改表单交互、改控件样式、补界面验证
+- 建议阅读：新增页面、改导航、改表单交互、改 Widget 样式、补界面验证
 - 可先跳过：纯服务层逻辑、纯数据访问、仅文档整理、仅部署配置调整
-- 优先查看：界面规则、移动端适配规则、测试规则
+- 优先查看：界面规则、动效规则、移动端适配规则、测试规则
 
 ### 常见任务入口
-- 新增页面或布局：先看界面结构与组件规则
+- 新增页面或布局：先看界面结构与 Widget 规则
 - 改表单、弹窗、导航、交互：先看状态管理与事件处理规则
 - 改样式、主题、视觉展示：先看样式规则与设计系统约束
+- 改动效、过渡、动画：先看动效规则与 animation 规范
 - 改移动端适配、手势、平台特定 UI：先看移动端适配规则
 - 补界面回归：先看 `提交前最小回归` 与测试规则
 
@@ -29,19 +30,17 @@ dependencies: [agents-root]
 ## 技术栈
 
 ### UI
-- .NET MAUI + XAML
-- 目标平台：Android、iOS（优先），Windows、macOS（按需）
-- UI 控件库：Syncfusion.Maui.Toolkit（开源免费，优先使用其控件）
-- MVVM 模式：CommunityToolkit.Mvvm
-- 消息传递：`IMessenger`
-- 设计风格：Material Design（Android）/ Human Interface Guidelines（iOS），通过 MAUI 跨平台统一
+- Flutter + Dart
+- Material 3（Flutter 内置 UI 组件库）
+- Riverpod（状态管理）
+- GoRouter（路由管理）
 
 ### 设计系统
 - 使用 `design-system.yaml` 中定义的设计 token
-- 样式必须使用 MAUI ResourceDictionary（`.xaml`），禁止把颜色、间距、圆角直接硬编码在控件属性中
-- 颜色、间距、圆角必须来自样式资源，使用 `StaticResource` 或 `DynamicResource` 引用
+- 样式必须使用 Flutter ThemeData + Material 3 Token，禁止硬编码颜色、间距、圆角
+- 颜色通过 `Theme.of(context).colorScheme` 获取
+- 主题定制统一通过 `ThemeData` + `ColorScheme` 配置
 
-### 技术选择原则
 如果仓库已经有真实实现，以现有代码为准，不要强行重构或替换技术栈。
 
 **技术债务评估框架**：
@@ -58,53 +57,61 @@ dependencies: [agents-root]
 
 ---
 
+## 主动建议规则
+- 发现页面、组件、状态管理或请求逻辑职责混杂，导致文件膨胀、复用困难或测试困难时，应主动提醒并建议最小拆分点
+- 发现样式与 `design-system.yaml`、现有主题或组件库冲突时，应先说明差异和影响，不直接引入平行视觉体系
+- 发现可以复用已有 Widget、Provider、Service、工具函数时，应优先建议复用
+- 不确定组件行为、路由规则、状态管理模式或设计 token 时，应按根 `AGENTS.md` 的查证优先级处理，禁止凭经验硬编码
+
+---
+
 ## 推荐目录结构
 
-- UI 目录建议聚焦在 `src/AppName/Pages/`、`src/AppName/Controls/`、`src/AppName/ViewModels/`、`src/AppName/Resources/` 下组织，优先复用现有结构，不强制迁移。
+- UI 目录建议聚焦在 `lib/pages/`、`lib/widgets/`、`lib/config/` 下组织，优先复用现有结构，不强制迁移。
 
 ```text
-src/AppName/
-├── Pages/
-│   ├── Base/                  # 页面基类
-│   ├── Dialogs/               # 弹窗页面
-│   └── [Module]/              # 按业务域拆分的页面
-├── Controls/                  # 自定义控件
-├── Converters/                # 值转换器
-├── Resources/
-│   ├── Styles/
-│   │   ├── Colors.xaml        # 颜色资源
-│   │   ├── Fonts.xaml         # 字体资源
-│   │   ├── Sizes.xaml         # 间距与尺寸资源
-│   │   └── Global.xaml        # 全局样式
-│   └── Images/                # 图片资源（SVG 优先）
-├── ViewModels/
-│   ├── Base/
-│   ├── Dialogs/
-│   └── [Module]/
-├── App.xaml                   # 应用级资源与 Shell 定义
-└── AppShell.xaml              # Shell 导航结构
+lib/
+├── main.dart                    # 应用入口
+├── app.dart                     # MaterialApp / GoRouter 配置
+├── config/
+│   ├── theme.dart               # ThemeData + ColorScheme 主题配置
+│   ├── routes.dart              # GoRouter 路由定义
+│   └── constants.dart           # 常量定义
+├── pages/
+│   ├── home/
+│   │   ├── home_page.dart
+│   │   └── home_widgets.dart    # 页面私有 Widget
+│   └── [module]/
+├── widgets/                     # 可复用的通用 Widget
+│   ├── common/
+│   └── layout/
+├── providers/                   # Riverpod Provider
+├── models/                      # 数据模型、DTO
+├── services/                    # 业务服务
+├── repositories/                # 数据仓储
+└── utils/                       # 工具函数
 ```
 
 ---
 
-## 阶段 1 — 视图实现（Claude Code 主导）
+### 阶段 1 — 视图实现（界面实现角色主导）
 
 **触发条件**：用户发出「开始视图开发」指令
 
 **入场要求**：阶段 0 设计文档已由用户确认
 
 **工作内容**：
-1. 按设计文档实现页面和控件，遵循 `design-system.yaml` 和 MAUI 样式规范。
+1. 按设计文档实现页面和 Widget，遵循 `design-system.yaml` 和 Material 3 样式规范。
 2. 数据层使用 mock（静态 mock 数据），不依赖真实服务。
-3. 同步输出接口契约文件 `src/AppName/Models/DTOs/`，定义所有数据传输对象。
+3. 同步输出数据模型文件 `lib/models/`，定义所有数据传输对象。
 
 **产物**：
-- 可运行的 MAUI 页面
-- `src/AppName/Models/DTOs/` 契约类
+- 可运行的 Flutter 页面
+- `lib/models/` 数据模型
 
 **门控规则**：
 - 用户确认页面符合设计文档预期。
-- DTO 类中的类型已定稳，不再变动。
+- 数据模型中的类型已定稳，不再变动。
 - 满足以上两点后，才允许进入阶段 2。
 
 ---
@@ -112,84 +119,120 @@ src/AppName/
 ## UI 规则
 
 ### 样式规则
-- 所有样式使用 MAUI ResourceDictionary（`.xaml` 文件），禁止在控件中直接设置 `BackgroundColor`、`Margin` 等样式属性
-- 所有颜色来自 `design-system.yaml` 中定义的语义化 token，通过样式资源引用
-- 所有间距使用统一的资源或样式类，禁止硬编码数值
-- 字体统一在 `Resources/Styles/Fonts.xaml` 中定义，页面引用资源名称
+- 所有样式使用 Flutter ThemeData + Material 3 Token，禁止在 Widget 中直接硬编码颜色、间距、圆角
+- 所有颜色通过 `Theme.of(context).colorScheme` 获取语义化 token
+- 所有间距使用统一的常量或 `design-system.yaml` 中定义的 spacing scale
+- 字体统一通过 `Theme.of(context).textTheme` 获取
 
 ### 移动端适配规则
 - 页面布局必须适配不同屏幕尺寸和方向（竖屏 / 横屏）
-- 使用 `OnPlatform` 和 `OnIdiom` 标记处理平台差异，差异逻辑收敛到 XAML 资源或布局层，不散落在代码各处
+- 使用 `LayoutBuilder` 和 `MediaQuery` 处理屏幕差异
 - 触摸目标尺寸最小 44x44（iOS）/ 48x48（Android），关键操作区域需考虑拇指热区
-- 安全区域处理：iOS 使用 `SafeArea` 设置，Android 使用系统边衬区
-- 列表滚动使用 `CollectionView` 优先，避免 `ListView` 已知性能问题
+- 安全区域处理：使用 `SafeArea` Widget 自动处理
+- 列表滚动使用 `ListView.builder` / `GridView.builder`，支持懒加载
 - 图片资源按平台提供合适分辨率，优先使用 SVG 矢量图
-- 下拉刷新使用 Syncfusion PullToRefresh 控件
-- 手势操作（滑动删除、捏合缩放）使用 MAUI 内置手势识别器
-- 键盘遮挡输入框时使用 `SoftInputExtensions` 自动调整
+- 下拉刷新使用 `RefreshIndicator`
+- 手势操作（滑动删除、捏合缩放）使用 Flutter 内置手势识别器
+- 键盘遮挡输入框时使用 `SingleChildScrollView` 或 `ResizeToAvoidBottomInset` 自动调整
 
-### 组件规则
-- 优先复用 `src/AppName/Controls/` 下已有控件，禁止重复创建
-- 只有确实有复用价值时才新增共享控件，避免为单次需求过度抽象
+### Widget 规则
+- 优先复用 `lib/widgets/` 下已有 Widget，禁止重复创建
+- 只有确实有复用价值时才新增共享 Widget，避免为单次需求过度抽象
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`
-- 优先使用 Syncfusion.Maui.Toolkit 控件，不满足需求时再使用 MAUI 内置控件或自定义控件
-- 图标使用 MAUI 内置图形能力（Font Image Source）或项目既有素材
-- 覆盖式侧边栏或抽屉打开后，主体页面中的搜索框、统计卡片、列表卡片等内容不得与抽屉视觉重叠；若菜单只需要左侧固定宽度，应使用全宽覆盖容器承载左侧菜单内容，而不是让半宽容器后方的大圆角卡片继续透出
+- 优先使用 Material 3 内置组件，不满足需求时再自定义 Widget
+- 图标使用 Material Icons（`Icon(Icons.xxx)`）或项目既有素材
 
-### MVVM 模式规则
-- 所有 ViewModel 最终都必须继承 `ObservableObject`；若项目已有 `BaseViewModel`，应由基类继承 `ObservableObject` 后统一复用
-- 属性通知使用 `[ObservableProperty]` 特性自动生成，禁止手写重复样板
-- 命令定义使用 `[RelayCommand]` 特性生成，禁止手动拼装重复命令逻辑
-- ViewModel 依赖通过构造函数注入
-- 禁止在 Code-behind（`.xaml.cs`）中编写业务逻辑
+### 状态管理规则（Riverpod）
+- 本地状态使用 `StatefulWidget` + `setState` 管理
+- 跨 Widget 共享状态使用 Riverpod Provider
+- Provider 定义在 `lib/providers/` 目录，按业务域拆分
+- 禁止使用静态全局类存储业务状态
+- 主题、语言等低频全局配置才放入 Riverpod Provider
+- 页面生命周期事件中只做初始化和清理，不承载业务逻辑
+- Provider 命名规范：`xxxProvider`（函数式）/ `XxxNotifier`（类式）
 
 ### 导航规则
-- 使用 MAUI Shell 导航（`Shell.Current.GoToAsync`）进行页面切换
-- 导航路由统一在 `AppShell.xaml.cs` 或 `MauiProgram.cs` 中注册
-- 页面参数通过导航查询参数（`ShellNavigationQueryParameters`）或 `IQueryAttributable` 传递，禁止使用静态全局状态
-- 全屏编辑页优先使用 Shell 路由进入，不直接 `Navigation.PushAsync(page)` 手动压入页面实例；若确需直接压入，隐藏顶部导航与底部标签栏时需在 XAML 附加属性、页面构造和 `OnAppearing` 中同时确认 Shell NavBar、Shell TabBar 与 `NavigationPage` 导航栏状态，避免 Android 上残留顶部占位
-- 需要历史记录时，应支持前进 / 后退
-- 模态页面使用 `://` 前缀或 `Shell.Current.Navigation.PushModalAsync`
-- 深度链接配置统一在 `AppShell.xaml` 中声明
+- 使用 GoRouter 进行页面切换，路由定义集中在 `lib/config/routes.dart`
+- 页面参数通过路由参数（path/query parameters）传递，不使用静态全局状态
+- 模态页面使用 `context.push('/route')`
+- 返回使用 `context.pop()`
+- 需要历史记录时，GoRouter 默认支持
+- 深度链接在 GoRouter 路由表中统一声明
 
 ### 弹窗规则
-- 简单提示使用 `CommunityToolkit.Maui.Alerts`（Snackbar / Toast）
-- 复杂弹窗使用 `CommunityToolkit.Maui.Views.Popup` 或 Syncfusion Popup，按项目已有方案选择
-- 弹窗内容必须使用 ViewModel，禁止在 Code-behind 编写业务逻辑
-- 弹窗结果通过异步返回，禁止依赖隐式全局状态
+- 简单提示使用 `ScaffoldMessenger.of(context).showSnackBar`
+- 确认弹窗使用 `showDialog` / `showAdaptiveDialog`
+- 底部弹窗使用 `showModalBottomSheet`（动效参考 design-system.yaml 的 spring_physics）
+- 弹窗内容如果复杂，应抽取为独立 Widget
+- 弹窗结果通过异步返回（`await showDialog<T>`），禁止依赖隐式全局状态
 - 危险操作需提供明确的二次确认
 
 ### 数据绑定规则
-- 列表数据使用 `ObservableCollection<T>`
-- 复杂集合变更优先使用批量更新策略，而不是简单清空后重添
-- 异步数据加载必须支持取消（`CancellationToken`）
-- 绑定路径必须可维护，禁止依赖脆弱的控件查找方式
-- 使用 `x:DataType` 启用编译时绑定检查，提升性能和类型安全
-
-### 状态管理规则
-- 本地状态使用 `[ObservableProperty]` 管理
-- 全局共享状态使用 `IMessenger` 传递跨 ViewModel 消息
-- 禁止使用静态全局类存储业务状态
-- 主题、语言等低频全局配置才放入应用级资源或全局上下文
-- 页面生命周期事件（`OnNavigatedTo`、`OnNavigatedFrom`）中只做初始化和清理，不承载业务逻辑
+- 列表数据使用 `List<T>` 或 `AsyncValue<T>`（Riverpod）
+- 异步数据加载使用 Riverpod 的 `AsyncNotifier` 自动管理 loading/error 状态
+- 绑定路径必须可维护，禁止依赖脆弱的 Widget 查找方式
 
 ### 主题规则
 - 默认使用浅色主题，深色主题仅在项目明确要求时扩展
-- 若支持深色模式，所有颜色必须通过 `design-system.yaml` 中的语义化 token 引用，禁止在 XAML 或代码中硬编码颜色值
-- 主题切换通过 `Application.Current.UserAppTheme` 控制，不自建主题切换机制
+- 若支持深色模式，所有颜色必须通过 `ColorScheme` 引用，禁止硬编码颜色值
+- 主题切换通过 `ThemeMode` 控制，不自建主题切换机制
 - 页面中任何视觉状态（含弹窗、Loading、Error 页面）必须同时验证浅色与深色下的可读性
+
+---
+
+## 动效规则
+
+### 通用原则
+- 动效参数统一参考 `design-system.yaml` 的 `animation` 区域
+- 动效服务于交互反馈，不用于装饰
+- 保持克制：避免过度弹跳、旋转、闪烁等分散注意力的动画
+- 所有动效必须可通过 `MediaQuery.disableAnimations` 关闭（无障碍支持）
+
+### 页面转场
+- 默认转场：fade + slight slide，200ms，Curves.easeOut
+- 前进导航：slide_from_right，250ms
+- 模态页面：slide_from_bottom，300ms
+- 详情展开：scale_up（0.9→1.0），200ms
+- 自定义转场通过 `GoRouter` 的 `pageBuilder` 或 `CustomTransitionPage` 实现
+
+### 列表交错入场
+- 卡片网格、列表数据加载后使用交错入场动画
+- 每项延迟 30ms，单项动画时长 300ms，Curves.easeOutCubic
+- 使用 `AnimatedList` 或手动 `AnimationController` + `Interval`
+
+### 弹簧动画
+- 底部弹窗（BottomSheet）、抽屉（Drawer）使用弹簧物理动画
+- 参数：damping=25, stiffness=200-300
+- Flutter API：`SpringSimulation` 或 `Curves.elasticOut`
+- 禁止在文字变化、颜色变化等非位移动画中使用弹簧
+
+### 进度条动画
+- 进度条从 0 到目标值的动画填充
+- 时长 1200ms，Curves.easeOut
+- Flutter API：`AnimatedContainer` 或 `TweenAnimationBuilder`
+
+### 交互反馈
+- 可点击元素默认使用 `InkWell`（Material 水波纹）
+- 卡片等需要更强反馈的元素，增加按压缩放（scale 0.95→1.0, 100ms）
+- 实时/在线状态使用脉冲指示器（success.light 颜色，循环动画）
+
+### 毛玻璃效果
+- 顶部导航栏：`BackdropFilter` blur=10, bg white/0.8
+- 底部操作栏：`BackdropFilter` blur=15, bg white/0.85
+- 深色背景浮层：`BackdropFilter` blur=20, bg black/0.3
+- 避免在列表滚动区域使用 `BackdropFilter`，影响性能
 
 ---
 
 ## 测试规则
 
 ### 提交前最小回归
-- 默认执行：项目现有的编译、静态检查或等价校验
+- 默认执行：`flutter analyze`
 - 页面、导航、表单交互改动：至少补一次受影响界面或组件的 smoke test / 等价验证
-- 连续两次反馈同一视觉问题未解决时，必须先做根因回顾，再改为确定布局约束（如 `Grid` 行列、明确 `Margin` / `Padding`、Shell / SafeArea 状态），禁止继续使用负 `TranslationY` 等视觉补丁掩盖问题；未取得真机或截图证据前，不得宣称视觉问题已修复。
+- 连续两次反馈同一视觉问题未解决时，必须先做根因回顾，再改为确定布局约束，禁止继续使用视觉补丁掩盖问题；未取得真机或截图证据前，不得宣称视觉问题已修复。
 - **微小调整**（文案修改、颜色调整、间距优化等不影响逻辑的改动，修改内容少于10行）：可不补自动化测试，但仍应确认受影响界面的关键状态、布局与主要交互未回退
 - 仅样式或视觉改动：至少确认受影响界面的关键状态、布局与主要交互未回退
-- 若影响共享控件、布局或状态流转，优先验证影响范围最大的界面，而不是只看局部控件
+- 若影响共享 Widget、布局或状态流转，优先验证影响范围最大的界面，而不是只看局部 Widget
 
 ### 总体要求
 - 影响行为的改动应优先补充或更新测试
@@ -200,7 +243,7 @@ src/AppName/
 - 页面交互、表单校验、列表行为、状态展示、异常状态变化时，应补充对应测试
 - 至少关注以下关键状态：`loading`、`empty`、`error`、`no-permission`
 - 若涉及数据请求、筛选、提交等关键路径，应验证主要交互结果
-- 推荐使用 xUnit + 项目既有 UI 测试方案
+- 推荐使用 `flutter_test` + `mocktail`
 
 ### 外部依赖与数据
 - 测试中不要真实调用外部服务，统一使用 mock、stub 或测试替身
