@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>欢迎使用 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+<style>
+/* 首次启动引导（需求 5.14）：单屏极简，仅演示；真实应用中此页只在首次启动出现 */
+.seed-card{background:var(--cream-0);border:1px solid var(--line-soft);border-radius:20px;padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow-card)}
+.seed-card b{font-size:13.5px;display:block;line-height:1.6}
+.seed-card small{font-size:11px;color:var(--ink-faint);font-weight:700;display:block;margin-top:7px;line-height:1.8}
+.emoji-row{font-size:17px;letter-spacing:3px;margin-top:6px}
+</style>
+</head>
+<body class="sub" data-page="onboard">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-basket" viewBox="0 0 24 24"><path d="M4 9h16l-1.8 10a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6Z"/><path d="M8 9c0-4 1.5-6 4-6s4 2 4 6M9 13v4M12 13v4M15 13v4"/></symbol></svg>
+
+<div class="app">
+  <div class="about-hero rv" style="padding-top:56px">
+    <div class="logo-blob"><svg fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-basket"/></svg></div>
+    <h1>暖仓 WarmPantry</h1>
+    <div class="slogan">🧺 把日子过得清清楚楚</div>
+  </div>
+  <div class="pad">
+    <div class="seed-card rv">
+      <b>已为你准备好 8 个常用分类</b>
+      <div class="emoji-row">🥕 🧹 🍳 💊 💄 🧃 🔌 📦</div>
+      <small>食品食材 · 日用清洁 · 厨房小物 · 药品保健 · 美妆护肤 · 酒水饮料 · 数码周边 · 其他杂物</small>
+    </div>
+    <div class="seed-card rv">
+      <b>还可以一键创建 8 个常用存放位置</b>
+      <small>冰箱冷藏室、冰箱冷冻室、橱柜吊柜、调料架、镜柜、洗手台下方柜、玄关收纳柜、书桌抽屉——按「厨房 / 卫生间 / 居住」区域分组，支持随时修改与停用。</small>
+    </div>
+    <button class="btn primary rv" style="width:100%" onclick="location.href='home.html'">开始使用（创建分类 + 预置位置）</button>
+    <button class="btn ghost rv" style="width:100%;margin-top:9px" onclick="location.href='home.html'">仅创建分类，跳过预置位置</button>
+    <p class="notice rv" style="justify-content:center;margin-top:14px">此页仅首次启动出现 · 预置内容可随时在「我的」里修改</p>
+  </div>
+</div>
+</body>
+</html>

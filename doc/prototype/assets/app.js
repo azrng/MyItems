@@ -406,6 +406,44 @@
       closeQ();
       showToast('已按上次规格入库新批次：'+name+' +'+add+' '+qUnitVal+' 📦（旧批次独立保留，不合并）');
     };
+
+    /* -- 位置筛选 + 排序切换（需求 5.3） -- */
+    var locChip=document.getElementById('locFilterChip'),sortChip=document.getElementById('sortChip');
+    var lfMask=document.getElementById('lfMask'),lfSheet=document.getElementById('lfSheet');
+    var currentLoc='全部位置',sortByAdded=false;
+    if(lfSheet){
+      function closeLf(){lfMask.classList.remove('on');lfSheet.classList.remove('on')}
+      lfMask.onclick=closeLf;
+      document.getElementById('lfClose').onclick=closeLf;
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&lfSheet.classList.contains('on'))closeLf()});
+      $$('#lfChips .chip').forEach(function(c){
+        c.onclick=function(){
+          $$('#lfChips .chip').forEach(function(x){x.classList.remove('on')});
+          c.classList.add('on');
+          currentLoc=c.textContent.trim();
+          applyFilters();
+          closeLf();
+        };
+      });
+    }
+    function applyFilters(){
+      var visible=0;
+      $$('.itemc').forEach(function(card){
+        var hit=currentLoc==='全部位置'||card.querySelector('.meta').textContent.indexOf(currentLoc)>-1;
+        card.style.display=hit?'':'none';
+        if(hit)visible++;
+      });
+      locChip.textContent='📍 '+currentLoc+' ▾';
+      if(currentLoc!=='全部位置')showToast('已筛选「'+currentLoc+'」：'+visible+' 件物品');
+    }
+    if(locChip)locChip.onclick=function(){
+      if(lfSheet){lfMask.classList.add('on');lfSheet.classList.add('on')}
+    };
+    if(sortChip)sortChip.onclick=function(){
+      sortByAdded=!sortByAdded;
+      sortChip.textContent=sortByAdded?'🕐 添加时间 ↓':'⏱ 到期时间 ↑';
+      showToast(sortByAdded?'已按添加时间倒序（最新入库在前）':'已按到期时间升序（最早到期在前）');
+    };
   }
 
   /* ---- 添加/编辑物品 ---- */

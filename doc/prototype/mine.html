@@ -37,7 +37,7 @@
   <div class="group rv">
     <div class="eyebrow">DATA · 数据与设备</div>
     <nav class="menu">
-      <a data-toast="每日一条聚合摘要（默认 08:30）；内容预计算后交系统定时，关 App 也会照常弹出；Android 13+ 首次开启时申请权限 ⏰"><span class="mi i-gold"><svg class="ic"><use href="#i-alert"/></svg></span>提醒设置<span class="val">每天 08:30 ▾<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a id="remindRow" style="cursor:pointer"><span class="mi i-gold"><svg class="ic"><use href="#i-alert"/></svg></span>提醒设置<span class="val">每天 <span id="rmVal">08:30</span> ▾<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
       <a id="themeRow"><span class="mi i-violet"><svg class="ic"><use href="#i-moon"/></svg></span>深色模式<span class="val"><button class="switch" id="themeSwitch" aria-label="深色模式开关"></button></span></a>
       <a data-nav="backup"><span class="mi i-teal"><svg class="ic"><use href="#i-cloud"/></svg></span>存储管理与备份<span class="val"><span class="pill-on">自动备份中</span><svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
     </nav>
@@ -60,7 +60,59 @@
   <a class="tab act" href="mine.html"><svg class="ic"><use href="#i-user"/></svg>我的<i class="tdot"></i></a>
 </nav>
 
+<!-- 提醒设置弹层 -->
+<div class="sheet-mask" id="rmMask"></div>
+<div class="sheet" id="rmSheet">
+  <h3>提醒设置</h3>
+  <p class="sub">每日一条聚合摘要；内容预计算后交系统定时投递，关闭 App 也会照常弹出</p>
+  <div class="switchrow" style="margin-bottom:12px">
+    <div><p>每日摘要提醒</p><small>汇总临期与已过期数量，最紧急的排前面</small></div>
+    <button class="switch on" id="rmSwitch" aria-label="提醒开关"></button>
+  </div>
+  <div class="field rs-field">
+    <label>提醒时间</label>
+    <div class="amt-chips" id="rmTimes">
+      <span class="chip">07:30</span><span class="chip on">08:30</span><span class="chip">09:00</span><span class="chip">12:30</span><span class="chip">21:00</span>
+    </div>
+  </div>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="rmCancel">取消</button>
+    <button class="btn primary" id="rmOk">保存</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>
+<script>
+/* 提醒设置弹层（需求 4.9 / 5.5）：开关 + 时间选择，保存即时生效 */
+(function(){
+  'use strict';
+  var $=function(s){return document.querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
+  var row=$('#remindRow'),m=$('#rmMask'),sh=$('#rmSheet');
+  if(!row)return;
+  function close(){m.classList.remove('on');sh.classList.remove('on')}
+  row.addEventListener('click',function(e){
+    if(e.target.closest('.switch'))return;
+    m.classList.add('on');sh.classList.add('on');
+  });
+  m.onclick=close;
+  $('#rmCancel').onclick=close;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sh.classList.contains('on'))close()});
+  $$('#rmTimes .chip').forEach(function(c){
+    c.onclick=function(){
+      $$('#rmTimes .chip').forEach(function(x){x.classList.remove('on')});
+      c.classList.add('on');
+    };
+  });
+  $('#rmOk').onclick=function(){
+    var on=$('#rmSwitch').classList.contains('on');
+    var t=$('#rmTimes .chip.on').textContent.trim();
+    $('#rmVal').textContent=on?t:'已关闭';
+    close();
+    $('#toastMsg').textContent=on?'✔ 已保存：每天 '+t+' 一条聚合摘要，关 App 也会照常弹出':'已关闭每日摘要（站内铃铛红点仍会提示）';
+    var t2=$('#toast');t2.classList.add('on');setTimeout(function(){t2.classList.remove('on')},2400);
+  };
+})();
+</script>
 </body>
 </html>

@@ -37,8 +37,8 @@
     <span class="chip">📦 其他 4</span>
   </div>
   <div class="cat-chips rv" style="padding-top:0">
-    <span class="chip" style="border-style:dashed">📍 全部位置 ▾</span>
-    <span class="chip" style="border-style:dashed">⏱ 到期时间 ↑</span>
+    <span class="chip" id="locFilterChip" style="border-style:dashed;cursor:pointer">📍 全部位置 ▾</span>
+    <span class="chip" id="sortChip" style="border-style:dashed;cursor:pointer">⏱ 到期时间 ↑</span>
   </div>
   <div class="grid">
     <article class="itemc rv"><div class="thumb" style="background:var(--danger-soft)"><span class="badge tag t-red">还剩2天</span>🍞</div><b>全麦吐司</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>冰箱冷藏 · 450g</div><div class="meter"><i style="width:65%"></i></div><div class="qtyrow"><span class="low-tag">已开封</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
@@ -110,6 +110,17 @@
 
 <!-- 撤销条：5 秒 Snackbar（需求 4.3 / 4.8） -->
 <div class="snackbar" id="snackbar"><span id="sbMsg"></span><button id="sbUndo" type="button">撤销</button></div>
+
+<!-- 位置筛选弹层（需求 5.3） -->
+<div class="sheet-mask" id="lfMask"></div>
+<div class="sheet" id="lfSheet">
+  <h3>按存放位置筛选</h3>
+  <p class="sub">选中即过滤下方物品网格，可随时切回全部位置</p>
+  <div class="amt-chips" id="lfChips" style="margin-bottom:16px">
+    <span class="chip on">全部位置</span><span class="chip">冰箱冷藏</span><span class="chip">冰箱冷冻</span><span class="chip">厨房吊柜</span><span class="chip">卫生间置物架</span><span class="chip">客厅电视柜</span><span class="chip">玄关收纳柜</span><span class="chip">家庭药箱</span><span class="chip">梳妆台抽屉</span><span class="chip">水槽收纳篮</span>
+  </div>
+  <button class="btn ghost" id="lfClose" style="width:100%">收起</button>
+</div>
 
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>
