@@ -6,6 +6,12 @@
 <title>物品库 · 暖仓 WarmPantry</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="assets/warmpantry.css">
+<style>
+/* 撤销条（Snackbar）：模拟需求 4.3 / 4.8 的 5 秒撤销窗口 */
+.snackbar{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:96px;z-index:60;display:flex;align-items:center;gap:14px;background:rgba(50,41,28,.94);color:#FBF2E3;font-size:12px;font-weight:800;padding:12px 16px;border-radius:14px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:.25s;max-width:min(92vw,400px)}
+.snackbar.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.snackbar button{border:none;background:none;color:#F8C89B;font-family:inherit;font-weight:900;font-size:12.5px;cursor:pointer;padding:0}
+</style>
 </head>
 <body data-page="library">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z"/></symbol><symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z"/><path d="M3.5 8 12 12.3 20.5 8M12 12.3V20.5"/></symbol><symbol id="i-bowl" viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 0 1-16 0Z"/><path d="M8.5 8.5c1.5-1.2 1-3 .5-4M13 8c.8-1.5-.2-2.8-.8-3.5"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.5-3.4 4.3-5 7.5-5s6 1.6 7.5 5"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10Z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11.5a7 7 0 0 1 14 0C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="5" rx="1.5"/><path d="M5.5 9.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5M10 13.5h4"/></symbol><symbol id="i-cat" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol></svg>
@@ -46,7 +52,7 @@
     <article class="itemc rv"><div class="thumb" style="background:var(--teal-soft)"><span class="badge tag t-gry">余量低</span>🧽</div><b>厨房双面海绵</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>水槽收纳篮 · 3片</div><div class="meter"><i style="width:15%"></i></div><div class="qtyrow"><span class="low-tag">剩15%</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
     <article class="itemc rv"><div class="thumb" style="background:var(--gold-soft)"><span class="badge tag t-grn">安全</span>🌰</div><b>每日坚果</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>玄关收纳柜 · 30日装</div><div class="meter"><i style="width:96%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
   </div>
-  <p class="notice rv">💡 点卡片可编辑详情，长按可多选批量调整</p>
+  <p class="notice rv">💡 点卡片进物品详情（批次 / 开封 / 余量校正）；「−」消耗 5 秒内可撤销；「＋」按上次规格快捷再入库；长按可多选批量调整与快捷开封</p>
 </div>
 
 <nav class="tabbar">
@@ -56,6 +62,45 @@
   <a class="tab" href="consume.html"><svg class="ic"><use href="#i-bowl"/></svg>消耗<i class="tdot"></i></a>
   <a class="tab" href="mine.html"><svg class="ic"><use href="#i-user"/></svg>我的<i class="tdot"></i></a>
 </nav>
+
+<!-- 快捷再入库面板（需求 4.3「＋」＝新建批次，预填上次规格） -->
+<div class="sheet-mask" id="qMask"></div>
+<div class="sheet" id="qSheet">
+  <h3>快捷再入库</h3>
+  <p class="sub">按上次规格新建一个批次，不合并旧批次，效期可修改</p>
+  <div class="field rs-field">
+    <label>物品名称</label>
+    <div class="input"><input id="qName" readonly></div>
+  </div>
+  <div class="field rs-field">
+    <label>规格 / 单位</label>
+    <div class="input"><input id="qSpec" placeholder="沿用上次规格"></div>
+  </div>
+  <div class="field rs-field">
+    <label>存放位置</label>
+    <div class="input"><input id="qLoc" placeholder="沿用上次位置"><span style="font-size:11px;color:var(--ink-faint);font-weight:800">默认带出</span></div>
+  </div>
+  <div class="field rs-field">
+    <label>保质期</label>
+    <div class="input"><input id="qExp" readonly><span style="font-size:11px;color:var(--accent-deep);font-weight:900">可进编辑页修改</span></div>
+  </div>
+  <div class="field rs-field">
+    <label>本批数量</label>
+    <div class="cust-row on" style="justify-content:center">
+      <button class="stepb-lg" data-qstep="-1" type="button">−</button>
+      <input id="qQty" type="number" inputmode="numeric" min="1" value="1" style="font-family:var(--f-num);font-size:21px;font-weight:600;width:74px;text-align:center;border:none;outline:none;background:transparent;color:var(--ink)">
+      <button class="stepb-lg" data-qstep="1" type="button">＋</button>
+    </div>
+  </div>
+  <p class="src-line">📋 确认后写入一条 intake 流水（来源 快捷再入库），与「再买一次」口径一致</p>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="qCancel">先留着</button>
+    <button class="btn primary" id="qOk">入库这个新批次</button>
+  </div>
+</div>
+
+<!-- 撤销条：5 秒 Snackbar（需求 4.3 / 4.8） -->
+<div class="snackbar" id="snackbar"><span id="sbMsg"></span><button id="sbUndo" type="button">撤销</button></div>
 
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>

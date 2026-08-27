@@ -6,6 +6,10 @@
 <title>存储与备份 · 暖仓 WarmPantry</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="assets/warmpantry.css">
+<style>
+/* 失败态示意（需求 7.1：失败 pill + 重试引导） */
+.meta-line.fail{background:var(--danger-soft);color:var(--danger);border:1px dashed var(--danger);align-items:flex-start}
+</style>
 </head>
 <body class="sub" data-page="backup">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3.5h8L19 8.5v12H6Z"/><path d="M13.5 3.5v5.5H19M9.5 13h5M9.5 16.5h5"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 18.3 11a3.8 3.8 0 0 1-.3 7.5Z"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.5 3 7.6 7 9.8 4-2.2 7-5.3 7-9.8V5.8Z"/><path d="m9 11.5 2.2 2.2L15.5 9.5"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="m8.4 10.7 6.8-3.9M8.4 13.3l6.8 3.9"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M4.5 20h15"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol></svg>
@@ -33,21 +37,23 @@
         <a><span class="mi" style="background:var(--olive-soft);color:var(--olive)"><svg class="ic"><use href="#i-cloud"/></svg></span>每日自动备份<span class="val"><button class="switch on" aria-label="开关"></button></span></a>
         <a data-toast="切换到本机文件目录 📁"><span class="mi i-teal"><svg class="ic"><use href="#i-cloud"/></svg></span>备份位置<span class="val">本机文件目录 ▾</span></a>
         <a data-toast="保留最近 5 个历史版本 🕘"><span class="mi i-gry"><svg class="ic"><use href="#i-clock"/></svg></span>保留版本数<span class="val">最近 5 份 ▾</span></a>
+        <a id="doBackup"><span class="mi i-orange"><svg class="ic"><use href="#i-shield"/></svg></span>立即备份<span class="val" id="bkVal">手动触发 ▸</span></a>
       </nav>
     </div>
 
     <div class="group rv">
       <div class="eyebrow">EXPORT · 导出</div>
       <div class="export-btns">
-        <button class="btn primary" data-toast="已生成 warmpantry-20260827.json 📦"><svg class="ic"><use href="#i-doc"/></svg>完整备份（JSON · 含图片）</button>
+        <button class="btn primary" data-toast="已生成 warmpantry_backup_20260827.myitems.json（含图片）📦"><svg class="ic"><use href="#i-doc"/></svg>完整备份（JSON · 含图片）</button>
         <button class="btn ghost" data-toast="已导出 items-table.csv 📄"><svg class="ic"><use href="#i-doc"/></svg>表格导出（CSV · 可用 Excel 打开）</button>
         <button class="btn ghost" data-toast="唤起系统分享面板 ↗️"><svg class="ic"><use href="#i-share"/></svg>分享给家人的其他设备</button>
       </div>
     </div>
 
     <div class="meta-line rv"><svg class="ic" style="width:15px;height:15px;flex-shrink:0"><use href="#i-shield"/></svg>上次成功备份：今天 08:30 · 2.1MB · 校验通过 ✓</div>
+    <div class="meta-line fail rv"><div style="flex:1">失败态示意：08-26 自动备份失败 · 磁盘空间不足<small style="display:block;font-weight:700;font-size:10.5px;margin-top:2px">次日窗口重试 / 回前台补试，或点上方「立即备份」手动补一份</small></div><span class="tag t-red">示例</span></div>
     <div class="menu rv" style="margin-top:12px">
-      <a data-toast="选择 .json 备份文件导入 📥"><span class="mi i-gold"><svg class="ic"><use href="#i-down"/></svg></span>从备份文件恢复<span class="val"><svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-toast="选择 .json 备份文件导入；覆盖前会自动把当前数据留存一份 pre_restore 备份 📥"><span class="mi i-gold"><svg class="ic"><use href="#i-down"/></svg></span>从备份文件恢复<span class="val">恢复后悔药已内置<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
     </div>
     <p class="notice rv" style="justify-content:center">🔒 备份文件均为本地生成，不上传任何服务器</p>
   </div>
@@ -55,5 +61,25 @@
 
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>
+<script>
+/* 立即备份（需求 7.1）：手动触发 → 备份中 → 校验通过 */
+(function(){
+  'use strict';
+  var btn=document.getElementById('doBackup'),val=document.getElementById('bkVal'),busy=false;
+  if(!btn)return;
+  btn.onclick=function(){
+    if(busy)return;busy=true;
+    val.textContent='备份中…';
+    setTimeout(function(){
+      var p=function(x){return String(x).padStart(2,'0')},d=new Date();
+      val.textContent='上次 刚刚 · 校验通过 ✓';
+      busy=false;
+      document.getElementById('toastMsg').textContent='✔ 完整备份完成：warmpantry_backup_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.myitems.json';
+      var t=document.getElementById('toast');t.classList.add('on');
+      setTimeout(function(){t.classList.remove('on')},2400);
+    },900);
+  };
+})();
+</script>
 </body>
 </html>

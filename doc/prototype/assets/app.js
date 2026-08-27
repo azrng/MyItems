@@ -38,11 +38,12 @@
 
   /* ===== 通用确认弹层（#sheet + #mask） ===== */
   var mask=document.getElementById('mask'),sheet=document.getElementById('sheet'),sheetAction=null;
-  function openConfirm(title,sub,okLabel,action){
+  function openConfirm(title,sub,okLabel,action,cancelLabel){
     if(!sheet)return;
     document.getElementById('sheetTitle').textContent=title;
     document.getElementById('sheetSub').textContent=sub;
     document.getElementById('sheetOk').textContent=okLabel||'确认';
+    var sc=document.getElementById('sheetCancel');if(sc)sc.textContent=cancelLabel||'先留着';
     sheetAction=action;
     if(mask)mask.classList.add('on');
     sheet.classList.add('on');
@@ -303,22 +304,86 @@
     });
   }
 
-  /* ---- 物品库：点卡片 → 编辑页（带参跳转） ---- */
+  /* ---- 物品库：点卡片 → 物品详情；− FIFO 快捷消耗（可撤销）；＋ 快捷再入库新批次 ---- */
   if(page==='library'){
+    var LIBLOCS=/冰箱冷藏|冰箱冷冻|厨房吊柜|橱柜吊柜|卫生间置物架|客厅电视柜|玄关收纳柜|家庭药箱|梳妆台抽屉|水槽收纳篮|浴室置物架/;
+    function qtyEl(card){return card.querySelector('.stepper')}
+    function qtyNum(card){return parseInt((qtyEl(card).childNodes[1].textContent||'').trim())||0}
+    function setQty(card,n){qtyEl(card).childNodes[1].textContent=n}
+
+    /* -- 撤销条：模拟需求 4.3/4.8 的 5 秒 Snackbar 撤销窗口 -- */
+    var bar=document.getElementById('snackbar'),barTimer=null,pending=null;
+    function hideBar(){if(bar)bar.classList.remove('on');pending=null}
+    function showUndo(msg,restore){
+      if(!bar){showToast(msg);return}
+      document.getElementById('sbMsg').textContent=msg;
+      pending=restore;bar.classList.add('on');
+      clearTimeout(barTimer);barTimer=setTimeout(hideBar,5000);
+    }
+    var sbBtn=document.getElementById('sbUndo');
+    if(sbBtn)sbBtn.onclick=function(){if(pending)pending();hideBar()};
+
     $$('.itemc').forEach(function(card){
+      var steps=card.querySelectorAll('.stepb');
+
+      /* 点卡片 → 物品详情（批次列表 / 开封 / 校正），编辑在详情页内 */
       card.addEventListener('click',function(e){
         if(e.target.closest('.stepb'))return;
         var badge=card.querySelector('.badge');
         var m=badge?badge.textContent.match(/(\d+)\s*天/):null;
         var meta=card.querySelector('.meta');
-        var locEl=meta?meta.textContent.match(/(?:冰箱冷藏|冰箱冷冻|厨房吊柜|卫生间置物架|客厅电视柜|玄关收纳柜|家庭药箱|梳妆台抽屉|水槽收纳篮|浴室置物架)/):null;
-        var p=new URLSearchParams({mode:'edit',name:card.querySelector('b').textContent});
-        if(card.querySelector('.stepper'))p.set('qty',card.querySelector('.stepper').textContent.replace(/[−＋]/g,'').trim());
+        var locEl=meta?meta.textContent.match(LIBLOCS):null;
+        var p=new URLSearchParams({name:card.querySelector('b').textContent});
         if(m)p.set('days',m[1]);
         if(locEl)p.set('loc',locEl[0]);
-        location.href='add-item.html?'+p.toString();
+        location.href='detail.html?'+p.toString();
       });
+
+      /* − ：按有效到期日最早批次 −1（FIFO 口径），演示为卡片计数 −1 */
+      steps[0].onclick=function(e){
+        e.stopPropagation();
+        var n=qtyNum(card);if(n<=0)return;
+        setQty(card,n-1);
+        var name=card.querySelector('b').textContent;
+        showUndo('已记录 '+name+' −1 · 写入消耗流水',function(){setQty(card,n)});
+      };
+
+      /* ＋ ：快捷再入库 → 预填上次规格的轻量面板，确认后新建批次 */
+      steps[1].onclick=function(e){e.stopPropagation();openIntake(card)};
     });
+
+    /* -- 快捷再入库面板（需求 4.3 「＋」语义） -- */
+    var qMask=document.getElementById('qMask'),qSheet=document.getElementById('qSheet');
+    var qName=document.getElementById('qName'),qSpec=document.getElementById('qSpec'),
+        qLoc=document.getElementById('qLoc'),qExp=document.getElementById('qExp'),qQty=document.getElementById('qQty');
+    function closeQ(){if(!qSheet)return;qMask.classList.remove('on');qSheet.classList.remove('on')}
+    if(qSheet){
+      qMask.onclick=closeQ;
+      document.getElementById('qCancel').onclick=closeQ;
+      document.addEventListener('keydown',function(e){if(e.key==='Escape')closeQ()});
+      $$('[data-qstep]').forEach(function(b){b.onclick=function(){
+        qQty.value=Math.max(1,(parseInt(qQty.value)||1)+ +b.dataset.qstep)}});
+    }
+    function openIntake(card){
+      if(!qSheet)return;
+      var parts=(card.querySelector('.meta').textContent||'').split('·');
+      var locEl=parts[0].match(LIBLOCS);
+      qName.value=card.querySelector('b').textContent;
+      qSpec.value=(parts[1]||'').trim();
+      qLoc.value=locEl?locEl[0]:'';
+      qExp.value='沿用上次到期日';
+      qQty.value='1';
+      qMask.classList.add('on');qSheet.classList.add('on');
+    }
+    var qOk=document.getElementById('qOk');
+    if(qOk)qOk.onclick=function(){
+      var add=Math.max(1,parseInt(qQty.value)||1);
+      var name=(qName.value||'').trim()||'物品';
+      var card=$$('.itemc').filter(function(c){return c.querySelector('b').textContent===name})[0];
+      if(card)setQty(card,qtyNum(card)+add);
+      closeQ();
+      showToast('已按上次规格入库新批次：'+name+' +'+add+' 📦（旧批次独立保留，不合并）');
+    };
   }
 
   /* ---- 添加/编辑物品 ---- */
@@ -349,6 +414,12 @@
     addSaveBtn.onclick=function(){
       var name=(nameInput.value||'').trim()||'未命名物品';
       if(q.get('mode')==='edit'){showToast('已保存修改 ✏️');setTimeout(function(){history.length>1?history.back():location.href='library.html'},650);}
+      else if(['全麦吐司','鲜牛奶','维C泡腾片'].indexOf(name)>-1){
+        /* 同名检查演示（需求 4.6.4）：选择挂作新批次或改名存为新物品 */
+        openConfirm('检测到同名物品','库里已有「'+name+'」。点确认将作为它的新批次入库，沿用上次规格；想保存为独立新物品，请取消后修改名称。','作为新批次入库',function(){
+          showToast('✔ 已并入「'+name+'」成为新批次 📦');
+        },'取消，另存为新物品');
+      }
       else showToast('✔ '+name+' 已加入库存');
     };
     if(addDeleteBtn)addDeleteBtn.onclick=function(){

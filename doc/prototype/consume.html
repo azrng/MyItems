@@ -30,31 +30,31 @@
       <div class="con-row rv" data-name="原木抽纸" data-unit="张" data-init="100" data-left="60" data-presets="1|5" data-fine="1" data-loc="客厅电视柜">
         <div class="remini" style="background:var(--teal-soft)">🧻</div>
         <div class="con-info"><b>原木抽纸<span class="pct">剩 60%</span></b><div class="meter"><i style="width:60%"></i></div></div>
-        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1</button><button class="ibtn done useup">✓</button></div>
+        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1</button><button class="ibtn b-adjust" title="余量校正">⇄</button><button class="ibtn done useup">✓</button></div>
       </div>
 
       <div class="con-row rv" data-name="柠檬洗洁精" data-unit="ml" data-init="500" data-left="200" data-presets="15|30" data-fine="5" data-loc="水槽收纳篮">
         <div class="remini" style="background:var(--accent-soft)">🧼</div>
         <div class="con-info"><b>柠檬洗洁精<span class="pct">剩 40%</span></b><div class="meter"><i style="width:40%"></i></div></div>
-        <div class="cbtns"><button class="ibtn consume-one" data-amt="15">−15ml</button><button class="ibtn done useup">✓</button></div>
+        <div class="cbtns"><button class="ibtn consume-one" data-amt="15">−15ml</button><button class="ibtn b-adjust" title="余量校正">⇄</button><button class="ibtn done useup">✓</button></div>
       </div>
 
       <div class="con-row rv" data-name="烟酰胺身体乳" data-unit="ml" data-init="250" data-left="185" data-presets="5|15" data-fine="5" data-loc="梳妆台抽屉">
         <div class="remini" style="background:var(--rose-soft)">🧴</div>
         <div class="con-info"><b>烟酰胺身体乳<span class="pct">剩 75%</span></b><div class="meter"><i style="width:75%"></i></div></div>
-        <div class="cbtns"><button class="ibtn consume-one" data-amt="5">−5ml</button><button class="ibtn done useup">✓</button></div>
+        <div class="cbtns"><button class="ibtn consume-one" data-amt="5">−5ml</button><button class="ibtn b-adjust" title="余量校正">⇄</button><button class="ibtn done useup">✓</button></div>
       </div>
 
       <div class="con-row rv" data-name="浓缩洗衣液" data-unit="次" data-init="30" data-left="9" data-presets="1|2" data-fine="1" data-loc="卫生间置物架">
         <div class="remini" style="background:var(--gold-soft)">🫧</div>
         <div class="con-info"><b>浓缩洗衣液<span class="pct">剩 30%</span></b><div class="meter"><i style="width:30%"></i></div></div>
-        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1次</button><button class="ibtn done useup">✓</button></div>
+        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1次</button><button class="ibtn b-adjust" title="余量校正">⇄</button><button class="ibtn done useup">✓</button></div>
       </div>
 
       <div class="con-row rv" data-name="玻尿酸面膜" data-unit="片" data-init="10" data-left="5.5" data-presets="1|0.5" data-fine="0.5" data-loc="梳妆台抽屉">
         <div class="remini" style="background:var(--violet-soft)">🦷</div>
         <div class="con-info"><b>玻尿酸面膜<span class="pct">剩 55%</span></b><div class="meter"><i style="width:55%"></i></div></div>
-        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1</button><button class="ibtn done useup">✓</button></div>
+        <div class="cbtns"><button class="ibtn consume-one" data-amt="1">−1</button><button class="ibtn b-adjust" title="余量校正">⇄</button><button class="ibtn done useup">✓</button></div>
       </div>
 
     </div>
@@ -140,7 +140,82 @@
   </div>
 </div>
 
+<!-- 余量校正弹层（需求 4.3：行上「校正」入口，写 adjust 流水） -->
+<div class="sheet-mask" id="ajMask"></div>
+<div class="sheet rec-sheet" id="ajSheet">
+  <h3>余量校正</h3>
+  <p class="sub" id="ajMeta">把当前剩余改成实际看到的量</p>
+  <div class="cust-row on" style="justify-content:center">
+    <button class="stepb-lg" id="ajMinus" type="button">−</button>
+    <input id="ajNum" type="number" inputmode="decimal" min="0" step="any" value="0"
+      style="font-family:var(--f-num);font-size:21px;font-weight:600;width:86px;text-align:center;border:none;outline:none;background:transparent;color:var(--ink)">
+    <span id="ajUnit" style="font-weight:900;font-size:12.5px;color:var(--ink-soft)">张</span>
+    <button class="stepb-lg" id="ajPlus" type="button">＋</button>
+  </div>
+  <div class="rs-preview"><span>校正为</span><em id="ajPrev">— </em><span style="margin-left:auto;color:var(--ink-faint)">差额写 adjust 流水</span></div>
+  <div class="field rs-field" style="margin-bottom:11px">
+    <label>原因备注（选填）</label>
+    <input class="note-input" id="ajNote" maxlength="20" placeholder="比如：手滑多记了一笔">
+  </div>
+  <p class="src-line">📋 写入库存流水：类型 余量校正 · 来源 余量校正 · Note 记录调整前后数值</p>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="ajCancel">先留着</button>
+    <button class="btn primary" id="ajOk">确认校正</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>
+<script>
+/* 消耗中心 · 余量校正（页面私有演示，需求 4.3） */
+(function(){
+  'use strict';
+  var $=function(s){return document.querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
+  var fmt=function(n){n=Math.round(n*100)/100;return String(n%1===0?Math.round(n):n)};
+  var cur=null,m=$('#ajMask'),sh=$('#ajSheet');
+
+  function paintRow(row,left){
+    var init=+row.dataset.init,pct=init>0?Math.max(0,Math.round(left/init*100)):0;
+    row.dataset.left=left;
+    row.querySelector('.pct').textContent='剩 '+pct+'%';
+    row.querySelector('.meter i').style.width=pct+'%';
+    if(!row.querySelector('.low-tag')&&pct>0&&pct<=25){
+      var t=document.createElement('span');t.className='low-tag';t.textContent='余量低';
+      row.querySelector('.con-info b').appendChild(t);
+    }
+  }
+  function render(){
+    if(!cur)return;
+    var v=Math.max(0,parseFloat($('#ajNum').value)||0),init=+cur.dataset.init;
+    $('#ajPrev').textContent=fmt(v)+' '+cur.dataset.unit+'（'+(init>0?Math.round(v/init*100):0)+'%）';
+  }
+  function close(){m.classList.remove('on');sh.classList.remove('on');cur=null}
+  $$('.b-adjust').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      cur=btn.closest('.con-row');
+      $('#ajUnit').textContent=cur.dataset.unit;
+      $('#ajNum').value=fmt(+cur.dataset.left);
+      $('#ajMeta').textContent=cur.dataset.name+' · 当前剩 '+fmt(+cur.dataset.left)+' / '+fmt(+cur.dataset.init)+' '+cur.dataset.unit;
+      render();
+      m.classList.add('on');sh.classList.add('on');
+    });
+  });
+  m.onclick=close;
+  $('#ajCancel').onclick=close;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sh.classList.contains('on'))close()});
+  $('#ajMinus').onclick=function(){$('#ajNum').value=fmt(Math.max(0,(parseFloat($('#ajNum').value)||0)-1));render()};
+  $('#ajPlus').onclick=function(){$('#ajNum').value=fmt((parseFloat($('#ajNum').value)||0)+1);render()};
+  $('#ajNum').addEventListener('input',render);
+  $('#ajOk').onclick=function(){
+    if(!cur)return;
+    var v=Math.max(0,parseFloat($('#ajNum').value)||0);
+    var old=+cur.dataset.left;
+    paintRow(cur,v);close();
+    $('#toastMsg').textContent='已校正 '+cur.dataset.name+'：'+fmt(old)+' → '+fmt(v)+'，adjust 流水已记 ✔';
+    var t=$('#toast');t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400);
+  };
+})();
+</script>
 </body>
 </html>

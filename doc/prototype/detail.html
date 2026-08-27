@@ -158,6 +158,17 @@ html.dark .c-org{color:var(--accent)}
   'use strict';
   var $=function(s){return document.querySelector(s)};
   var fmt=function(n){n=Math.round(n*100)/100;return String(n%1===0?Math.round(n):n)};
+
+  /* 接收物品库带参跳转：?name=物品名（demo 数据其余固定为全麦吐司两批次） */
+  try{
+    var qn=new URLSearchParams(location.search).get('name');
+    if(qn){
+      document.title='物品详情 · 暖仓 WarmPantry — '+qn;
+      var hd=document.querySelector('.d-head h2');
+      if(hd)hd.firstChild.textContent=qn;
+    }
+  }catch(_){}
+
   var toastEl=$('#toast'),toastMsg=$('#toastMsg'),tt;
   function toast(m){toastMsg.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){toastEl.classList.remove('on')},2400)}
 
