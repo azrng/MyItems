@@ -352,11 +352,32 @@
       steps[1].onclick=function(e){e.stopPropagation();openIntake(card)};
     });
 
-    /* -- 快捷再入库面板（需求 4.3 「＋」语义） -- */
+    /* -- 快捷再入库面板（需求 4.3 「＋」语义；单位口径见 4.6） -- */
     var qMask=document.getElementById('qMask'),qSheet=document.getElementById('qSheet');
     var qName=document.getElementById('qName'),qSpec=document.getElementById('qSpec'),
         qLoc=document.getElementById('qLoc'),qExp=document.getElementById('qExp'),qQty=document.getElementById('qQty');
     function closeQ(){if(!qSheet)return;qMask.classList.remove('on');qSheet.classList.remove('on')}
+    /* 计量单位 chips：单选 + 自定义（默认沿用上次 = 从规格文本识别） */
+    var qUnitVal='袋';
+    var qChips=$$('#qUnitChips .chip'),qCustRow=document.getElementById('qUnitCustom'),qCustInput=document.getElementById('qUnitInput');
+    qChips.forEach(function(c){
+      c.onclick=function(e){
+        e.stopPropagation();
+        qChips.forEach(function(x){x.classList.remove('on')});
+        c.classList.add('on');
+        if(c.dataset.custom){qCustRow.classList.add('on');try{qCustInput.focus()}catch(_){}}
+        else{qCustRow.classList.remove('on');qUnitVal=c.textContent.trim()}
+      };
+    });
+    if(qCustInput)qCustInput.addEventListener('input',function(){qUnitVal=qCustInput.value.trim()||'个'});
+    function syncUnitChips(){
+      var um=(qSpec.value||'').match(/袋|盒|瓶|罐|包|片|粒|支|张|卷|ml|L|g|kg/);
+      qUnitVal=um?um[0]:'袋';
+      qChips.forEach(function(x){
+        x.classList.toggle('on',!x.dataset.custom&&x.textContent.trim()===qUnitVal);
+      });
+      qCustRow.classList.remove('on');
+    }
     if(qSheet){
       qMask.onclick=closeQ;
       document.getElementById('qCancel').onclick=closeQ;
@@ -373,6 +394,7 @@
       qLoc.value=locEl?locEl[0]:'';
       qExp.value='沿用上次到期日';
       qQty.value='1';
+      syncUnitChips();
       qMask.classList.add('on');qSheet.classList.add('on');
     }
     var qOk=document.getElementById('qOk');
@@ -382,7 +404,7 @@
       var card=$$('.itemc').filter(function(c){return c.querySelector('b').textContent===name})[0];
       if(card)setQty(card,qtyNum(card)+add);
       closeQ();
-      showToast('已按上次规格入库新批次：'+name+' +'+add+' 📦（旧批次独立保留，不合并）');
+      showToast('已按上次规格入库新批次：'+name+' +'+add+' '+qUnitVal+' 📦（旧批次独立保留，不合并）');
     };
   }
 

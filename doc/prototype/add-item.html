@@ -6,6 +6,11 @@
 <title>添加物品 · 暖仓 WarmPantry</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="assets/warmpantry.css">
+<style>
+/* 计量单位选择（需求 4.6 / 5.6） */
+.unit-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.unit-chips .chip.on,.unit-chips .chip.act{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+</style>
 </head>
 <body class="sub" data-page="add-item">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol></svg>
@@ -26,6 +31,11 @@
     <div class="field rv">
       <label>物品名称 <em>*</em></label>
       <div class="input"><input value="全麦吐司" placeholder="如：鲜牛奶 250ml×12"></div>
+    </div>
+
+    <div class="field rv">
+      <label>规格 <em style="color:var(--ink-faint);font-weight:700;font-size:10.5px">选填 · 包装描述</em></label>
+      <div class="input"><input placeholder="如：250ml×12 / 500g / 20片"></div>
     </div>
 
     <div class="field rv">
@@ -55,14 +65,20 @@
     </div>
 
     <div class="field rv">
-      <label>数量</label>
+      <label>数量与计量单位</label>
       <div class="stepper-lg">
         <button type="button" data-step="-1">−</button>
-        <b><span id="qtyNum">1</span> <span style="font-size:12px;color:var(--ink-faint)">袋</span></b>
+        <b><span id="qtyNum">1</span> <span id="qtyUnit" style="font-size:12px;color:var(--ink-faint)">袋</span></b>
         <button type="button" data-step="1">＋</button>
         <label style="display:flex;align-items:center;gap:7px;margin-left:8px;font-size:12px;font-weight:800;color:var(--ink-soft)">
           <span class="switch on" style="transform:scale(.8)"></span>计为耗材
         </label>
+      </div>
+      <div class="unit-chips" id="unitChips">
+        <span class="chip act">袋</span><span class="chip">盒</span><span class="chip">瓶</span><span class="chip">罐</span><span class="chip">包</span><span class="chip">片</span><span class="chip">ml</span><span class="chip">g</span><span class="chip" data-custom="1">自定义…</span>
+      </div>
+      <div class="cust-row" id="unitCustom" style="margin-top:9px">
+        <input id="unitCustomInput" maxlength="6" placeholder="输入单位，如 支 / 张 / 次" style="flex:1;text-align:left;border:none;outline:none;background:transparent;font-weight:800;font-size:12.5px;color:var(--ink)">
       </div>
     </div>
 
@@ -114,5 +130,24 @@
 </div>
 <div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
 <script src="assets/app.js"></script>
+<script>
+/* 计量单位选择（页面私有演示，需求 4.6 / 5.6）：chips 单选 + 自定义，步进器单位同步 */
+(function(){
+  'use strict';
+  var chips=[].slice.call(document.querySelectorAll('#unitChips .chip'));
+  var lab=document.getElementById('qtyUnit');
+  var custRow=document.getElementById('unitCustom');
+  var custInput=document.getElementById('unitCustomInput');
+  chips.forEach(function(c){
+    c.onclick=function(){
+      chips.forEach(function(x){x.classList.remove('act')});
+      c.classList.add('act');
+      if(c.dataset.custom){custRow.classList.add('on');try{custInput.focus()}catch(_){}}
+      else{custRow.classList.remove('on');lab.textContent=c.textContent.trim()}
+    };
+  });
+  custInput.addEventListener('input',function(){lab.textContent=custInput.value.trim()||'个'});
+})();
+</script>
 </body>
 </html>
