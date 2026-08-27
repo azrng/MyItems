@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>耗尽归档 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body class="sub" data-page="archive">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol></svg>
+
+<div class="app">
+  <div class="sub-head">
+    <a class="back" href="mine.html"><svg class="ic"><use href="#i-back"/></svg></a>
+    <h1>耗尽归档</h1>
+    <a class="link act" data-toast="清空需二次确认（仅演示）🗑️">清空</a>
+  </div>
+  <div class="pad">
+    <div class="arch-strip rv">
+      <div class="arch"><b>134</b><span>累计用完</span></div>
+      <div class="arch"><b>26 天</b><span>平均使用周期</span></div>
+      <div class="arch"><b>9</b><span>本月归档</span></div>
+    </div>
+    <div class="cat-chips rv" style="margin-bottom:12px">
+      <span class="chip act">本月 9</span><span class="chip">食品 41</span><span class="chip">日化 63</span><span class="chip">药品 19</span><span class="chip">值得回购 ⭐</span>
+    </div>
+    <div class="arch-row rv"><div class="em">🧴</div><div><b>氨基酸洗面奶</b><small>用完于 08-20 · 使用 34 天 · 好用想回购 ⭐</small></div><button class="btn mini ghost" style="margin-left:auto">再买一次</button></div>
+    <div class="arch-row rv"><div class="em">🍪</div><div><b>燕麦消化饼干</b><small>用完于 08-18 · 使用 21 天</small></div><button class="btn mini ghost" style="margin-left:auto">再买一次</button></div>
+    <div class="arch-row rv"><div class="em">🫐</div><div><b>蓝莓 125g×3</b><small>用完于 08-15 · 使用 6 天</small></div><button class="btn mini ghost" style="margin-left:auto">再买一次</button></div>
+    <div class="arch-row rv"><div class="em">🧤</div><div><b>加绒家务手套</b><small>用完于 08-12 · 使用 96 天</small></div><button class="btn mini ghost" style="margin-left:auto">再买一次</button></div>
+    <div class="arch-row rv"><div class="em">🦷</div><div><b>牙线棒 300 支</b><small>用完于 08-08 · 使用 58 天 · 回购中</small></div><span class="tag t-grn" style="margin-left:auto">已在购物车</span></div>
+    <a class="btn ghost rv" style="width:100%;margin-top:6px" data-nav="rec">查看它们的历史消耗记录</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

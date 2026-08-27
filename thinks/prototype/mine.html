@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>我的 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body data-page="mine">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.5-3.4 4.3-5 7.5-5s6 1.6 7.5 5"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol><symbol id="i-cat" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11.5a7 7 0 0 1 14 0C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="5" rx="1.5"/><path d="M5.5 9.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5M10 13.5h4"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4Z"/><path d="M12 10v4.2M12 17.2v.1"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 18.3 11a3.8 3.8 0 0 1-.3 7.5Z"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="m8.4 10.7 6.8-3.9M8.4 13.3l6.8 3.9"/></symbol><symbol id="i-basket" viewBox="0 0 24 24"><path d="M4 9h16l-1.8 10a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6Z"/><path d="M8 9c0-4 1.5-6 4-6s4 2 4 6M9 13v4M12 13v4M15 13v4"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></symbol></svg>
+
+<div class="app pad">
+  <div class="me-hero rv">
+    <div class="avatar">🧺</div>
+    <div>
+      <h2>小暖收纳控</h2>
+      <p>和家庭一起，物尽其用 ♻️</p>
+      <div class="me-stats">
+        <div><b>86</b><span>在库</span></div>
+        <div><b>312</b><span>累计消耗</span></div>
+        <div><b>28天</b><span>连续记录</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group rv">
+    <div class="eyebrow">MANAGE · 库存管理</div>
+    <nav class="menu">
+      <a data-nav="cat"><span class="mi i-orange"><svg class="ic"><use href="#i-cat"/></svg></span>物品分类管理<span class="val"><span id="catCountVal">8</span> 个分类 <svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-nav="loc"><span class="mi i-teal"><svg class="ic"><use href="#i-pin"/></svg></span>存放位置管理<span class="val"><span id="locCountVal">9</span> 个位置 <svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-nav="arch"><span class="mi i-gold"><svg class="ic"><use href="#i-archive"/></svg></span>耗尽归档<span class="val">134 条记录 <svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-nav="expi"><span class="mi i-rose"><svg class="ic"><use href="#i-alert"/></svg></span>临期预警清单<span class="val"><span class="pill-on" style="background:var(--danger-soft);color:var(--danger)">6 件待处理</span><svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+    </nav>
+  </div>
+
+  <div class="group rv">
+    <div class="eyebrow">DATA · 数据与设备</div>
+    <nav class="menu">
+      <a id="themeRow"><span class="mi i-violet"><svg class="ic"><use href="#i-moon"/></svg></span>深色模式<span class="val"><button class="switch" id="themeSwitch" aria-label="深色模式开关"></button></span></a>
+      <a data-nav="backup"><span class="mi i-teal"><svg class="ic"><use href="#i-cloud"/></svg></span>存储管理与备份<span class="val"><span class="pill-on">自动备份中</span><svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+    </nav>
+  </div>
+
+  <div class="group rv">
+    <div class="eyebrow">MORE · 更多</div>
+    <nav class="menu">
+      <a data-toast="分享组件位：把暖仓推荐给家人 💌"><span class="mi i-rose"><svg class="ic"><use href="#i-share"/></svg></span>邀请家庭成员<span class="val">已加入 2 人<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-nav="about"><span class="mi i-gry"><svg class="ic"><use href="#i-basket"/></svg></span>关于我们<span class="val">v1.2.0<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+    </nav>
+  </div>
+  <p class="notice rv" style="justify-content:center">🌱 暖仓·把日子过得清清楚楚</p>
+</div>
+
+<nav class="tabbar">
+  <a class="tab" href="home.html"><svg class="ic"><use href="#i-home"/></svg>首页<i class="tdot"></i></a>
+  <a class="tab" href="library.html"><svg class="ic"><use href="#i-box"/></svg>物品库<i class="tdot"></i></a>
+  <div class="fab-slot"><a class="fab" href="add-item.html" title="添加物品"><svg class="ic"><use href="#i-plus"/></svg></a></div>
+  <a class="tab" href="consume.html"><svg class="ic"><use href="#i-bowl"/></svg>消耗<i class="tdot"></i></a>
+  <a class="tab act" href="mine.html"><svg class="ic"><use href="#i-user"/></svg>我的<i class="tdot"></i></a>
+</nav>
+
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>物品库 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body data-page="library">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z"/></symbol><symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z"/><path d="M3.5 8 12 12.3 20.5 8M12 12.3V20.5"/></symbol><symbol id="i-bowl" viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 0 1-16 0Z"/><path d="M8.5 8.5c1.5-1.2 1-3 .5-4M13 8c.8-1.5-.2-2.8-.8-3.5"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.5-3.4 4.3-5 7.5-5s6 1.6 7.5 5"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10Z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11.5a7 7 0 0 1 14 0C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="5" rx="1.5"/><path d="M5.5 9.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5M10 13.5h4"/></symbol><symbol id="i-cat" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol></svg>
+
+<div class="app pad" id="v-lib">
+  <div class="home-head rv">
+    <div class="greet"><h1>物品库 📦</h1><p>共 <b id="libCountVal" style="font-family:var(--f-num);color:var(--accent-deep)">86</b> 件在库 · 覆盖 9 个存放点</p></div>
+    <a class="bell" href="categories.html" style="text-decoration:none"><svg class="ic"><use href="#i-cat"/></svg></a>
+  </div>
+  <div class="searchbar rv">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input placeholder="搜索名称 / 备注 / 存放位置…">
+  </div>
+  <div class="cat-chips rv" id="libChips">
+    <span class="chip act">全部 86</span>
+    <span class="chip">🥕 食品食材 28</span>
+    <span class="chip">🧹 日用清洁 14</span>
+    <span class="chip">💊 药品保健 13</span>
+    <span class="chip">💄 美妆护肤 7</span>
+    <span class="chip">🧃 酒水饮料 8</span>
+    <span class="chip">🍳 厨房小物 8</span>
+    <span class="chip">🔌 数码周边 4</span>
+    <span class="chip">📦 其他 4</span>
+  </div>
+  <div class="cat-chips rv" style="padding-top:0">
+    <span class="chip" style="border-style:dashed">📍 全部位置 ▾</span>
+    <span class="chip" style="border-style:dashed">⏱ 到期时间 ↑</span>
+  </div>
+  <div class="grid">
+    <article class="itemc rv"><div class="thumb" style="background:var(--danger-soft)"><span class="badge tag t-red">还剩2天</span>🍞</div><b>全麦吐司</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>冰箱冷藏 · 450g</div><div class="meter"><i style="width:65%"></i></div><div class="qtyrow"><span class="low-tag">已开封</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--accent-soft)"><span class="badge tag t-org">还剩3天</span>🥛</div><b>鲜牛奶 250ml</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>冰箱冷藏 · ×12 盒</div><div class="meter"><i style="width:82%"></i></div><div class="qtyrow"><span style="color:var(--ink-faint);font-size:11px;font-weight:800">整箱</span><div class="stepper"><span class="stepb">−</span>2<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--teal-soft)"><span class="badge tag t-gry">余量低</span>🧴</div><b>氨基酸洗发水</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>卫生间置物架 · 500ml</div><div class="meter"><i style="width:24%"></i></div><div class="qtyrow"><span class="low-tag">剩 25%</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--teal-soft)"><span class="badge tag t-grn">安全</span>🧻</div><b>原木抽纸</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>客厅电视柜 · 100抽×8</div><div class="meter"><i style="width:90%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>5<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--gold-soft)"><span class="badge tag t-grn">安全</span>☕</div><b>挂耳咖啡礼盒</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>厨房吊柜 · 10颗/盒</div><div class="meter"><i style="width:70%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>3<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--gold-soft)"><span class="badge tag t-yel">开封注意</span>🍯</div><b>槐花蜂蜜</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>厨房吊柜 · 500g</div><div class="meter"><i style="width:55%"></i></div><div class="qtyrow"><span style="color:var(--ink-faint);font-size:11px;font-weight:800">开封150天</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--rose-soft)"><span class="badge tag t-yel">6个月内</span>🧊</div><b>补水面膜</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>梳妆台抽屉 · 5片装</div><div class="meter"><i style="width:45%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--violet-soft)"><span class="badge tag t-org">还剩5天</span>💊</div><b>维C泡腾片</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>家庭药箱 · 20片</div><div class="meter"><i style="width:38%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>2<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--teal-soft)"><span class="badge tag t-gry">余量低</span>🧽</div><b>厨房双面海绵</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>水槽收纳篮 · 3片</div><div class="meter"><i style="width:15%"></i></div><div class="qtyrow"><span class="low-tag">剩15%</span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+    <article class="itemc rv"><div class="thumb" style="background:var(--gold-soft)"><span class="badge tag t-grn">安全</span>🌰</div><b>每日坚果</b><div class="meta"><svg class="ic" style="width:11px;height:11px"><use href="#i-pin"/></svg>玄关收纳柜 · 30日装</div><div class="meter"><i style="width:96%"></i></div><div class="qtyrow"><span></span><div class="stepper"><span class="stepb">−</span>1<span class="stepb">＋</span></div></div></article>
+  </div>
+  <p class="notice rv">💡 点卡片可编辑详情，长按可多选批量调整</p>
+</div>
+
+<nav class="tabbar">
+  <a class="tab" href="home.html"><svg class="ic"><use href="#i-home"/></svg>首页<i class="tdot"></i></a>
+  <a class="tab act" href="library.html"><svg class="ic"><use href="#i-box"/></svg>物品库<i class="tdot"></i></a>
+  <div class="fab-slot"><a class="fab" href="add-item.html" title="添加物品"><svg class="ic"><use href="#i-plus"/></svg></a></div>
+  <a class="tab" href="consume.html"><svg class="ic"><use href="#i-bowl"/></svg>消耗<i class="tdot"></i></a>
+  <a class="tab" href="mine.html"><svg class="ic"><use href="#i-user"/></svg>我的<i class="tdot"></i></a>
+</nav>
+
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

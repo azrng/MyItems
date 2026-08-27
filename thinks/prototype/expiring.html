@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>临期预警 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body class="sub" data-page="expiring">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol></svg>
+
+<div class="app">
+  <div class="sub-head">
+    <a class="back" href="home.html"><svg class="ic"><use href="#i-back"/></svg></a>
+    <h1>临期预警</h1>
+    <a class="link act" data-toast="已在设置中调整阈值 ⏰">规则</a>
+  </div>
+  <div class="pad">
+    <div class="warn-banner rv">
+      <div class="wi">🔔</div>
+      <div><b>6 件物品需要优先处理</b><small>规则：到期前 ≤3 天预警，开封类按建议限期计算</small></div>
+    </div>
+    <div class="cat-chips rv" style="margin-bottom:12px">
+      <span class="chip act">全部 6</span><span class="chip">24小时内 1</span><span class="chip">3天内 3</span><span class="chip">7天内 2</span><span class="chip">已开封超限 2</span>
+    </div>
+    <div class="expi-row rv" style="border-color:#EFC0AC"><div class="em" style="background:var(--danger-soft)">🍳</div><div><b>嫩豆腐 2 盒</b><small>📍 冰箱冷藏 · 生产 08-24</small><div class="meter"><i style="width:88%;background:linear-gradient(90deg,var(--danger),#E8926F)"></i></div></div><div class="d-count d-red"><span>DUE IN</span><div class="days">1 天</div></div></div>
+    <div class="expi-row rv" style="border-color:#EFC0AC"><div class="em" style="background:var(--danger-soft)">🍞</div><div><b>全麦吐司</b><small>📍 冰箱冷藏 · 开封第 2 天</small><div class="meter"><i style="width:80%;background:linear-gradient(90deg,var(--danger),#E8926F)"></i></div></div><div class="d-count d-red"><span>DUE IN</span><div class="days">2 天</div></div></div>
+    <div class="expi-row rv"><div class="em" style="background:var(--accent-soft)">🥛</div><div><b>鲜牛奶 250ml×12</b><small>📍 冰箱冷藏 · 整箱至 08-30</small><div class="meter"><i style="width:66%"></i></div></div><div class="d-count d-org"><span>DUE IN</span><div class="days">3 天</div></div></div>
+    <div class="expi-row rv"><div class="em" style="background:var(--violet-soft)">💊</div><div><b>维C泡腾片 ×2</b><small>📍 家庭药箱 · 余 16 片</small><div class="meter"><i style="width:52%"></i></div></div><div class="d-count d-org"><span>DUE IN</span><div class="days">5 天</div></div></div>
+    <div class="expi-row rv"><div class="em" style="background:var(--gold-soft)">🥜</div><div><b>开心果 500g</b><small>📍 厨房吊柜 · 开封后建议 7 天</small><div class="meter"><i style="width:44%;background:linear-gradient(90deg,var(--gold),#E5C06B)"></i></div></div><div class="d-count d-yel"><span>DUE IN</span><div class="days">6 天</div></div></div>
+    <div class="expi-row rv"><div class="em" style="background:var(--rose-soft)">🧴</div><div><b>防晒霜 SPF50</b><small>📍 浴室置物架 · 开封满 6 个月</small><div class="meter"><i style="width:40%;background:linear-gradient(90deg,var(--gold),#E5C06B)"></i></div></div><div class="d-count d-yel"><span>PAO</span><div class="days">7 天</div></div></div>
+    <button class="btn primary rv" style="width:100%;margin-top:6px" data-toast="已按最快到期排序，全麦吐司排第一 🍞">生成本周「先吃先用」清单</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

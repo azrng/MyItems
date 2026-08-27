@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>添加物品 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body class="sub" data-page="add-item">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol></svg>
+
+<div class="app">
+  <div class="sub-head">
+    <a class="back" href="library.html"><svg class="ic"><use href="#i-back"/></svg></a>
+    <h1 id="addTitle">添加物品</h1>
+    <a class="link act" data-toast="已保存为草稿 📝">存草稿</a>
+  </div>
+  <div class="pad" id="v-form">
+    <div class="photo-drop rv">
+      <div class="cam">📷</div>
+      拍照记录物品外观，<u style="font-weight:900;color:var(--accent-deep)">方便家人辨认</u>
+      <span style="font-size:10.5px;font-weight:700">填好分类与保质期，30 秒完成录入</span>
+    </div>
+
+    <div class="field rv">
+      <label>物品名称 <em>*</em></label>
+      <div class="input"><input value="全麦吐司" placeholder="如：鲜牛奶 250ml×12"></div>
+    </div>
+
+    <div class="field rv">
+      <label>物品分类 <em>*</em></label>
+      <div class="opt-grid" data-single style="grid-template-columns:repeat(4,1fr)">
+        <div class="oc act"><i>🥕</i>食品食材</div>
+        <div class="oc"><i>🧹</i>日用清洁</div>
+        <div class="oc"><i>🍳</i>厨房小物</div>
+        <div class="oc"><i>💊</i>药品保健</div>
+        <div class="oc"><i>💄</i>美妆护肤</div>
+        <div class="oc"><i>🧃</i>酒水饮料</div>
+        <div class="oc"><i>🔌</i>数码周边</div>
+        <div class="oc"><i>📦</i>其他</div>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>存放位置 <em>*</em></label>
+      <div class="opt-grid" data-single>
+        <div class="oc act"><i>🧊</i>冰箱冷藏</div>
+        <div class="oc"><i>❄️</i>冰箱冷冻</div>
+        <div class="oc"><i>🏢</i>厨房吊柜</div>
+        <div class="oc"><i>💧</i>卫生间</div>
+        <div class="oc"><i>🧰</i>家庭药箱</div>
+        <div class="oc"><i>➕</i>新增位置</div>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>数量</label>
+      <div class="stepper-lg">
+        <button type="button" data-step="-1">−</button>
+        <b><span id="qtyNum">1</span> <span style="font-size:12px;color:var(--ink-faint)">袋</span></b>
+        <button type="button" data-step="1">＋</button>
+        <label style="display:flex;align-items:center;gap:7px;margin-left:8px;font-size:12px;font-weight:800;color:var(--ink-soft)">
+          <span class="switch on" style="transform:scale(.8)"></span>计为耗材
+        </label>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>到期日期</label>
+      <div class="input"><svg class="ic" style="color:var(--accent-deep)"><use href="#i-cal"/></svg><input value="2026-08-29" readonly style="font-weight:800"></div>
+      <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">
+        <span class="chip" style="font-size:11px">7天内到期? 否</span>
+        <span class="chip" style="font-size:11px">2026-09-02（生产+4天）</span>
+        <span class="chip" style="font-size:11px">自定义…</span>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>价格记录 <em style="color:var(--ink-faint);font-weight:700;font-size:10.5px">选填 · 仅记录，不做统计</em></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        <div class="input"><span style="color:var(--ink-faint);font-weight:900">¥</span><input placeholder="单价"></div>
+        <div class="input"><svg class="ic" style="color:var(--ink-faint)"><use href="#i-cal"/></svg><input placeholder="购买日期"></div>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>提醒设置</label>
+      <div class="switchrow">
+        <div><p>临期提前提醒</p><small>默认到期前 3 天推送通知</small></div>
+        <button class="switch on" aria-label="开关"></button>
+      </div>
+    </div>
+
+    <div class="field rv">
+      <label>备注</label>
+      <textarea class="note" rows="2" placeholder="开封日期、口味、给谁的…">已开封，开封后 4 天内吃完</textarea>
+    </div>
+
+    <button class="btn primary rv" id="addSaveBtn" style="width:100%">加入库存</button>
+    <button class="btn ghost rv" style="width:100%;margin-top:9px" data-toast="已保存，继续录入下一件 ➕">保存并继续录入下一件</button>
+    <button class="btn ghost rv" id="addDeleteBtn" style="display:none;width:100%;margin-top:9px;color:var(--danger);border-color:var(--danger-soft)">删除该物品</button>
+  </div>
+</div>
+
+<div class="sheet-mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <h3 id="sheetTitle"></h3>
+  <p class="sub" id="sheetSub"></p>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="sheetCancel">取消</button>
+    <button class="btn primary" id="sheetOk">确认</button>
+  </div>
+</div>
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

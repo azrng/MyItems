@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>存放位置 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body class="sub" data-page="locations">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol></svg>
+
+<div class="app" id="v-loc">
+  <div class="sub-head">
+    <a class="back" href="mine.html"><svg class="ic"><use href="#i-back"/></svg></a>
+    <h1>存放位置</h1>
+    <a class="link act" data-locadd>＋ 新增</a>
+  </div>
+  <div class="pad">
+    <div class="room-h rv" style="margin-top:6px">🏠 厨房区域</div>
+    <div class="loc-card rv"><div class="li" style="background:var(--accent-soft)">🧊</div><div><b>冰箱冷藏室</b><div class="meter"><i style="width:67%"></i></div><small><span>短保食品优先区</span><span>容量 18</span></small></div><div class="loc-right"><b>12<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b><span style="display:block;font-size:9.5px;color:var(--ink-faint);font-weight:800;margin-top:2px">2 件临期</span></div></div>
+    <div class="loc-card rv"><div class="li" style="background:var(--teal-soft)">❄️</div><div><b>冰箱冷冻室</b><div class="meter"><i style="width:50%"></i></div><small><span>速冻主食 / 肉类</span><span>容量 10</span></small></div><div class="loc-right"><b>5<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+    <div class="loc-card rv"><div class="li" style="background:var(--gold-soft)">🏢</div><div><b>厨房吊柜</b><div class="meter"><i style="width:56%"></i></div><small><span>干货调料冲调</span><span>容量 16</span></small></div><div class="loc-right"><b>9<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+
+    <div class="room-h rv">🚿 卫生间区域</div>
+    <div class="loc-card rv"><div class="li" style="background:var(--teal-soft)">💧</div><div><b>浴室置物架</b><div class="meter"><i style="width:75%"></i></div><small><span>洗护用品常驻位</span><span>容量 20</span></small></div><div class="loc-right"><b>15<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+    <div class="loc-card rv"><div class="li" style="background:var(--rose-soft)">🪞</div><div><b>镜柜台面</b><div class="meter"><i style="width:36%"></i></div><small><span>每日开架彩妆</span><span>容量 14</span></small></div><div class="loc-right"><b>5<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+
+    <div class="room-h rv">🛋️ 居住区域</div>
+    <div class="loc-card rv"><div class="li" style="background:var(--gold-soft)">📺</div><div><b>客厅电视柜</b><div class="meter"><i style="width:58%"></i></div><small><span>纸品零食分散位</span><span>容量 12</span></small></div><div class="loc-right"><b>7<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+    <div class="loc-card rv"><div class="li" style="background:var(--accent-soft)">👟</div><div><b>玄关收纳柜</b><div class="meter"><i style="width:60%"></i></div><small><span>出门顺手拿取</span><span>容量 10</span></small></div><div class="loc-right"><b>6<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b></div></div>
+    <div class="loc-card rv"><div class="li" style="background:var(--violet-soft)">🧰</div><div><b>家庭药箱</b><div class="meter"><i style="width:73%"></i></div><small><span>效期强提醒区域 ⚠️</span><span>容量 15</span></small></div><div class="loc-right"><b>11<span style="font-size:10px;color:var(--ink-faint)"> 件</span></b><span style="display:block;font-size:9.5px;color:var(--danger);font-weight:900;margin-top:2px">1 件临期</span></div></div>
+    <button class="btn ghost rv" style="width:100%;margin-top:4px" data-locadd>＋ 新增存放位置（支持子层）</button>
+  </div>
+</div>
+
+<div class="sheet-mask" id="locMask"></div>
+<div class="sheet" id="locSheet">
+  <h3 id="locSheetTitle">新增存放位置</h3>
+  <p class="sub">支持「区域 → 具体位置」两级层级，按打开就能看见的原则命名。</p>
+  <div class="field" style="margin-bottom:13px">
+    <label>位置名称 <em>*</em></label>
+    <div class="input"><input id="locName" placeholder="如：阳台储物箱"></div>
+  </div>
+  <div class="field" style="margin-bottom:13px">
+    <label>所属区域</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="locRegions">
+      <span class="chip act" data-region="厨房">🍳 厨房</span>
+      <span class="chip" data-region="卫生间">🚿 卫生间</span>
+      <span class="chip" data-region="居住">🛋️ 居住</span>
+      <span class="chip" data-region="custom">＋ 新区域</span>
+    </div>
+    <div class="input" id="locCustomWrap" style="display:none;margin-top:9px"><input id="locRegionCustom" placeholder="区域名称，如：阳台"></div>
+  </div>
+  <div class="field" style="margin-bottom:13px">
+    <label>图标</label>
+    <div class="pick-grid" id="locEmojis">
+      <span class="act">🧊</span><span>❄️</span><span>🏢</span><span>💧</span><span>🪞</span><span>📺</span>
+      <span>👟</span><span>🧰</span><span>📦</span><span>🗄️</span>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:16px">
+    <label>容量上限</label>
+    <div class="stepper-lg" style="gap:10px">
+      <button type="button" data-cstep="-1">−</button>
+      <b><span id="locCapNum">10</span> <span style="font-size:12px;color:var(--ink-faint)">件</span></b>
+      <button type="button" data-cstep="1">＋</button>
+      <small style="font-size:11px;color:var(--ink-faint);font-weight:700">放满会提醒你「别再囤啦」</small>
+    </div>
+  </div>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="locCancel">取消</button>
+    <button class="btn primary" id="locSave">创建位置</button>
+  </div>
+  <button class="btn ghost" id="locDelete" style="display:none;width:100%;margin-top:10px;color:var(--danger);border-color:var(--danger-soft)">停用该位置</button>
+</div>
+
+<div class="sheet-mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <h3 id="sheetTitle"></h3>
+  <p class="sub" id="sheetSub"></p>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="sheetCancel">取消</button>
+    <button class="btn primary" id="sheetOk">确认</button>
+  </div>
+</div>
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

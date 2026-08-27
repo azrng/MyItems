@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>物品分类 · 暖仓 WarmPantry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="assets/warmpantry.css">
+</head>
+<body class="sub" data-page="categories">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol></svg>
+
+<div class="app" id="v-cat">
+  <div class="sub-head">
+    <a class="back" href="mine.html"><svg class="ic"><use href="#i-back"/></svg></a>
+    <h1>物品分类</h1>
+    <a class="link act" data-catadd>＋ 新建</a>
+  </div>
+  <div class="pad">
+    <p class="notice rv" style="margin:0 0 13px">分类颜色将用于物品库筛选与统计图表 · 点击行可编辑 · 按住拖拽排序</p>
+    <div class="cat-row rv"><div class="ci" style="background:var(--accent-soft)">🥕</div><div><b>食品食材</b><small>含生鲜 / 零食 / 冲调</small></div><div class="drag"><span class="count-pill">28</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--teal-soft)">🧹</div><div><b>日用清洁</b><small>洗衣 / 厨卫清洁用品</small></div><div class="drag"><span class="count-pill">14</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--gold-soft)">🍳</div><div><b>厨房小物</b><small>保鲜袋 / 锡纸 / 百洁布</small></div><div class="drag"><span class="count-pill">8</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--violet-soft)">💊</div><div><b>药品保健</b><small>OTC / 维生素 / 医疗器械</small></div><div class="drag"><span class="count-pill">13</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--rose-soft)">💄</div><div><b>美妆护肤</b><small>含开封后有效期追踪</small></div><div class="drag"><span class="count-pill">7</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--gold-soft)">🧃</div><div><b>酒水饮料</b><small>咖啡 / 茶 / 饮品囤货</small></div><div class="drag"><span class="count-pill">8</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--teal-soft)">🔌</div><div><b>数码周边</b><small>电池 / 数据线 / 存储卡</small></div><div class="drag"><span class="count-pill">4</span><span>⠿</span></div></div>
+    <div class="cat-row rv"><div class="ci" style="background:var(--cream-2)">📦</div><div><b>其他杂物</b><small>暂未归类的物品</small></div><div class="drag"><span class="count-pill">4</span><span>⠿</span></div></div>
+    <button class="btn ghost rv" style="width:100%;margin-top:4px" data-catadd>＋ 自定义新分类</button>
+  </div>
+</div>
+
+<div class="sheet-mask" id="catMask"></div>
+<div class="sheet" id="catSheet">
+  <h3 id="catSheetTitle">新建分类</h3>
+  <p class="sub">为常见的一类物品安个家，颜色会用于物品库筛选与统计标记。</p>
+  <div class="field" style="margin-bottom:13px">
+    <label>分类名称 <em>*</em></label>
+    <div class="input"><input id="catName" placeholder="如：宠物用品"></div>
+  </div>
+  <div class="field" style="margin-bottom:13px">
+    <label>图标</label>
+    <div class="pick-grid" id="catEmojis">
+      <span class="act">🐾</span><span>🧸</span><span>🌿</span><span>🎁</span><span>📚</span><span>🛠️</span>
+      <span>⚡</span><span>🎨</span><span>🏷️</span><span>🚗</span><span>🧩</span><span>💡</span>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:16px">
+    <label>颜色标记</label>
+    <div class="color-row" id="catColors">
+      <i class="act" data-c="accent" style="background:var(--accent)"></i>
+      <i data-c="olive" style="background:var(--olive)"></i>
+      <i data-c="teal" style="background:var(--teal)"></i>
+      <i data-c="gold" style="background:var(--gold)"></i>
+      <i data-c="rose" style="background:var(--rose)"></i>
+      <i data-c="violet" style="background:var(--violet)"></i>
+    </div>
+  </div>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="catCancel">取消</button>
+    <button class="btn primary" id="catSave">创建分类</button>
+  </div>
+  <button class="btn ghost" id="catDelete" style="display:none;width:100%;margin-top:10px;color:var(--danger);border-color:var(--danger-soft)">删除该分类</button>
+</div>
+
+<div class="sheet-mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <h3 id="sheetTitle"></h3>
+  <p class="sub" id="sheetSub"></p>
+  <div class="sheet-btns">
+    <button class="btn ghost" id="sheetCancel">取消</button>
+    <button class="btn primary" id="sheetOk">确认</button>
+  </div>
+</div>
+<div class="toast" id="toast"><span>✨</span><span id="toastMsg"></span></div>
+<script src="assets/app.js"></script>
+</body>
+</html>
