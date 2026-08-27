@@ -44,7 +44,7 @@
     <div class="group rv">
       <div class="eyebrow">EXPORT · 导出</div>
       <div class="export-btns">
-        <button class="btn primary" data-toast="已生成 warmpantry_backup_20260827.myitems.json（含图片）📦"><svg class="ic"><use href="#i-doc"/></svg>完整备份（JSON · 含图片）</button>
+        <button class="btn primary" data-toast="已生成 warmpantry_backup_20260827.myitems.zip（backup.json + images/）📦"><svg class="ic"><use href="#i-doc"/></svg>完整备份（ZIP · 数据 + 图片）</button>
         <button class="btn ghost" data-toast="已导出 items-table.csv 📄"><svg class="ic"><use href="#i-doc"/></svg>表格导出（CSV · 可用 Excel 打开）</button>
         <button class="btn ghost" data-toast="唤起系统分享面板 ↗️"><svg class="ic"><use href="#i-share"/></svg>分享给家人的其他设备</button>
       </div>
@@ -53,7 +53,7 @@
     <div class="meta-line rv"><svg class="ic" style="width:15px;height:15px;flex-shrink:0"><use href="#i-shield"/></svg>上次成功备份：今天 08:30 · 2.1MB · 校验通过 ✓</div>
     <div class="meta-line fail rv"><div style="flex:1">失败态示意：08-26 自动备份失败 · 磁盘空间不足<small style="display:block;font-weight:700;font-size:10.5px;margin-top:2px">次日窗口重试 / 回前台补试，或点上方「立即备份」手动补一份</small></div><span class="tag t-red">示例</span></div>
     <div class="menu rv" style="margin-top:12px">
-      <a data-toast="选择 .json 备份文件导入；覆盖前会自动把当前数据留存一份 pre_restore 备份 📥"><span class="mi i-gold"><svg class="ic"><use href="#i-down"/></svg></span>从备份文件恢复<span class="val">恢复后悔药已内置<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
+      <a data-toast="选择 .myitems.zip 备份包导入（旧版纯 .json 亦可）；覆盖前自动留存 pre_restore 备份 📥"><span class="mi i-gold"><svg class="ic"><use href="#i-down"/></svg></span>从备份文件恢复<span class="val">恢复后悔药已内置<svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>
     </div>
     <p class="notice rv" style="justify-content:center">🔒 备份文件均为本地生成，不上传任何服务器</p>
   </div>
@@ -74,7 +74,7 @@
       var p=function(x){return String(x).padStart(2,'0')},d=new Date();
       val.textContent='上次 刚刚 · 校验通过 ✓';
       busy=false;
-      document.getElementById('toastMsg').textContent='✔ 完整备份完成：warmpantry_backup_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.myitems.json';
+      document.getElementById('toastMsg').textContent='✔ 完整备份完成：warmpantry_backup_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.myitems.zip';
       var t=document.getElementById('toast');t.classList.add('on');
       setTimeout(function(){t.classList.remove('on')},2400);
     },900);
