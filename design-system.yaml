@@ -254,6 +254,10 @@ animation:
       small_icon_button_fab: "scale 0.90，150ms"
     tab_active_dot: "选中 Tab 底部 accent 圆点 opacity/scale 200ms 浮现"
     ink_splash: "Material 水波纹点击效果（InkWell）作为兜底反馈"
+    haptic_feedback:
+      description: "成功写入流水的轻震动反馈，增强『记上了』的踏实感"
+      usage: "记录消耗 / 用完归档 / 余量校正 / 表单保存成功时 HapticFeedback.lightImpact；失败与警告一律不震动"
+      respect_settings: "全部动效与触感响应 MediaQuery.disableAnimations 关闭"
 
   accessibility:
     rule: "所有动效必须响应 MediaQuery.disableAnimations 关闭"

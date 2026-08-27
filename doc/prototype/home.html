@@ -110,13 +110,18 @@
   });
 })();
 
-/* 问候语昵称（需求 §3.7/§5.2）：在「我的」页修改后这里同步 */
+/* 问候语昵称 + 时段化（需求 §5.2）：「我的」页改昵称后这里同步 */
 (function(){
   var h=document.querySelector('.greet h1');
   if(!h)return;
   var n='小暖';
   try{n=localStorage.getItem('wp-nick')||n}catch(_){}
-  h.textContent='你好，'+n+' 👋';
+  var hr=new Date().getHours(),g='你好',tail='';
+  if(hr<5){g='这么晚还在整理呀';tail='，记得睡';}
+  else if(hr<11){g='早呀';}
+  else if(hr<18){g='你好';}
+  else{g='晚上好';}
+  h.textContent=g+'，'+n+tail+' 👋';
 })();
 </script>
 </body>

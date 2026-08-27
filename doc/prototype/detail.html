@@ -231,7 +231,7 @@ html.dark .c-org{color:var(--accent)}
   $$('.b-useup').forEach(function(btn){
     btn.onclick=function(){
       var b=btn.closest('.batch');
-      ask('这一批用完了？','将把该批次余量清零、写入 archive 流水并从批次列表移除。','用完并归档',function(){
+      ask('这一批用完了？','将把该批次余量清零、写入 archive 流水并从批次列表移除。这批吐司已经陪伴了你 13 天。','用完并归档',function(){
         b.style.transition='.35s';b.style.opacity='0';b.style.transform='translateX(24px)';
         setTimeout(function(){b.remove();
           if(!$$('.batch').length){$('.empty-demo').style.display='block';}

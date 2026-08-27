@@ -193,7 +193,8 @@
       b.onclick=function(e){
         e.stopPropagation();
         var row=b.closest('.con-row'),name=row.dataset.name,c=rowCtx(row);
-        openConfirm('「'+name+'」用完了？','这件物品将从库存移除并写入消耗记录，随时可以在「耗尽归档」里回购。','用完并归档',function(){
+        var since=row.dataset.since?'它已经陪伴了你 '+row.dataset.since+'。':'';
+        openConfirm('「'+name+'」用完了？','这件物品将从库存移除并写入消耗记录，随时可以在「耗尽归档」里回购。'+since,'用完并归档',function(){
           row.style.transition='.4s';row.style.opacity='0';row.style.transform='translateX(24px)';
           setTimeout(function(){
             row.innerHTML='<div style="text-align:center;color:var(--ink-faint);font-weight:800;font-size:12px;padding:6px">🗄️ 已移入耗尽归档</div>';
