@@ -109,6 +109,15 @@
     setTimeout(function(){location.href='expiring.html'},160);
   });
 })();
+
+/* 问候语昵称（需求 §3.7/§5.2）：在「我的」页修改后这里同步 */
+(function(){
+  var h=document.querySelector('.greet h1');
+  if(!h)return;
+  var n='小暖';
+  try{n=localStorage.getItem('wp-nick')||n}catch(_){}
+  h.textContent='你好，'+n+' 👋';
+})();
 </script>
 </body>
 </html>
