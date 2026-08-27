@@ -1,12 +1,14 @@
 # 设计与组件规则的唯一事实来源。
 # 该文件面向人和 AI 共同使用：可读、可解析、非可执行、易于比对。
 # 技术栈：Flutter + Dart + Material 3 + Riverpod
+# 视觉基准：doc/prototype/assets/warmpantry.css（奶油暖盘浅色 + 暖黑深色），本文件全部 token 与其一一对应。
 
 meta:
-  name: "Flutter 移动端设计系统"
-  version: "1.0.0"
-  last_updated: "2026-06-05"
+  name: "暖仓 WarmPantry 设计系统"
+  version: "2.0.0"
+  last_updated: "2026-08-27"
   status: "启用中"
+  source_of_truth: "doc/prototype/assets/warmpantry.css"
   owners:
     - "design"
     - "mobile"
@@ -16,18 +18,17 @@ meta:
     ui: "Material 3（Flutter 内置）"
     state_management: "Riverpod"
     routing: "GoRouter"
-    http: "Dio / http"
-    local_db: "sqflite"
+    local_db: "drift（迁移期 sqflite）"
     target_platforms:
       - "Android"
-      - "iOS"
   usage:
     read_order:
       - "在进行任何 UI 改动前阅读本文件"
-      - "然后查看 lib/config/theme.dart 主题配置"
-      - "然后查看现有 Widget、页面布局和字体配置"
+      - "对照 prototype/ 对应屏幕 HTML 与 warmpantry.css 变量"
+      - "然后查看 lib/core/theme.dart（主题落地）与现有 Widget"
       - "最后再开始新增页面、Widget 或状态逻辑"
     principles:
+      - "原型 HTML 是视觉基准，本文件是其 token 化表达，两者不一致时先修订本文件"
       - "优先复用已有 Widget、样式和资源"
       - "优先使用 Material 3 语义化 token，不直接写视觉常量"
       - "移动端优先，保证触摸目标和可读性"
@@ -36,389 +37,323 @@ meta:
 
 product:
   style_keywords:
-    - "现代"
-    - "简洁"
-    - "流畅"
-    - "易用"
+    - "奶油暖盘"
+    - "温暖"
+    - "柔和"
+    - "手账感"
     - "原生感"
   ui_goal:
     - "遵循 Material 3 设计语言，充分利用 Flutter 原生能力"
-    - "信息层级清晰，操作确定性高"
-    - "重要状态一眼可辨，表单与列表操作成本低"
+    - "信息层级清晰，效期状态一眼可辨"
+    - "库存数字用衬线字体强调'账本感'，正文保持易读黑体"
     - "触摸友好，关键操作区域满足最小触摸目标要求"
     - "动效克制自然，增强操作反馈而非装饰"
 
 # ============================================================
-# 颜色 Token
-# Material 3 ColorScheme 映射
+# 颜色 Token（来源 warmpantry.css :root 与 html.dark）
 # ============================================================
 tokens:
   colors:
-    # 主品牌色
-    primary:
-      light: "#FF6B6B"
-      dark: "#FF8A9A"
-      container_light: "#FFE8E8"
-      container_dark: "#4A1F27"
-    # 辅助色
-    secondary:
-      light: "#4ECDC4"
-      dark: "#4EC89D"
-      container_light: "#D9F6EE"
-      container_dark: "#173F35"
-    # 成功色
-    success:
-      light: "#22A97E"
-      dark: "#4EC89D"
-      container_light: "#DCFBE6"
-      container_dark: "#1A3D2E"
-    # 警告色
-    warning:
-      light: "#B76A00"
-      dark: "#F8B72B"
-      container_light: "#FFF1B8"
-      container_dark: "#3D2E0A"
-    # 错误色
-    error:
-      light: "#D92D46"
-      dark: "#FF8A9A"
-      container_light: "#FFE4E8"
-      container_dark: "#3D0A10"
-    # 中性色
-    gray:
-      50: "#F8FAFC"
-      100: "#F1F5F9"
-      200: "#E2E8F0"
-      300: "#CBD5E1"
-      400: "#94A3B8"
-      500: "#64748B"
-      600: "#475569"
-      700: "#334155"
-      800: "#1E293B"
-      900: "#0F172A"
+    # 背景奶油层级：页面 cream-1 < 卡片 cream-0 < 填充控件 cream-2
+    cream-0: { light: "#FFFCF5", dark: "#262019", role: "卡片 / 弹层背景" }
+    cream-1: { light: "#FBF4E8", dark: "#1C1712", role: "页面 Scaffold 背景" }
+    cream-2: { light: "#F3E9D6", dark: "#322A20", role: "填充控件底（分段器/进度条槽/次级容器）" }
+    line:     { light: "#EBDEC7", dark: "#41382A", role: "边框-默认" }
+    line-soft: { light: "#F0E6D3", dark: "#37301F", role: "边框-弱（卡片描边常用）" }
+
+    ink:       { light: "#3D352A", dark: "#F0E7D6", role: "文字-主" }
+    ink-soft:  { light: "#6E6250", dark: "#BDB09A", role: "文字-次要" }
+    ink-faint: { light: "#A3947C", dark: "#847761", role: "文字-弱化/占位" }
+
+    # 主品牌色：陶土橙
+    accent:      { light: "#DE7931", dark: "#E08A45", role: "primary；FAB、主按钮、激活态" }
+    accent-deep: { light: "#BE5E18", dark: "#EF9E5D", role: "onPrimaryContainer / 强调链接色" }
+    accent-soft: { light: "#F8E4CF", dark: "#3D2D1B", role: "primaryContainer / 图标软底" }
+    on-accent:   { light: "#FFF7EC", dark: "#FFF6EA", role: "主按钮/FAB 文字" }
+
+    # 分类色系（Category.ColorKey 六组 soft-strong 色对，同时用于图表）
+    olive:  { strong: { light: "#79905B", dark: "#9CB37E" }, soft: { light: "#E4EAD5", dark: "#2C3421" } }
+    rose:   { strong: { light: "#C77B8E", dark: "#D892A4" }, soft: { light: "#F6E2E6", dark: "#3A282E" } }
+    teal:   { strong: { light: "#559487", dark: "#74AC9E" }, soft: { light: "#DEEBE6", dark: "#1F302C" } }
+    violet: { strong: { light: "#8B7DB0", dark: "#A99BCB" }, soft: { light: "#E9E4F2", dark: "#2E2A3D" } }
+    gold:   { strong: { light: "#D9A441", dark: "#E0B45E" }, soft: { light: "#F6EBCE", dark: "#39301A" } }
+    danger: { strong: { light: "#CB5840", dark: "#E07A5F" }, soft: { light: "#F8E0D8", dark: "#3D241B" } }
+
+    # gold 系在 soft 底上的可读文字色（深浅两版固定值，见 css t-yel）
+    gold-text-on-soft: { light: "#9C7313", dark: "#E0B45E" }
 
   # ============================================================
   # 语义化颜色映射（Material 3 ColorScheme 对应）
-  # 优先使用 ColorScheme.of(context)，而非硬编码颜色
   # ============================================================
   semantic:
     text:
-      primary: "colorScheme.onSurface（gray-900）"
-      secondary: "colorScheme.onSurfaceVariant（gray-600）"
-      muted: "gray-500"
+      primary: "colorScheme.onSurface（ink）"
+      secondary: "colorScheme.onSurfaceVariant（ink-soft）"
+      muted: "ink-faint"
       disabled: "colorScheme.onSurface.withOpacity(0.38)"
-      inverse: "colorScheme.onPrimary（white）"
-      link: "colorScheme.primary"
+      inverse: "colorScheme.onPrimary"
+      link: "accent-deep"
     background:
-      page: "colorScheme.surface（gray-50）"
-      card: "colorScheme.surfaceContainerLow（white）"
-      surface: "colorScheme.surfaceContainerHighest（gray-100）"
-      active: "colorScheme.primaryContainer"
-      brand: "colorScheme.primary"
+      page: "colorScheme.surface（cream-1）"
+      card: "colorScheme.surfaceContainerLowest（cream-0）"
+      filled_control: "colorScheme.surfaceContainerHighest（cream-2）"
+      active: "colorScheme.primaryContainer（accent-soft）"
+      brand: "colorScheme.primary（accent）"
     border:
-      default: "colorScheme.outlineVariant（gray-200）"
-      strong: "colorScheme.outline（gray-300）"
-      focus: "colorScheme.primary"
-    status:
-      success_bg: "success container_light"
-      success_text: "success.light"
-      warning_bg: "warning container_light"
-      warning_text: "warning.light"
-      error_bg: "error container_light"
-      error_text: "error.light"
+      default: "colorScheme.outline（line）"
+      weak: "colorScheme.outlineVariant（line-soft）"
+      focus: "colorScheme.primary（accent）"
+    status_tags:  # Tag/Badge 五级色阶，对应 css .t-*
+      red:  { bg: "danger.soft", text: "danger.strong" }
+      org:  { bg: "accent-soft", text: "accent-deep" }
+      yel:  { bg: "gold.soft", text: "gold-text-on-soft" }
+      grn:  { bg: "olive.soft", text: "olive.strong" }
+      gry:  { bg: "cream-2", text: "ink-faint" }
+    expiry_days:  # 临期剩余天数着色，对应 css .d-red/.d-org/.d-yel
+      red: "danger.strong"
+      orange: "accent-deep"
+      yellow: "gold-text-on-soft"
 
   # ============================================================
   # Material 3 ThemeData 映射
-  # 实现文件：lib/config/theme.dart
+  # 实现文件：lib/core/theme.dart
   # ============================================================
   material3:
     theme_config:
-      location: "lib/config/theme.dart"
-      description: "通过 ThemeData + ColorScheme 统一管理主题"
-      light_theme: |
-        ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0xFFFF6B6B),
-            brightness: Brightness.light,
-          ),
-          fontFamily: 'SystemDefault',
+      location: "lib/core/theme.dart"
+      description: "ColorScheme 显式逐项指定（不用 fromSeed，保证与原型一致）；ThemeMode.system + 我的页手动开关"
+      light_scheme: |
+        ColorScheme(
+          brightness: Brightness.light,
+          primary: Color(0xFFDE7931), onPrimary: Color(0xFFFFF7EC),
+          primaryContainer: Color(0xFFF8E4CF), onPrimaryContainer: Color(0xFFBE5E18),
+          secondary: Color(0xFF559487), onSecondary: Color(0xFFFFFFFF),
+          tertiary: Color(0xFF8B7DB0),
+          error: Color(0xFFCB5840), onError: Color(0xFFFFFFFF),
+          surface: Color(0xFFFBF4E8), onSurface: Color(0xFF3D352A),
+          surfaceContainerHighest: Color(0xFFF3E9D6),
+          surfaceContainerLowest: Color(0xFFFFFCF5),
+          outline: Color(0xFFEBDEC7), outlineVariant: Color(0xFFF0E6D3),
         )
-      dark_theme: |
-        ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0xFFFF6B6B),
-            brightness: Brightness.dark,
-          ),
-          fontFamily: 'SystemDefault',
+      dark_scheme: |
+        ColorScheme(
+          brightness: Brightness.dark,
+          primary: Color(0xFFE08A45), onPrimary: Color(0xFFFFF6EA),
+          primaryContainer: Color(0xFF3D2D1B), onPrimaryContainer: Color(0xFFEF9E5D),
+          secondary: Color(0xFF74AC9E), onSecondary: Color(0xFF10201C),
+          tertiary: Color(0xFFA99BCB),
+          error: Color(0xFFE07A5F), onError: Color(0xFF2A130B),
+          surface: Color(0xFF1C1712), onSurface: Color(0xFFF0E7D6),
+          surfaceContainerHighest: Color(0xFF322A20),
+          surfaceContainerLowest: Color(0xFF262019),
+          outline: Color(0xFF41382A), outlineVariant: Color(0xFF37301F),
         )
       usage_rules:
-        - "主题定制统一通过 ThemeData + ColorScheme 配置"
         - "组件中使用 Theme.of(context).colorScheme 获取颜色，禁止硬编码"
-        - "间距统一使用 Material 3 的 Spacing token 或自定义常量"
+        - "分类六色等非 ColorScheme 色通过统一的 AppColors 扩展（ThemeExtension）注入，同样禁止散落硬编码"
+        - "间距统一使用 spacing scale 常量"
         - "响应式使用 LayoutBuilder 或 MediaQuery"
 
   typography:
     font_family:
-      default: "系统默认字体（Flutter 自动映射平台原生字体）"
-      mono: "等宽字体（Consolas / Menlo）"
+      ui: "系统默认黑体（PingFang SC / MiSans / Microsoft YaHei，Flutter 自动映射），对应原型 Nunito 的圆润气质以系统字体近似"
+      numeric: "Fraunces（打包 ttf 资产，wght 500–600 子集），用于统计数字、倒计时天数、金额等衬线数字；fallback: serif"
     font_size:
-      caption: "12"
-      body: "14"
-      subhead: "16"
-      title: "18"
-      headline: "22"
-      display: "28"
+      eyebrow: "10（letter-spacing 0.24em 全大写小标签）"
+      caption: "10.5–11"
+      body-s: "12–13.5"
+      body: "13.5–14"
+      title: "17–18"
+      headline: "20–21"
+      stat-number: "26–30（衬线数字）"
     font_weight:
-      regular: "FontWeight.w400"
-      medium: "FontWeight.w500"
-      semibold: "FontWeight.w600"
-      bold: "FontWeight.w700"
-    line_height:
-      tight: "1.25"
-      normal: "1.5"
-      relaxed: "1.7"
+      regular: "FontWeight.w600（UI 文字基线偏重）"
+      semibold: "FontWeight.w700"
+      bold: "FontWeight.w800"
+      black: "FontWeight.w900（标题/eyebrow/chip）"
 
   spacing:
     base_unit: "4"
     scale:
       xs: "4"
       sm: "8"
-      md: "12"
+      md: "11"
       base: "16"
-      lg: "20"
+      lg: "20（页面水平 padding，对应 css .pad）"
       xl: "24"
       xxl: "32"
-      xxxl: "48"
-    page_padding: "16（水平）"
-    section_gap: "24"
-    item_gap: "12"
-    card_padding: "16"
-    card_radius: "16（通用圆角；列表内小容器可使用 12）"
+    page_padding: "20（水平）"
+    card_padding: "12–17"
+    tabbar_clearance: "底部内容需预留 ≥96px 高度给浮起 TabBar（含安全区）"
 
   radius:
-    sm: "6"
-    md: "10"
-    lg: "14"
-    xl: "20"
-    full: "28（胶囊形）"
+    sm: "12（内部小块/输入框内件）"
+    md: "16–18（按钮/搜索框/弹层内卡）"
+    lg: "20–24（卡片/位置行/分类行 20；大卡片与弹层 24–28）"
+    fab: "20（中央 FAB 圆角方）"
+    full: "999（chip/tag 胶囊）"
 
   shadow:
-    sm: "0 2 8 rgba(0,0,0,0.08)"
-    md: "0 4 16 rgba(0,0,0,0.10)"
-    lg: "0 8 32 rgba(0,0,0,0.14)"
+    card: "0 10 26 -12 rgba(112,84,44,0.22)（dark: rgba(0,0,0,0.55)）"
+    pop: "0 18 40 -14 rgba(112,84,44,0.35)（dark: rgba(0,0,0,0.65)）"
+    fab: "0 14 26 -8 rgba(190,94,24,0.65)"
 
   transitions:
-    fast: "100ms"
-    base: "200ms（标准）"
+    fast: "150ms"
+    base: "200ms（chips/hover 过渡对应 css .18s）"
     slow: "300ms"
-    slower: "500ms"
+    sheet: "340ms cubic-bezier(0.3,1.1,0.4,1)"
 
   touch_target:
-    minimum_ios: "44x44"
     minimum_android: "48x48"
     recommended: "48x48"
-    button_height: "44"
-    input_height: "44"
-    bar_height: "48"
-    icon_size: "24"
+    button_height: "≥46（css .btn padding 15 对应约 50）"
+    input_height: "≥48（css .input padding 13）"
+    icon_button: "34–40（紧凑图标钮不小于 34，间距放宽补偿）"
+    icon_size: "18–24"
 
   safe_area:
     top: "遵循平台状态栏高度"
     bottom: "遵循平台导航栏 / Home Indicator 高度"
-    rule: "使用 SafeArea Widget 自动处理"
+    rule: "使用 SafeArea Widget 自动处理；子页头 sticky 渐隐背景参照 css .sub-head"
 
 # ============================================================
-# 动效规范
-# 从「掌上数据分析」项目提炼，适配 Flutter API
+# 动效规范（与 ui-AGENTS.md 动效规则一致，参数对齐原型）
 # ============================================================
 animation:
-  # 页面转场动画
   page_transitions:
-    default:
-      type: "fade + slight slide"
-      duration: "200ms"
-      curve: "Curves.easeOut"
-      flutter_api: "FadeTransition + SlideTransition"
-    slide_from_right:
-      description: "从右侧滑入，用于前进导航"
-      offset: "Offset(1.0, 0.0) → Offset.zero"
-      duration: "250ms"
-      curve: "Curves.easeOutCubic"
-    slide_from_bottom:
-      description: "从底部滑入，用于模态页面"
-      offset: "Offset(0.0, 1.0) → Offset.zero"
-      duration: "300ms"
-      curve: "Curves.easeOutCubic"
-    scale_up:
-      description: "缩放进入，用于详情展开"
-      begin_scale: "0.9"
-      end_scale: "1.0"
-      duration: "200ms"
-      curve: "Curves.easeOut"
-    fade:
-      description: "纯淡入淡出，用于标签切换"
-      duration: "150ms"
-      curve: "Curves.linear"
+    forward_push: { type: "slide_from_right", duration: "250ms", curve: "Curves.easeOutCubic" }
+    modal: { type: "slide_from_bottom", duration: "300ms", curve: "Curves.easeOutCubic" }
+    default: { type: "fade + slight slide", duration: "200ms", curve: "Curves.easeOut" }
 
-  # 列表交错入场动画
-  staggered_animation:
-    enabled: true
-    delay_per_item: "30ms"
-    duration_per_item: "300ms"
-    curve: "Curves.easeOutCubic"
-    flutter_api: "AnimatedList + Interval / StaggeredAnimation"
-    usage: "卡片网格、列表数据加载后逐项入场"
+  rise_in:  # 入场 rise，对应 css @keyframes rise
+    description: "区块/列表项首次进入时自下方 16px 淡入上移"
+    duration: "550ms"
+    curve: "cubic-bezier(0.22,0.9,0.3,1)"
+    stagger_delay_per_item: "50ms（首个 30ms，之后每项递增，9 项后统一 430ms 封顶）"
+    flutter_api: "AnimationController + Interval，或 staggered 通用组件封装一次全项目复用"
 
-  # 弹簧物理动画
+  progress_meter:  # 余量进度条
+    width_transition: "350–500ms cubic-bezier(0.22,0.9,0.3,1)"
+    usage: "扣减后进度条就地收窄，百分比文案同步过渡"
+
+  count_bump:  # 今日计数跳字
+    keyframe: "scale 1 → 1.25 → 1，450ms cubic-bezier(0.3,1.4,0.4,1)"
+    usage: "仅用于今日消耗数等『成功写流水』的确认反馈"
+
   spring_physics:
-    description: "用于底部弹窗、抽屉、模态等需要弹性的场景"
     damping: "25"
     stiffness: "200-300"
-    flutter_api: "SpringSimulation / Curves.elasticOut"
     usage_rules:
-      - "底部弹窗（BottomSheet）使用弹簧动画"
-      - "抽屉（Drawer）使用弹簧动画"
+      - "底部弹窗（BottomSheet/记录消耗/校正/归档确认）使用弹簧动画"
       - "避免在文字变化、颜色变化等非位移动画中使用弹簧"
 
-  # 进度条动画
-  progress_animation:
-    duration: "1200ms"
-    curve: "Curves.easeOut"
-    flutter_api: "AnimatedContainer / TweenAnimationBuilder"
-    usage: "进度条从 0 到目标值的动画填充"
-
-  # 交互动效反馈
   feedback:
-    tap_scale:
-      description: "按压缩放反馈"
-      scale_down: "0.95"
-      scale_up: "1.0"
-      duration: "100ms"
-      flutter_api: "ScaleTransition + GestureDetector"
-      usage: "卡片、按钮等可点击元素的按压反馈"
-    pulse_indicator:
-      description: "脉冲指示器，表示实时/在线状态"
-      color: "success.light"
-      flutter_api: "AnimatedContainer + AnimatedOpacity loop"
-      usage: "实时数据状态、在线指示"
-    ink_splash:
-      description: "Material 水波纹点击效果"
-      flutter_api: "InkWell / InkResponse"
-      usage: "所有可点击元素默认使用 InkWell"
+    press_scale:
+      card: "scale 0.97，150ms"
+      small_icon_button_fab: "scale 0.90，150ms"
+    tab_active_dot: "选中 Tab 底部 accent 圆点 opacity/scale 200ms 浮现"
+    ink_splash: "Material 水波纹点击效果（InkWell）作为兜底反馈"
 
-  # 毛玻璃效果
+  accessibility:
+    rule: "所有动效必须响应 MediaQuery.disableAnimations 关闭"
+    fab_bob: "原型 FAB 上下浮动属装饰动画，实现默认关闭或极低幅度，不视为必还原项"
+
   glass_morphism:
-    description: "半透明模糊背景效果，用于导航栏、浮层"
-    blur_radius: "10-20"
-    background_opacity: "0.7-0.9"
-    border_opacity: "0.1"
-    flutter_api: "BackdropFilter + ImageFilter.blur"
-    usage_rules:
-      - "顶部导航栏：BackdropFilter blur=10, bg white/0.8"
-      - "底部操作栏：BackdropFilter blur=15, bg white/0.85"
-      - "深色背景浮层：BackdropFilter blur=20, bg black/0.3"
-      - "避免在列表滚动区域过度使用，影响性能"
+    tabbar:
+      blur: "14"
+      background: "cream-0 92% 不透明度（dark 用 #241E17 92%）"
+      note: "仅 TabBar 使用 BackdropFilter；列表滚动区域禁用"
 
 # ============================================================
-# 图表样式规范
-# 适用于 fl_chart 或其他 Flutter 图表库
+# 图表样式规范（本周消耗柱状图 / 备份环形图）
 # ============================================================
 chart_styles:
   color_palette:
-    - "#1A90FF" # 主蓝
-    - "#10B981" # 主绿
-    - "#F59E0B" # 主橙
-    - "#EF4444" # 主红
-    - "#8B5CF6" # 紫
-    - "#EC4899" # 粉
-    - "#06B6D4" # 青
-    - "#F97316" # 橙红
+    - "#DE7931" # accent 陶土橙
+    - "#559487" # teal 青绿
+    - "#D9A441" # gold 金黄
+    - "#8B7DB0" # violet 紫藤
+    - "#C77B8E" # rose 玫粉
+    - "#79905B" # olive 橄榄
 
-  area_gradient:
-    description: "面积图渐变填充"
-    opacity_top: "0.4"
-    opacity_bottom: "0.0"
-    flutter_api: "LinearGradient begin=Alignment.topCenter, end=Alignment.bottomCenter"
+  bar_style:  # 首页本周消耗节奏
+    bar_width: "≤22"
+    spacing: "9"
+    border_radius: "vertical(top: Radius.circular(7))"
+    idle_color: "cream-2 → line-soft 纵向渐变（dark 同理取暖黑渐变）"
+    hot_color: "accent → accent-deep 纵向渐变"
+    height: "76"
 
-  line_style:
-    stroke_width: "2-3"
-    dot_radius: "3"
-    dot_style: "白底 + 彩色描边"
-    curve: "Curves.linear（折线）/ Curves.easeOut（曲线）"
-
-  bar_style:
-    border_radius: "BorderRadius.vertical(top: Radius.circular(4))"
-    bar_width: "18-25"
-    spacing: "8"
-
-  pie_style:
-    type: "donut（环形图）"
-    inner_radius_ratio: "0.5-0.6"
-    padding_angle: "2-6 度"
-    section_border: "白色描边, strokeWidth=2"
+  pie_style:  # 存储占用 donut
+    type: "donut"
+    inner_radius_ratio: "0.75-0.8"
+    section_colors: "[accent, teal, gold, cream-2]"
+    center_text: "衬线数字总量"
 
   grid_style:
-    show_horizontal: true
-    show_vertical: false
-    dash_pattern: "[3, 3]"
-    color: "gray-200"
-
-  axis_style:
     show_axis_line: false
-    show_ticks: false
-    label_font_size: "10-12"
-    label_font_weight: "bold"
-    label_color: "gray-400"
-
-  tooltip_style:
-    background: "white"
-    border_radius: "12"
-    border: "none"
-    shadow: "0 10px 25px -5px rgba(0,0,0,0.1)"
-    text_style: "text-sm, gray-700"
+    label_font_size: "9.5-12"
+    label_color: "ink-faint"
 
   usage_rules:
-    - "图表颜色统一引用 chart_styles.color_palette，不在 option 中硬编码颜色"
+    - "图表颜色统一引用 chart_styles.color_palette，不在 option 中硬编码"
     - "图表容器必须设置明确的高度"
-    - "图表组件必须处理 loading 和 empty 状态"
-    - "tooltip、legend、axis 样式统一来自本配置，不单独覆盖"
+    - "loading/empty 状态必须处理"
+
+# ============================================================
+# 组件模式（原型沉淀的签名组件，实现于 lib/widgets/ 或模块内）
+# ============================================================
+component_patterns:
+  app_bar_tabs:  # 页面无 AppBar 标题栏，使用 greet 头部（首页/消耗中心/我的）
+    structure: "emoji+标题 (headline w900) + 副标题 (caption w700 ink-faint)；右侧铃铛(带红点)/头像"
+  float_tabbar:  # css .tabbar
+    container: "悬浮胶囊 68 高 r26 cream-0 92% blur14 边框 line 投影 pop，左右留 14 边距"
+    items: "四 Tab：图标 21 + 文字 10 w900；未选 ink-faint，选中 accent-deep + tdot"
+    center_fab: "56x56 r20 accent→accent-deep 渐变，上浮叠压 TabBar 顶部，阴影 fab"
+  sub_head: "子页头部：返回钮 40x40 r14 cream-0 卡片式 + h1 18 w900 + 右侧动作位；sticky 渐隐背景"
+  card: "cream-0 底 + line-soft 描边 + r-lg 圆角 + shadow-card"
+  chip: "胶囊 chip：line 描边 cream-0 底 caption w700 ink-soft；act 态反色为 ink 底 cream-0 字；筛选 chips 横滑"
+  tag: "r8 小圆角 tag，padding 3x8，字号 10.5 w900，配色取 semantic.status_tags"
+  meter: "高 6 圆角 4 cream-2 槽 + accent→gold 横向渐变填充；数量型余量专用"
+  stat_card: "三列统计卡：eyebrow 弱标签 + 衬线大数字 26 + 说明 span；alert 变体用 accent 双色渐变底"
+  menu_group: "我的页菜单组：eyebrow 组名 + 菜单卡（图标软底方块 36 r12 + 文案 + 右侧值/箭头），虚线分隔 line-soft"
+  switch_row: "表单开关行：cream-0 卡 r15 描边 line-soft，标题 w800 + 副文案 caption；开关态用 olive"
+  bottom_sheet: "r28 cream-0 弹层 pop 阴影，圆角遮罩 rgba(52,41,26,0.45)；复杂表单弹层同构（记录消耗/校正/新建分类）"
+  toast: "深棕反色 toast rgba(50,41,28,0.94) 文字 #FBF2E3 r14，位于 TabBar 上方"
 
 # ============================================================
 # 移动端模式
 # ============================================================
 mobile_patterns:
   navigation:
-    router: "GoRouter（声明式路由）"
-    tab_bar: "底部标签栏最多 5 个标签"
-    modal: "使用模态页面用于创建、编辑、确认等独立流程"
-    back: "系统返回按钮由平台自动管理，无需自定义"
-    deep_link: "GoRouter 统一配置深度链接"
+    router: "GoRouter（StatefulShellRoute 承载四 Tab，子页压栈）"
+    tab_bar: "四 Tab + 中央 FAB（首页/物品库/添加/消耗/我的）"
+    modal: "模态页用于创建、编辑独立流程"
+    back: "系统返回按钮由平台自动管理"
   list:
-    component: "ListView.builder / GridView.builder"
+    component: "ListView.builder / GridView.builder（物品库双列网格SliverGrid）"
     pull_to_refresh: "RefreshIndicator"
-    load_more: "长列表支持增量加载或分页"
-    swipe_action: "Dismissible 实现滑动操作"
-    empty_state: "空列表必须显示引导性空状态"
+    load_more: "消耗记录支持分页加载更早记录"
+    swipe_action: "Dismissible 左滑删除（配合 4.8 软删缓冲撤销窗口）"
+    empty_state: "空列表必须显示引导性空状态（emoji 场景图 + 一句原因 + 主行动按钮）"
   form:
-    label_position: "标签在输入框上方"
+    label_position: "标签在输入框上方（label w900 12px + em 必填星标 accent-deep）"
     validation: "实时校验 + 提交校验双阶段"
-    error_display: "输入框下方红色错误文案"
-    submit_button: "固定在底部或键盘上方"
-    keyboard_type: "根据输入内容设置合适的 TextInputType"
+    error_display: "输入框下 danger 色文案"
+    submit_button: "底部固定主按钮（btn.primary）+ 可选次按钮"
+    keyboard_type: "根据输入内容设置合适的 TextInputType（数值步进用 decimal）"
   feedback:
     loading: "CircularProgressIndicator 或骨架屏"
-    snackbar: "ScaffoldMessenger.of(context).showSnackBar"
+    snackbar: "ScaffoldMessenger SnackBar（含删除/消耗撤销按钮，时长 5s）"
     dialog: "showDialog / showAdaptiveDialog"
-    bottom_sheet: "showModalBottomSheet"
+    bottom_sheet: "showModalBottomSheet（弹簧动效）"
     empty: "说明当前为空的原因，并给出引导动作"
     error: "错误信息可读、可恢复，提供重试或返回路径"
   gesture:
     tap: "主要交互方式（InkWell）"
-    swipe: "列表项操作、页面切换"
-    pinch: "图片缩放（按需）"
-    long_press: "上下文菜单、快捷操作（按需）"
+    long_press: "物品库长按菜单（多选/快捷开封）与详情批次卡操作"
+    swipe: "左滑删除、临期专区横滑专区"
 
 # ============================================================
 # 页面状态规范
@@ -428,16 +363,13 @@ page_states:
     - "loading"
     - "empty"
     - "error"
-    - "no-permission"
   guidance:
     loading:
-      implementation: "使用 CircularProgressIndicator 或骨架屏，避免页面空白"
+      implementation: "骨架屏优先（cream-2 色块），避免白屏"
     empty:
-      implementation: "说明当前为空的原因，并提供引导操作按钮"
+      implementation: "场景 emoji + 一句人话原因 + 引导主按钮（如「去添加第一件物品」）"
     error:
-      implementation: "错误信息可读、可恢复，提供重试或返回按钮"
-    no_permission:
-      implementation: "明确提示权限不足，不暴露内部实现细节"
+      implementation: "错误信息可读，提供重试按钮；数据损坏类错误引导走备份恢复"
 
 # ============================================================
 # 组件使用规则
@@ -445,20 +377,20 @@ page_states:
 component_rules:
   reuse_first: true
   file_placement:
-    pages: "lib/pages/"
-    widgets: "lib/widgets/"
+    theme: "lib/core/theme/"
+    constants: "lib/core/constants/"
+    features: "lib/features/<module>/（每目录对应原型一个屏幕：home/library/consume/mine/item_editor/categories/locations/expiring/archive/backup/about/item_detail）"
+    shared_widgets: "lib/widgets/（跨模块复用）"
+    module_widgets: "lib/features/<module>/widgets.dart（仅本模块使用的私有组件）"
     providers: "lib/providers/"
-    models: "lib/models/"
-    services: "lib/services/"
-    repositories: "lib/repositories/"
-    config: "lib/config/"
+    models: "lib/data/models/"
+    repositories: "lib/data/repositories/"
+    services: "lib/data/services/"
   naming:
-    pages: "PascalCase，以 Page / Screen 结尾"
+    pages: "PascalCase，以 Page 结尾"
     widgets: "PascalCase，以 Widget 结尾（可复用组件）"
-    providers: "snake_case 文件名，PascalCase 类名"
-    models: "PascalCase，以 Model / Entity / DTO 结尾"
-    services: "PascalCase，以 Service 结尾"
-    repositories: "PascalCase，以 Repository 结尾"
+    providers: "snake_case 文件名，XxxNotifier 类名"
+    models: "PascalCase，实体名直命名（Item/Batch/Category...）"
   rules:
     - "优先复用项目已有 Widget、转换器和样式"
     - "共享 Widget 必须具备明确复用价值"
@@ -471,15 +403,15 @@ component_rules:
 form_rules:
   layout:
     label_position: "标签在输入框上方"
-    field_gap: "12"
-    section_gap: "24"
-    submit_position: "页面底部或键盘上方固定"
+    field_gap: "13-15"
+    section_gap: "18"
+    submit_position: "页面底部固定主按钮 + 次按钮（保存并继续录入下一件）"
   validation:
     strategy: "实时 + 提交双阶段校验"
-    error_style: "输入框下方文字提示 + 边框颜色变化"
+    error_style: "输入框下方文字提示 + 边框变 danger 色（常态 line-soft，聚焦 accent）"
   submit_behavior:
     loading: "提交按钮 disabled + CircularProgressIndicator"
-    success: "反馈成功并刷新受影响数据"
+    success: "Snack 反馈并刷新受影响数据"
     failure: "保留用户输入并提示可恢复原因"
     keyboard_dismiss: "提交前收起键盘（FocusScope.unfocus）"
 
@@ -487,36 +419,30 @@ form_rules:
 # 响应式设计规范
 # ============================================================
 responsive:
-  principle: "移动端优先，竖屏为主"
-  common_patterns:
-    phone_portrait: "单列布局，全宽组件"
-    phone_landscape: "双列或横向滚动布局"
-    tablet: "多列布局，利用宽屏空间"
+  principle: "移动端优先竖屏；布局最大宽度 432dp 居中（对应 css max-width），宽屏时内容仍单列居中"
   rules:
     - "关键操作必须可单手完成"
-    - "触摸目标不小于 44x44"
-    - "文字不小于 12sp"
+    - "触摸目标不小于 48x48"
+    - "文字不小于 10sp（eyebrow 除外且不作关键信息载体）"
     - "使用 LayoutBuilder / MediaQuery 适配不同尺寸"
+    - "横屏不做特殊双栏，保持竖版流式布局"
 
 # ============================================================
 # Do / Don't 规则
 # ============================================================
 do:
-  - "优先使用 Material 3 内置组件，不满足需求时再自定义 Widget"
-  - "优先复用 token、样式、资源和现有 Widget"
-  - "保持页面状态完整：loading / empty / error / no-permission"
-  - "使用语义化颜色（ColorScheme），而不是视觉硬编码"
-  - "确保触摸目标满足最小尺寸要求"
-  - "列表页面支持下拉刷新"
-  - "颜色必须使用 ColorScheme 语义化 token，以保证主题切换时自动适配"
+  - "颜色一律来自本文件 token / ThemeExtension / ColorScheme，保证浅深两套自动适配"
+  - "每个视觉决定先回 prototype/ 找到对应屏幕与 CSS 类再实现"
+  - "保持页面状态完整：loading / empty / error"
+  - "数字与天数使用 numeric 衬线字体家族，强化账本感"
+  - "列表页支持下拉刷新，长列表懒加载"
   - "动效使用 animation 区域定义的参数，保持一致性"
 
 dont:
   - "不要在 Widget 中直接硬编码颜色、间距、圆角（如 Color(0xFF1677FF)）"
+  - "不要引入与暖盘体系冲突的第二套视觉（旧珊瑚红/sky 蓝体系已废弃）"
   - "不要在 Widget 树中编写业务逻辑"
-  - "不要使用静态全局类存储业务状态（使用 Riverpod）"
   - "不要交付没有 loading / empty / error 状态的页面"
-  - "不要为了单次需求额外引入新的样式体系或组件库"
   - "不要在图表 option 中硬编码颜色，必须引用 chart_styles"
-  - "不要使用过度动效（弹跳、旋转等装饰性动画）"
+  - "不要使用过度动效（原型中的 FAB bob 属可裁剪装饰）"
   - "不要在列表滚动区域使用 BackdropFilter（影响性能）"
