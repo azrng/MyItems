@@ -75,6 +75,18 @@
       <span class="chip">07:30</span><span class="chip on">08:30</span><span class="chip">09:00</span><span class="chip">12:30</span><span class="chip">21:00</span>
     </div>
   </div>
+  <div class="field rs-field">
+    <label>临期预警天数（提前几天开始提醒）</label>
+    <div class="amt-chips" id="rmWarnDays">
+      <span class="chip on">3 天</span><span class="chip">5 天</span><span class="chip">7 天</span>
+    </div>
+  </div>
+  <div class="field rs-field">
+    <label>低余量阈值（卡片「余量低」标签）</label>
+    <div class="amt-chips" id="rmLowPct">
+      <span class="chip">20%</span><span class="chip on">25%</span><span class="chip">30%</span>
+    </div>
+  </div>
   <div class="sheet-btns">
     <button class="btn ghost" id="rmCancel">取消</button>
     <button class="btn primary" id="rmOk">保存</button>
@@ -98,18 +110,24 @@
   m.onclick=close;
   $('#rmCancel').onclick=close;
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sh.classList.contains('on'))close()});
-  $$('#rmTimes .chip').forEach(function(c){
-    c.onclick=function(){
-      $$('#rmTimes .chip').forEach(function(x){x.classList.remove('on')});
-      c.classList.add('on');
-    };
+  ['#rmTimes','#rmWarnDays','#rmLowPct'].forEach(function(sel){
+    $$(sel+' .chip').forEach(function(c){
+      c.onclick=function(){
+        $$(sel+' .chip').forEach(function(x){x.classList.remove('on')});
+        c.classList.add('on');
+      };
+    });
   });
   $('#rmOk').onclick=function(){
     var on=$('#rmSwitch').classList.contains('on');
     var t=$('#rmTimes .chip.on').textContent.trim();
+    var wd=$('#rmWarnDays .chip.on').textContent.trim();
+    var lp=$('#rmLowPct .chip.on').textContent.trim();
     $('#rmVal').textContent=on?t:'已关闭';
     close();
-    $('#toastMsg').textContent=on?'✔ 已保存：每天 '+t+' 一条聚合摘要，关 App 也会照常弹出':'已关闭每日摘要（站内铃铛红点仍会提示）';
+    $('#toastMsg').textContent=on
+      ?'✔ 已保存：每天 '+t+' 摘要 · 提前 '+wd+' 预警 · 低余量 '+lp
+      :'已关闭每日摘要（站内铃铛红点仍会提示）';
     var t2=$('#toast');t2.classList.add('on');setTimeout(function(){t2.classList.remove('on')},2400);
   };
 })();
