@@ -47,6 +47,34 @@ flutter test
 flutter build apk --debug
 ```
 
+### 本地启动（当前环境实测状态）
+
+| 途径 | 状态 | 说明 |
+|------|------|------|
+| Android 真机 | ✅ 推荐 | USB 连接并授权调试后 `flutter run`；或直接安装已构建的 APK |
+| Android 模拟器 | ❌ 暂不可用 | 本机未安装任何 AVD 系统镜像，需先在 Android Studio 下载 |
+| Windows 桌面 | ⚠️ 需开关 | 代码可跑，但插件构建要求系统开启「开发者模式」（符号链接权限）：`start ms-settings:developers` |
+
+真机运行：
+
+```powershell
+flutter devices          # 确认设备已识别
+flutter run              # 默认选中唯一的手机设备
+```
+
+只装 APK 不驻留调试：
+
+```powershell
+flutter build apk --debug
+adb install -r build\app\outputs\flutter-apk\app-debug.apk
+```
+
+首启会进入引导页：写入 8 个预置分类与 8 个预置位置（可跳过位置）。
+
+### 版本固定说明
+
+`sqlite3` 经 dependency_overrides 固定 2.4.6、drift/drift_dev 固定 2.20.3：sqlite3 ≥2.5 的原生构建钩子需联网访问 GitHub 下载预编译产物，代理/离线环境会构建失败；Android 原生库由 `sqlite3_flutter_libs` 提供，不受影响。详见 `doc/requirement.md` §6.3。
+
 ### Release 构建
 
 Release APK 需要签名才能安装。项目已配置签名，需先创建 `android/key.properties`：

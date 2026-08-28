@@ -1,5 +1,7 @@
 # Flutter Android 迁移实现计划
 
+> ⚠️ **历史归档（2026-08-29）**：本计划基于旧 sqflite/CSV 技术栈，已由 2026-08-28 的「暖仓 WarmPantry 全新开发」（TASK T006，见 `doc/devlog/2026-08-28-warmpantry-fresh-start.md`）整体取代：技术栈切换为 Riverpod + GoRouter + drift，不迁移旧数据。保留本文仅作过程记录。
+
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:executing-plans 或等价分步执行方式。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
 **目标：** 在 `flutter` 分支新增 Flutter Android 版本，覆盖当前「我的物品」App 的核心 Android 使用链路，并保留原 MAUI 工程作为迁移参考。

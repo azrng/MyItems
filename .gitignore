@@ -66,3 +66,5 @@ Desktop.ini
 .gemini
 .codegraph
 .cursor
+# Flutter create 生成的 IDE 项目文件
+warmpantry.iml

@@ -157,7 +157,7 @@ tokens:
   typography:
     font_family:
       ui: "系统默认黑体（PingFang SC / MiSans / Microsoft YaHei，Flutter 自动映射），对应原型 Nunito 的圆润气质以系统字体近似"
-      numeric: "Fraunces（打包 ttf 资产，wght 500–600 子集），用于统计数字、倒计时天数、金额等衬线数字；fallback: serif"
+      numeric: "Fraunces（计划打包 ttf 资产，wght 500–600 子集），用于统计数字、倒计时天数、金额等衬线数字；2026-08-29 实施状态：暂未打包字体文件，fontFamilyFallback 回退系统 serif，账本感成立；后续下载子集打包后无需改代码"
     font_size:
       eyebrow: "10（letter-spacing 0.24em 全大写小标签）"
       caption: "10.5–11"
