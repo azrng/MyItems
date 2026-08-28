@@ -1,7 +1,7 @@
-name: my_items
-description: 我的物品 Flutter Android 版本。
+name: warmpantry
+description: "暖仓 WarmPantry —— 把日子过得清清楚楚的家庭物品管理 App。"
 publish_to: "none"
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -11,17 +11,37 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  csv: ^6.0.0
-  file_picker: ^10.3.3
-  intl: ^0.20.2
+  # 状态管理 / 路由 / 数据库（requirement.md §6.1 技术栈，一次到位）
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.2.0
+  drift: 2.20.3
+  sqlite3_flutter_libs: ^0.5.24
+  # 基础
   path: ^1.9.0
   path_provider: ^2.1.5
-  sqflite: ^2.4.1
+  intl: ^0.20.2
+  # 本地通知（每日聚合摘要，§4.9）
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.0
+  flutter_timezone: ^3.0.1
+  # 图片采集（image_picker 原生长边/质量压缩，§4.10）
+  image_picker: ^1.1.2
+  # 备份：ZIP 打包 / 文件选择 / 系统分享（§7.1）
+  archive: ^3.6.1
+  file_picker: ^8.1.2
+  share_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.12
+  drift_dev: 2.20.3
+
+# sqlite3 ≥2.5 的原生构建钩子需要访问 GitHub 下载预编译产物，
+# 离线/代理环境会失败；固定到无钩子版本，Android 端原生库由 sqlite3_flutter_libs 提供。
+dependency_overrides:
+  sqlite3: 2.4.6
 
 flutter:
   uses-material-design: true

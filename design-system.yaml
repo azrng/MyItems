@@ -18,7 +18,7 @@ meta:
     ui: "Material 3（Flutter 内置）"
     state_management: "Riverpod"
     routing: "GoRouter"
-    local_db: "drift（迁移期 sqflite）"
+    local_db: "drift"
     target_platforms:
       - "Android"
   usage:

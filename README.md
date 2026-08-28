@@ -1,31 +1,40 @@
-# MyItems（我的物品）
+# 暖仓 WarmPantry
 
-个人物品管理应用，Flutter Android 版本。
+家庭物品管理 App「暖仓 WarmPantry」——把日子过得清清楚楚 🧺。跟踪物品保质期与余量消耗，管理分类与存放位置。
 
-`main` 分支保留原 .NET MAUI 源码作为历史参考。
+- 技术栈：Flutter + Material 3 + Riverpod + GoRouter + drift（requirement.md §6.1）
+- 设计基准：`doc/prototype/`（奶油暖盘视觉）+ `design-system.yaml`（token 唯一事实来源）
+- 数据完全本地存储，无网络传输；备份为 ZIP（backup.json + images/）
+- 2026-08-28 全新开发（不兼容旧版数据与旧 JSON 备份，见 requirement.md 十七次修订）
 
 ## 环境要求
 
-- Flutter SDK
+- Flutter SDK（stable 3.x）
 - Dart SDK（随 Flutter SDK 提供）
 - Java 17
-- Android SDK
-- Android SDK Command-line Tools 或 Android Studio
+- Android SDK（最低 Android 8.0 / API 26）
 
-当前已验证 Flutter、Dart、Java、Android SDK、ADB 和魅族 16th 真机识别。详细安装与排错说明见 [Flutter Android 环境配置指南](doc/Flutter-Android-环境配置.md)。
+详细安装与排错说明见 [Flutter Android 环境配置指南](doc/Flutter-Android-环境配置.md)。
 
 ### 目录说明
 
 ```text
 lib/
-├── main.dart          # 应用入口、主题和全局 Store 注入
-├── models.dart        # 物品、分类、消耗记录、展示 DTO 和过期状态计算
-├── repository.dart    # SQLite 初始化、CRUD、统计、完整备份和 CSV 兼容导入导出
-├── app_store.dart     # 页面状态、保存、筛选、分类与存储位置管理
-└── pages.dart         # 主页、物品库、详情、添加编辑、分类、存储管理、归档、关于
+├── main.dart               # 应用入口：目录装配 + 设置快照注入
+├── app.dart                # MaterialApp.router + 浅色/深色主题
+├── core/                   # 主题（design-system token 落地）/ 常量 / 效期规则 / 工具
+├── data/
+│   ├── database/           # drift 表定义与数据库（schema v1）
+│   ├── repositories/       # 数据访问边界（抽象 + drift 实现）
+│   └── services/           # 库存业务 / 备份 / 通知 / 种子 / 图片
+├── providers/              # Riverpod：DI、设置、数据流、视图组合、命令编排
+├── router/                 # GoRouter：四 Tab + 子页
+├── widgets/                # 共享组件（悬浮 TabBar / Tag / Meter / 弹层 / 统计卡）
+└── features/               # 每目录对应原型一个屏幕（home/library/consume/mine/…）
 
-android/               # Flutter Android 壳工程
-test/                  # Flutter 单元测试
+android/                    # Flutter Android 壳工程
+doc/                        # requirement.md（唯一需求基准）+ 原型
+test/                       # 单元 + 真实链路（备份往返）测试
 ```
 
 ### 首次构建

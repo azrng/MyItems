@@ -1,10 +1,17 @@
-﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 暖仓：无网络红线（requirement.md §8），仅本地通知 / 图片 / 备份所需权限 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.CAMERA"
+        android:required="false" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 12 及以下选图 / 文件选择兼容 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
-        android:label="我的物品"
+        android:label="暖仓"
         android:name="${applicationName}"
         android:icon="@drawable/app_icon"
         android:roundIcon="@drawable/app_icon"
@@ -27,6 +34,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- 定时通知重启补挂（flutter_local_notifications scheduled notifications） -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

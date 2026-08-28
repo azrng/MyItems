@@ -1,433 +1,288 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-class SearchField extends StatefulWidget {
-  const SearchField({
+import '../core/theme/app_theme.dart';
+
+/// 区块标题：eyebrow 小标签 + 主标题 + 右侧动作（component_patterns.app_bar_tabs / 首页区块）。
+class SectionHeader extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String? action;
+  final VoidCallback? onAction;
+
+  const SectionHeader({
     super.key,
-    required this.hint,
-    required this.initialValue,
-    required this.onChanged,
+    required this.emoji,
+    required this.title,
+    this.action,
+    this.onAction,
   });
-
-  final String hint;
-  final String initialValue;
-  final ValueChanged<String> onChanged;
-
-  @override
-  State<SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends State<SearchField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialValue);
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      widget.onChanged(value);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return TextField(
-      controller: _controller,
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-        suffixIcon: _controller.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: '清除',
-                icon: const Icon(Icons.close, size: 18),
-                onPressed: () {
-                  _debounce?.cancel();
-                  _controller.clear();
-                  widget.onChanged('');
-                  setState(() {});
-                },
-              ),
-        filled: true,
-        fillColor: colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: colorScheme.primaryContainer),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: colorScheme.primaryContainer),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
-        ),
-      ),
-      onChanged: (value) {
-        setState(() {});
-        _onChanged(value);
-      },
-    );
-  }
-}
-
-class SoftCard extends StatelessWidget {
-  const SoftCard({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-    this.onTap,
-    this.borderColor,
-    this.backgroundColor,
-  });
-
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-  final VoidCallback? onTap;
-  final Color? borderColor;
-  final Color? backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final content = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor ?? colorScheme.primaryContainer.withAlpha(120),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withAlpha(12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$emoji $title',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            ),
           ),
+          if (action != null)
+            InkWell(
+              onTap: onAction,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Text(
+                  action!,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onPrimaryContainer),
+                ),
+              ),
+            ),
         ],
       ),
-      child: child,
     );
-    if (onTap == null) return content;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: content,
+  }
+}
+
+/// 空状态：场景 emoji + 一句原因 + 引导主按钮（mobile_patterns.empty_state）。
+class EmptyState extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const EmptyState({
+    super.key,
+    required this.emoji,
+    required this.title,
+    this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).extension<AppColors>()!;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 44)),
+            const SizedBox(height: 12),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+            if (subtitle != null) ...[
+              const SizedBox(height: 6),
+              Text(subtitle!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 12.5, color: c.inkFaint, fontWeight: FontWeight.w600)),
+            ],
+            if (actionLabel != null) ...[
+              const SizedBox(height: 18),
+              FilledButton(
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class SoftSectionHeader extends StatelessWidget {
-  const SoftSectionHeader({
+/// 子页骨架：返回钮 + 标题 + 右侧动作 + 滚动体（component_patterns.sub_head）。
+class SubPage extends StatelessWidget {
+  final String title;
+  final List<Widget> actions;
+  final Widget body;
+  final Widget? floatingActionButton;
+
+  const SubPage({
     super.key,
     required this.title,
-    this.subtitle,
-    this.trailing,
+    required this.body,
+    this.actions = const [],
+    this.floatingActionButton,
   });
-
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      )),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                Text(subtitle!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-              ],
-            ],
-          ),
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                children: [
+                  _BackButton(scheme: scheme),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w900)),
+                  ),
+                  ...actions,
+                ],
+              ),
+            ),
+            Expanded(child: body),
+          ],
         ),
-        if (trailing != null) trailing!,
-      ],
+      ),
+      floatingActionButton: floatingActionButton,
     );
   }
 }
 
-class MetricTile extends StatelessWidget {
-  const MetricTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final VoidCallback? onTap;
+class _BackButton extends StatelessWidget {
+  final ColorScheme scheme;
+  const _BackButton({required this.scheme});
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      borderColor: color.withAlpha(40),
+    return InkWell(
+      onTap: () => Navigator.of(context).maybePop(),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Icon(Icons.arrow_back_rounded, size: 20, color: scheme.onSurface),
+      ),
+    );
+  }
+}
+
+/// 三列统计卡（component_patterns.stat_card）。
+class StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? suffix;
+  final VoidCallback? onTap;
+  final bool alert;
+  final bool isText; // 文本值（如「最常消耗」物品名）用小一号字重展示
+
+  const StatCard({
+    super.key,
+    required this.label,
+    required this.value,
+    this.suffix,
+    this.onTap,
+    this.alert = false,
+    this.isText = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final c = Theme.of(context).extension<AppColors>()!;
+    final child = Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: alert ? scheme.primaryContainer : scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(label.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 9.5,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w900,
+                  color: c.inkFaint)),
+          const SizedBox(height: 6),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withAlpha(24),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const Spacer(),
-              Icon(Icons.arrow_outward,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.outline.withAlpha(160)),
+              Text(value,
+                  maxLines: isText ? 1 : null,
+                  overflow: isText ? TextOverflow.ellipsis : null,
+                  style: TextStyle(
+                      fontSize: isText ? 14 : 26,
+                      fontWeight: FontWeight.w700,
+                      color: alert ? scheme.onPrimaryContainer : scheme.onSurface)),
+              if (suffix != null)
+                Text(' ${suffix!}',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: c.inkFaint)),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
-                  )),
-          const SizedBox(height: 3),
-          Text(value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w900,
-                  )),
         ],
       ),
     );
+    if (onTap == null) return child;
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(20), child: child);
   }
 }
 
-class StatusBadge extends StatelessWidget {
-  const StatusBadge({
-    super.key,
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: foreground,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-          )),
-    );
-  }
-}
-
-class SectionCard extends StatelessWidget {
-  const SectionCard({super.key, required this.title, required this.children});
-
+/// 表单开关行（component_patterns.switch_row）。
+class SwitchRow extends StatelessWidget {
   final String title;
-  final List<Widget> children;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class StepperRow extends StatelessWidget {
-  const StepperRow({
+  const SwitchRow({
     super.key,
-    this.label = '数量',
+    required this.title,
+    this.subtitle,
     required this.value,
     required this.onChanged,
   });
 
-  final String label;
-  final int value;
-  final ValueChanged<int> onChanged;
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        IconButton.outlined(
-            onPressed: value <= 1 ? null : () => onChanged(value - 1),
-            icon: const Icon(Icons.remove)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('$value', style: Theme.of(context).textTheme.titleMedium),
-        ),
-        IconButton.outlined(
-            onPressed: () => onChanged(value + 1), icon: const Icon(Icons.add)),
-      ],
-    );
-  }
-}
-
-class DetailTile extends StatelessWidget {
-  const DetailTile({super.key, required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+    final scheme = Theme.of(context).colorScheme;
+    final c = Theme.of(context).extension<AppColors>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-              width: 84,
-              child: Text(label,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant))),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                if (subtitle != null)
+                  Text(subtitle!,
+                      style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600, color: c.inkFaint)),
+              ],
+            ),
+          ),
+          Switch(value: value, onChanged: onChanged, activeTrackColor: c.olive),
         ],
       ),
     );
   }
-}
-
-class EmptyState extends StatelessWidget {
-  const EmptyState(
-      {super.key,
-      required this.icon,
-      required this.title,
-      required this.subtitle});
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
-        child: Column(
-          children: [
-            Icon(icon, size: 42, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 12),
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ErrorBanner extends StatelessWidget {
-  const ErrorBanner({super.key, required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child:
-          Text(message, style: TextStyle(color: colorScheme.onErrorContainer)),
-    );
-  }
-}
-
-Future<bool> showConfirm(
-    BuildContext context, String title, String content) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消')),
-        FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('确定')),
-      ],
-    ),
-  );
-  return result ?? false;
-}
-
-void showSnack(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
