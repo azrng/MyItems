@@ -5,7 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/actions.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 import '../../core/utils/result.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/meter.dart';

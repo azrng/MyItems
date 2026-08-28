@@ -7,7 +7,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/result.dart';
 import '../../providers/actions.dart';
 import '../../providers/inventory_providers.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 import '../../widgets/common.dart';
 import '../../widgets/meter.dart';
 import 'consume_widgets.dart';

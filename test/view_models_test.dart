@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:warmpantry/core/constants/app_constants.dart';
 import 'package:warmpantry/core/utils/formatters.dart';
 import 'package:warmpantry/data/database/app_database.dart';
-import 'package:warmpantry/providers/view_models.dart';
+import 'package:warmpantry/data/models/view_models.dart';
 
 Item item({bool archived = false, DateTime? archivedAt, DateTime? createdAt}) {
   final t = createdAt ?? DateTime(2026, 8, 1, 9);

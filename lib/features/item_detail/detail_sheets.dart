@@ -7,7 +7,7 @@ import '../../core/utils/result.dart';
 import '../../data/database/app_database.dart';
 import '../../providers/actions.dart';
 import '../../providers/inventory_providers.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 import '../../widgets/app_feedback.dart';
 
 /// 详情页批次操作弹层：开封 / 开封信息纠错 / 余量校正 / 移位 / 用完确认（§4.2 / §4.3 / §5.13）。

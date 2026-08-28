@@ -28,9 +28,9 @@ dependencies: [agents-root]
 
 ### 核心库
 - `flutter_riverpod`：状态管理（`StateNotifier`、`AsyncNotifier`、`FutureProvider`、`StreamProvider`）
-- `freezed`：不可变数据类、联合类型（可选）
-- `json_serializable`：JSON 序列化/反序列化
-- `dio` / `http`：HTTP 客户端
+- `drift`：本地数据访问与实体契约（表定义 + build_runner 生成数据类）
+- `go_router`：路由
+- `json_serializable` / `freezed`：本项目暂不引入（drift 生成实体 + 手写视图模型已覆盖）
 
 如果仓库已经有真实实现，以现有代码为准，不要强行重构或替换技术栈。
 技术债务与重构判断遵循根 `AGENTS.md` 的全局规则。
@@ -47,24 +47,19 @@ dependencies: [agents-root]
 
 ## 推荐目录结构
 
-- 应用层目录建议聚焦在 `lib/providers/`、`lib/services/`、`lib/models/` 下组织，优先复用现有结构，不强制迁移。
+- 应用层目录按 WarmPantry 实际布局组织：Provider 在 `lib/providers/`，服务在 `lib/data/services/`，视图 DTO 在 `lib/data/models/`，优先复用现有结构，不强制迁移。
 
 ```text
 lib/
-├── providers/
-│   ├── auth/
-│   │   └── auth_provider.dart
-│   └── [module]/
-│       └── xxx_provider.dart
-├── services/
-│   ├── interfaces/            # 服务接口定义（可选，Dart 无强制接口）
-│   └── [module]/
-│       └── xxx_service.dart
-├── models/
-│   ├── entities/              # 数据实体
-│   └── dtos/                  # 数据传输对象
-└── utils/
-    └── result.dart            # 统一结果包装
+├── providers/                 # Riverpod：DI、状态、派生数据、命令编排
+│   ├── core_providers.dart
+│   ├── inventory_providers.dart
+│   └── actions.dart
+├── data/
+│   ├── services/              # 业务服务（InventoryService / BackupService ...）
+│   ├── models/                # 视图 / 展示 DTO（view_models.dart）
+│   └── repositories/          # 仓储抽象与实现
+└── core/utils/result.dart     # 统一结果包装
 ```
 
 ---
@@ -73,7 +68,7 @@ lib/
 
 **触发条件**：用户发出「开始业务逻辑开发」指令
 
-**入场要求**：前端视图已完成，`lib/models/` 数据模型文件已明确
+**入场要求**：前端视图已完成，实体契约（drift 表定义）与视图模型（`lib/data/models/`）已明确
 
 **工作内容**：
 1. 严格按照 Model 中的类型定义实现 Provider 状态编排与 Service 层逻辑。
@@ -127,8 +122,7 @@ lib/
 - DTO 是视图层与业务逻辑层之间的稳定契约，变更时必须同步更新相关映射和调用方
 - 若仓库已有真实实体或 DTO 结构，优先沿用现状，不为模板强行改名或重组
 - 数据转换规则应集中放在 Service 或明确的映射层，不散落在 Page 或 Repository 调用点
-- 推荐使用 `freezed` 生成不可变数据类 + JSON 序列化
-- 若不使用 `freezed`，手动实现 `copyWith`、`==`、`hashCode`
+- 推荐使用 drift 生成实体数据类作为实体契约；视图 / 展示 DTO 手写（放在 `lib/data/models/`），不引入 freezed
 
 ### 统一结果包装
 - Service 层方法返回值统一使用项目既有的结果包装类型
@@ -172,7 +166,7 @@ class Failure<T> extends Result<T> {
 
 ### 代码组织规范
 - 一个文件只放一个主对象：Provider、Service、Repository、Entity、DTO 各自独立文件，文件名与主对象一致。
-- DTO / Model 组织：放 `lib/models/`，按 `entities/` / `dtos/` 分类，一类一文件，不合并到一个 `models.dart`。
+- DTO / Model 组织：实体契约由 drift 表定义与生成类承载（`lib/data/database/`）；视图 DTO 放 `lib/data/models/`，按业务域分文件
 - 触发拆分的信号：职责混杂、同文件出现多个主类、字段持续堆叠、跨多个不相关业务。
 - 允许例外：仅服务当前文件的私有辅助类型、freezed 生成的联合类型成员、测试 fixture。
 - 反模式：一个 `models.dart` 堆放所有实体 / DTO；把多个不相关 Provider 或 Service 塞进同一文件。

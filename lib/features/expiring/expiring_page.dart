@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/expiry_helper.dart';
 import '../../providers/inventory_providers.dart';
 import '../../providers/settings_provider.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 import '../../widgets/common.dart';
 import '../../widgets/meter.dart';
 

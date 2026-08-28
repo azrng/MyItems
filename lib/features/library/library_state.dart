@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/app_database.dart';
 import '../../providers/inventory_providers.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 
 /// 物品库筛选 / 排序 / 多选状态（页面本地 UI 状态，StateProvider 承载）。
 

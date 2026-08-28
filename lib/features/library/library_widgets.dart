@@ -10,7 +10,7 @@ import '../../core/utils/result.dart';
 import '../../data/database/app_database.dart';
 import '../../providers/actions.dart';
 import '../../providers/inventory_providers.dart';
-import '../../providers/view_models.dart';
+import '../../data/models/view_models.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/meter.dart';
 import '../../widgets/tag.dart';

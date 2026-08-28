@@ -5,7 +5,7 @@ import '../data/database/app_database.dart';
 import '../data/services/inventory_service.dart';
 import 'core_providers.dart';
 import 'settings_provider.dart';
-import 'view_models.dart';
+import '../data/models/view_models.dart';
 
 /// 原始数据流（drift watch → 响应式刷新）。
 final categoriesProvider = StreamProvider<List<Category>>(
