@@ -78,7 +78,8 @@ class _ConsumePageState extends ConsumerState<ConsumePage> {
                   subtitle: '录入物品并开始使用后，会出现在这里',
                 )
               else
-                ...consuming.map((v) => ConsumingRow(view: v)),
+                ...consuming.map(
+                    (v) => ConsumingRow(key: ValueKey(v.item.id), view: v)),
             ] else ...[
               Row(
                 children: [
@@ -106,8 +107,8 @@ class _ConsumePageState extends ConsumerState<ConsumePage> {
               ...ViewComposer.groupByDay(
                       logs.take(_visibleDays * 10).toList(), now)
                   .take(_visibleDays)
-                  .map((group) =>
-                      DayGroupSection(day: group.$1, logs: group.$2)),
+                  .map((group) => DayGroupSection(
+                      key: ValueKey(group.$1), day: group.$1, logs: group.$2)),
               if (logs.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -187,20 +188,22 @@ class ConsumingRow extends ConsumerWidget {
     final v = view;
     final unit = v.primaryBatch?.unit ?? '件';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => showConsumeSheet(context, v),
-            borderRadius: BorderRadius.circular(12),
-            child: Row(
+    // 整卡可点开记录弹层；按钮用 GestureDetector(opaque) 保证命中
+    //（真机回归曾出现 InkWell pill 在首行无法命中的问题，opaque 直接收取事件）
+    return InkWell(
+      onTap: () => showConsumeSheet(context, v),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Column(
+          children: [
+            Row(
               children: [
                 Text(v.item.icon ?? '📦', style: const TextStyle(fontSize: 19)),
                 const SizedBox(width: 10),
@@ -230,38 +233,38 @@ class ConsumingRow extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 9),
-          Meter(value: v.percent / 100),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text('${Fmt.quantity(v.totalRemaining)} $unit',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: c.inkFaint)),
-              const Spacer(),
-              // 危险操作左置离手，最高频的 −1 主样式放最右拇指位
-              _PillBtn(
-                label: '✓ 用完',
-                danger: true,
-                onTap: () => showFinishSheet(context, ref, v),
-              ),
-              const SizedBox(width: 8),
-              _PillBtn(
-                label: '记录消耗',
-                onTap: () => showConsumeSheet(context, v),
-              ),
-              const SizedBox(width: 8),
-              _PillBtn(
-                label: '−1',
-                primary: true,
-                onTap: () => _quickMinus(context, ref, unit),
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 9),
+            Meter(value: v.percent / 100),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text('${Fmt.quantity(v.totalRemaining)} $unit',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: c.inkFaint)),
+                const Spacer(),
+                // 危险操作左置离手，最高频的 −1 主样式放最右拇指位
+                _PillBtn(
+                  label: '✓ 用完',
+                  danger: true,
+                  onTap: () => showFinishSheet(context, ref, v),
+                ),
+                const SizedBox(width: 8),
+                _PillBtn(
+                  label: '记录消耗',
+                  onTap: () => showConsumeSheet(context, v),
+                ),
+                const SizedBox(width: 8),
+                _PillBtn(
+                  label: '−1',
+                  primary: true,
+                  onTap: () => _quickMinus(context, ref, unit),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -300,9 +303,9 @@ class _PillBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
       child: Container(
         // 触摸目标高 48（design-system touch_target.minimum_android）
         height: 48,
