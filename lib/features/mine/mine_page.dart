@@ -46,77 +46,88 @@ class MinePage extends ConsumerWidget {
             BadgeRow(streak: stats.streak, archivedTotal: archived.total),
             const SizedBox(height: 22),
             _groupLabel('库存管理', c),
-            _menuCard(context, [
-              _MenuItem(
-                emoji: '🗂',
-                title: '物品分类管理',
-                value: '${categories.length} 个分类',
-                onTap: () => context.push('/categories'),
-              ),
-              _MenuItem(
-                emoji: '📍',
-                title: '存放位置管理',
-                value: '${locations.length} 个位置',
-                onTap: () => context.push('/locations'),
-              ),
-              _MenuItem(
-                emoji: '🗄',
-                title: '耗尽归档',
-                value: '${archived.total} 条记录',
-                onTap: () => context.push('/archive'),
-              ),
-              _MenuItem(
-                emoji: '⏰',
-                title: '临期预警清单',
-                value: '${expiring.length} 件待处理',
-                highlight: expiring.isNotEmpty,
-                onTap: () => context.push('/expiring'),
-              ),
-            ], scheme),
+            _menuCard(
+                context,
+                [
+                  _MenuItem(
+                    emoji: '🗂',
+                    title: '物品分类管理',
+                    value: '${categories.length} 个分类',
+                    onTap: () => context.push('/categories'),
+                  ),
+                  _MenuItem(
+                    emoji: '📍',
+                    title: '存放位置管理',
+                    value: '${locations.length} 个位置',
+                    onTap: () => context.push('/locations'),
+                  ),
+                  _MenuItem(
+                    emoji: '🗄',
+                    title: '耗尽归档',
+                    value: '${archived.total} 条记录',
+                    onTap: () => context.push('/archive'),
+                  ),
+                  _MenuItem(
+                    emoji: '⏰',
+                    title: '临期预警清单',
+                    value: '${expiring.length} 件待处理',
+                    highlight: expiring.isNotEmpty,
+                    onTap: () => context.push('/expiring'),
+                  ),
+                ],
+                scheme),
             const SizedBox(height: 18),
             _groupLabel('数据与设备', c),
-            _menuCard(context, [
-              _MenuItem(
-                emoji: '🔔',
-                title: '提醒设置',
-                subtitle: settings.dailySummaryEnabled
-                    ? '每日 ${Fmt.clock(settings.summaryHour, settings.summaryMinute)} 摘要'
-                    : '摘要提醒已关闭',
-                onTap: () => showReminderSheet(context),
-              ),
-              _MenuItem(
-                emoji: '💾',
-                title: '存储管理与备份',
-                value: settings.autoBackupEnabled ? '自动备份 · 开' : '自动备份 · 关',
-                pillError: backupFailed,
-                onTap: () => context.push('/backup'),
-              ),
-              _MenuItem(
-                emoji: '🌗',
-                title: '深色模式',
-                value: settings.themeMode == ThemeMode.system
-                    ? '跟随系统'
-                    : settings.themeMode == ThemeMode.dark
-                        ? '深色'
-                        : '浅色',
-                onTap: () => _cycleTheme(ref, settings.themeMode),
-              ),
-            ], scheme),
+            _menuCard(
+                context,
+                [
+                  _MenuItem(
+                    emoji: '🔔',
+                    title: '提醒设置',
+                    subtitle: settings.dailySummaryEnabled
+                        ? '每日 ${Fmt.clock(settings.summaryHour, settings.summaryMinute)} 摘要'
+                        : '摘要提醒已关闭',
+                    onTap: () => showReminderSheet(context),
+                  ),
+                  _MenuItem(
+                    emoji: '💾',
+                    title: '存储管理与备份',
+                    value: settings.autoBackupEnabled ? '自动备份 · 开' : '自动备份 · 关',
+                    pillError: backupFailed,
+                    onTap: () => context.push('/backup'),
+                  ),
+                  _MenuItem(
+                    emoji: '🌗',
+                    title: '深色模式',
+                    value: settings.themeMode == ThemeMode.system
+                        ? '跟随系统'
+                        : settings.themeMode == ThemeMode.dark
+                            ? '深色'
+                            : '浅色',
+                    onTap: () => _cycleTheme(ref, settings.themeMode),
+                  ),
+                ],
+                scheme),
             const SizedBox(height: 18),
             _groupLabel('更多', c),
-            _menuCard(context, [
-              _MenuItem(
-                emoji: '💬',
-                title: '关于我们',
-                value: 'v2.0.0',
-                onTap: () => context.push('/about'),
-              ),
-            ], scheme),
+            _menuCard(
+                context,
+                [
+                  _MenuItem(
+                    emoji: '💬',
+                    title: '关于我们',
+                    value: 'v2.0.0',
+                    onTap: () => context.push('/about'),
+                  ),
+                ],
+                scheme),
             const SizedBox(height: 28),
             Center(
               child: Text('🌱 暖仓 · 把日子过得清清楚楚',
                   style: TextStyle(
-                      fontSize: 11.5, fontWeight: FontWeight.w700, color: c.inkFaint)),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint)),
             ),
           ],
         ),
@@ -143,7 +154,8 @@ class MinePage extends ConsumerWidget {
                 color: c.inkFaint)),
       );
 
-  Widget _menuCard(BuildContext context, List<Widget> items, ColorScheme scheme) {
+  Widget _menuCard(
+      BuildContext context, List<Widget> items, ColorScheme scheme) {
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
@@ -232,7 +244,9 @@ class _MenuItem extends StatelessWidget {
                 ),
                 child: Text('备份失败',
                     style: TextStyle(
-                        fontSize: 10, fontWeight: FontWeight.w900, color: scheme.error)),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: scheme.error)),
               )
             else if (value != null)
               Text(value!,
@@ -250,7 +264,8 @@ class _MenuItem extends StatelessWidget {
 }
 
 /// 昵称编辑弹层（§3.7：同步首页问候语）。
-Future<void> showNicknameSheet(BuildContext context, WidgetRef ref, String current) async {
+Future<void> showNicknameSheet(
+    BuildContext context, WidgetRef ref, String current) async {
   final ctrl = TextEditingController(text: current);
   final ok = await showAppSheet<bool>(
     context,
@@ -281,6 +296,9 @@ Future<void> showReminderSheet(BuildContext context) async {
   bool enabled = s.dailySummaryEnabled;
   int warningDays = s.expiryWarningDays;
   int lowPercent = s.lowRemainingPercent;
+  // 时间用局部变量渲染：provider 快照不会随选择器回调刷新，直接读会永远显示旧值
+  int hour = s.summaryHour;
+  int minute = s.summaryMinute;
 
   await showAppSheet(
     context,
@@ -304,21 +322,24 @@ Future<void> showReminderSheet(BuildContext context) async {
                     ? () async {
                         final t = await showTimePicker(
                           context: context,
-                          initialTime:
-                              TimeOfDay(hour: s.summaryHour, minute: s.summaryMinute),
+                          initialTime: TimeOfDay(hour: hour, minute: minute),
                         );
                         if (t != null) {
                           setState(() {
-                            container.read(settingsProvider.notifier).setSummary(
-                                hour: t.hour, minute: t.minute);
+                            hour = t.hour;
+                            minute = t.minute;
                           });
+                          await container
+                              .read(settingsProvider.notifier)
+                              .setSummary(hour: t.hour, minute: t.minute);
                         }
                       }
                     : null,
                 child: AbsorbPointer(
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: scheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(15),
@@ -331,7 +352,7 @@ Future<void> showReminderSheet(BuildContext context) async {
                                 fontSize: 14, fontWeight: FontWeight.w800)),
                         const Spacer(),
                         Text(
-                          Fmt.clock(s.summaryHour, s.summaryMinute),
+                          Fmt.clock(hour, minute),
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -398,7 +419,13 @@ Future<void> showReminderSheet(BuildContext context) async {
                 await notifier.setSummary(enabled: enabled);
                 await notifier.setWarningDays(warningDays);
                 await notifier.setLowRemaining(lowPercent);
-                await container.read(inventoryActionsProvider).runAutoBackupNow();
+                // 设置变更立即重挂摘要闹钟（否则新时间要等下次冷启动才生效）
+                await container
+                    .read(inventoryActionsProvider)
+                    .rescheduleReminderSummaries();
+                await container
+                    .read(inventoryActionsProvider)
+                    .runAutoBackupNow();
                 if (context.mounted) {
                   showToast(context, '提醒设置已保存，立即生效');
                   Navigator.pop(context);
@@ -431,7 +458,9 @@ Widget _choice(BuildContext context, String text,
           style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w900,
-              color: selected ? scheme.surfaceContainerLowest : scheme.onSurfaceVariant)),
+              color: selected
+                  ? scheme.surfaceContainerLowest
+                  : scheme.onSurfaceVariant)),
     ),
   );
 }

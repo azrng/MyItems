@@ -58,8 +58,10 @@ class InventoryActions {
   }
 
   Future<void> _sweepOrphanImages() async {
-    final batches = await _ref.read(inventoryRepositoryProvider).watchBatches().first;
-    final referenced = batches.map((b) => b.imagePath).whereType<String>().toSet();
+    final batches =
+        await _ref.read(inventoryRepositoryProvider).watchBatches().first;
+    final referenced =
+        batches.map((b) => b.imagePath).whereType<String>().toSet();
     await _ref.read(imageServiceProvider).removeOrphans(referenced);
   }
 
@@ -81,6 +83,16 @@ class InventoryActions {
             warningDays: s.expiryWarningDays,
           ),
         );
+  }
+
+  /// 提醒设置变更后立即重挂摘要闹钟；关闭开关时清掉已挂闹钟，避免到点仍响。
+  Future<void> rescheduleReminderSummaries() async {
+    final s = _ref.read(settingsProvider);
+    if (!s.dailySummaryEnabled) {
+      await _ref.read(notificationServiceProvider).cancelAll();
+      return;
+    }
+    _rescheduleNotifications();
   }
 
   /// 启动钩子：冷启动清扫待删残留、每日首次启动补备份、重挂通知。
@@ -116,22 +128,22 @@ class InventoryActions {
     final imagePath =
         await _ref.read(imageServiceProvider).importPicked(pickedImagePath);
     final result = _afterChange(_svc.saveIntake(
-          existingItemId: existingItemId,
-          name: name,
-          spec: spec,
-          categoryId: categoryId,
-          icon: icon,
-          isConsumable: isConsumable,
-          reminderEnabled: reminderEnabled,
-          locationId: locationId,
-          quantity: quantity,
-          unit: unit,
-          expiryDate: expiryDate,
-          purchasePrice: purchasePrice,
-          purchaseDate: purchaseDate,
-          notes: notes,
-          imagePath: imagePath,
-        ));
+      existingItemId: existingItemId,
+      name: name,
+      spec: spec,
+      categoryId: categoryId,
+      icon: icon,
+      isConsumable: isConsumable,
+      reminderEnabled: reminderEnabled,
+      locationId: locationId,
+      quantity: quantity,
+      unit: unit,
+      expiryDate: expiryDate,
+      purchasePrice: purchasePrice,
+      purchaseDate: purchaseDate,
+      notes: notes,
+      imagePath: imagePath,
+    ));
     await _settings.setLastUsedUnit(unit);
     return result;
   }
@@ -162,21 +174,21 @@ class InventoryActions {
       imagePath = await images.replacePicked(pickedImagePath, oldImageName);
     }
     return _afterChange(_svc.saveEdits(
-          itemId: itemId,
-          batchId: batchId,
-          name: name,
-          spec: spec,
-          categoryId: categoryId,
-          icon: icon,
-          isConsumable: isConsumable,
-          reminderEnabled: reminderEnabled,
-          locationId: locationId,
-          expiryDate: expiryDate,
-          purchasePrice: purchasePrice,
-          purchaseDate: purchaseDate,
-          notes: notes,
-          imagePath: imagePath,
-        ));
+      itemId: itemId,
+      batchId: batchId,
+      name: name,
+      spec: spec,
+      categoryId: categoryId,
+      icon: icon,
+      isConsumable: isConsumable,
+      reminderEnabled: reminderEnabled,
+      locationId: locationId,
+      expiryDate: expiryDate,
+      purchasePrice: purchasePrice,
+      purchaseDate: purchaseDate,
+      notes: notes,
+      imagePath: imagePath,
+    ));
   }
 
   // ============ 消耗 / 归档 ============
@@ -204,17 +216,23 @@ class InventoryActions {
 
   // ============ 批次级操作 ============
 
-  Future<Result<void>> adjustRemaining(String batchId, double value, String? reason) =>
-      _afterChange(_svc.adjustRemaining(batchId: batchId, newValue: value, reason: reason));
+  Future<Result<void>> adjustRemaining(
+          String batchId, double value, String? reason) =>
+      _afterChange(_svc.adjustRemaining(
+          batchId: batchId, newValue: value, reason: reason));
 
-  Future<Result<void>> openBatch(String batchId, DateTime openedAt, int? shelfDays) =>
-      _afterChange(_svc.openBatch(batchId: batchId, openedAt: openedAt, shelfLifeDays: shelfDays));
+  Future<Result<void>> openBatch(
+          String batchId, DateTime openedAt, int? shelfDays) =>
+      _afterChange(_svc.openBatch(
+          batchId: batchId, openedAt: openedAt, shelfLifeDays: shelfDays));
 
   Future<Result<void>> cancelOpen(String batchId) =>
       _afterChange(_svc.cancelOpen(batchId));
 
-  Future<Result<void>> updateOpenInfo(String batchId, DateTime openedAt, int? shelfDays) =>
-      _afterChange(_svc.updateOpenInfo(batchId: batchId, openedAt: openedAt, shelfLifeDays: shelfDays));
+  Future<Result<void>> updateOpenInfo(
+          String batchId, DateTime openedAt, int? shelfDays) =>
+      _afterChange(_svc.updateOpenInfo(
+          batchId: batchId, openedAt: openedAt, shelfLifeDays: shelfDays));
 
   Future<Result<void>> moveBatch(String batchId, String? locationId) =>
       _afterChange(_svc.moveBatch(batchId: batchId, locationId: locationId));
@@ -241,7 +259,8 @@ class InventoryActions {
         // 待清理集合直接进入孤儿扫描语义：备份后统一删除
         final batches =
             await _ref.read(inventoryRepositoryProvider).watchBatches().first;
-        final referenced = batches.map((b) => b.imagePath).whereType<String>().toSet();
+        final referenced =
+            batches.map((b) => b.imagePath).whereType<String>().toSet();
         await _ref.read(imageServiceProvider).removeOrphans(referenced);
       }
       _ref.invalidate(pendingDeletesProvider);
@@ -283,7 +302,9 @@ class InventoryActions {
   // ============ 分类 / 位置 / 引导 ============
 
   Future<void> seedOnboarding({required bool withLocations}) async {
-    await _ref.read(seedServiceProvider).seed(withPresetLocations: withLocations);
+    await _ref
+        .read(seedServiceProvider)
+        .seed(withPresetLocations: withLocations);
     await _settings.markOnboardingDone();
     _onDataChanged();
   }
@@ -325,8 +346,10 @@ class InventoryActions {
   /// 拖拽排序持久化（§5.7）。
   Future<void> saveCategoryOrder(List<Category> list) async {
     await _ref.read(inventoryRepositoryProvider).reorderCategories(
-          [for (var i = 0; i < list.length; i++) (id: list[i].id, sortOrder: i + 1)],
-        );
+      [
+        for (var i = 0; i < list.length; i++) (id: list[i].id, sortOrder: i + 1)
+      ],
+    );
     _onDataChanged();
   }
 
@@ -379,7 +402,6 @@ class InventoryActions {
     _onDataChanged();
   }
 
-
   // ============ 备份 / 恢复 / 存储 ============
 
   Future<File> exportNow() {
@@ -416,10 +438,16 @@ class InventoryActions {
 }
 
 /// 最近一次备份信息（状态行展示）。
-final lastBackupInfoProvider = FutureProvider<({DateTime? at, int? size, bool ok, String error})>(
-    (ref) async {
+final lastBackupInfoProvider =
+    FutureProvider<({DateTime? at, int? size, bool ok, String error})>(
+        (ref) async {
   final s = ref.watch(settingsProvider);
-  return (at: s.lastBackupAt, size: s.lastBackupSize, ok: s.lastBackupOk, error: s.lastBackupError);
+  return (
+    at: s.lastBackupAt,
+    size: s.lastBackupSize,
+    ok: s.lastBackupOk,
+    error: s.lastBackupError
+  );
 });
 
 final inventoryActionsProvider = Provider<InventoryActions>((ref) {
