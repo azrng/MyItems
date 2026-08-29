@@ -28,51 +28,56 @@ class ShellScaffold extends ConsumerWidget {
       body: shell,
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              height: 68,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: scheme.outline),
-                boxShadow: [
-                  BoxShadow(
-                    color: scheme.onSurface.withValues(alpha: 0.22),
-                    blurRadius: 26,
-                    offset: const Offset(0, 10),
-                    spreadRadius: -12,
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  for (var i = 0; i < _tabs.length; i++) ...[
-                    if (i == 2) const Spacer(),
-                    _TabItem(
-                      icon: _tabs[i].icon,
-                      label: _tabs[i].label,
-                      selected: current == i,
-                      color: colors,
-                      scheme: scheme,
-                      onTap: () => shell.goBranch(
-                        i,
-                        initialLocation: i == shell.currentIndex,
-                      ),
+        // 顶部预留 28px 给上浮的中央 FAB：Stack 边界外绘制可见但命中不到（Clip.none 只放开绘制），
+        // FAB 必须整体落在 Stack 尺寸内点击才生效
+        child: Padding(
+          padding: const EdgeInsets.only(top: 28),
+          child: Stack(
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 14, right: 14, top: 8, bottom: 8),
+                height: 68,
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLowest.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(color: scheme.outline),
+                  boxShadow: [
+                    BoxShadow(
+                      color: scheme.onSurface.withValues(alpha: 0.22),
+                      blurRadius: 26,
+                      offset: const Offset(0, 10),
+                      spreadRadius: -12,
                     ),
                   ],
-                ],
+                ),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++) ...[
+                      if (i == 2) const Spacer(),
+                      _TabItem(
+                        icon: _tabs[i].icon,
+                        label: _tabs[i].label,
+                        selected: current == i,
+                        color: colors,
+                        scheme: scheme,
+                        onTap: () => shell.goBranch(
+                          i,
+                          initialLocation: i == shell.currentIndex,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-            // 中央 FAB：56x56 r20 accent 渐变，上浮叠压 TabBar 顶部
-            Positioned(
-              top: -8 - 28 + 8,
-              child: _AddFab(onTap: () => context.push('/editor')),
-            ),
-          ],
+              // 中央 FAB：56x56 r20 accent 渐变，上浮叠压 TabBar 顶部
+              Positioned(
+                top: 0,
+                child: _AddFab(onTap: () => context.push('/editor')),
+              ),
+            ],
+          ),
         ),
       ),
     );

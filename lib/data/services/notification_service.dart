@@ -32,7 +32,8 @@ class NotificationService {
     // 频道随通知详情自动注册，无需单独 createChannel
     await _plugin.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        // 通知小图标须指向工程内实际存在的资源；App 图标是 @drawable/app_icon，没有 mipmap/ic_launcher
+        android: AndroidInitializationSettings('app_icon'),
       ),
       onDidReceiveNotificationResponse: (r) => onNotificationTap(r.payload ?? ''),
     );
