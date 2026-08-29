@@ -98,7 +98,7 @@ class DriftInventoryRepository implements InventoryRepository {
 
   @override
   Future<void> updateCategory(CategoriesCompanion c) =>
-      db.update(db.categories).write(c);
+      (db.update(db.categories)..where((t) => t.id.equals(c.id.value))).write(c);
 
   @override
   Future<int> countItemsOfCategory(String categoryId) async {
@@ -150,7 +150,7 @@ class DriftInventoryRepository implements InventoryRepository {
 
   @override
   Future<void> updateLocation(StorageLocationsCompanion l) =>
-      db.update(db.storageLocations).write(l);
+      (db.update(db.storageLocations)..where((t) => t.id.equals(l.id.value))).write(l);
 
   @override
   Future<void> deactivateLocation(String id) =>
@@ -179,7 +179,8 @@ class DriftInventoryRepository implements InventoryRepository {
       db.into(db.items).insert(i, mode: InsertMode.insertOrReplace);
 
   @override
-  Future<void> updateItem(ItemsCompanion i) => db.update(db.items).write(i);
+  Future<void> updateItem(ItemsCompanion i) =>
+      (db.update(db.items)..where((t) => t.id.equals(i.id.value))).write(i);
 
   @override
   Future<void> markArchived(String itemId, bool archived, {DateTime? at}) {
@@ -227,7 +228,8 @@ class DriftInventoryRepository implements InventoryRepository {
       db.into(db.batches).insert(b, mode: InsertMode.insertOrReplace);
 
   @override
-  Future<void> updateBatch(BatchesCompanion b) => db.update(db.batches).write(b);
+  Future<void> updateBatch(BatchesCompanion b) =>
+      (db.update(db.batches)..where((t) => t.id.equals(b.id.value))).write(b);
 
   @override
   Future<void> deleteBatches(List<String> batchIds) =>
