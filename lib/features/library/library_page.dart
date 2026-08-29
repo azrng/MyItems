@@ -46,8 +46,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final scheme = Theme.of(context).colorScheme;
     final c = Theme.of(context).extension<AppColors>()!;
     final views = ref.watch(filteredLibraryViewsProvider);
-    final categories = ref.watch(categoriesProvider).value ?? const <Category>[];
-    final locations = ref.watch(locationsProvider).value ?? const <StorageLocation>[];
+    final categories =
+        ref.watch(categoriesProvider).value ?? const <Category>[];
+    final locations =
+        ref.watch(locationsProvider).value ?? const <StorageLocation>[];
     final inStock = ref.watch(activeViewsProvider).length;
     final spots = ref.watch(storageSpotCountProvider);
     final selecting = ref.watch(selectModeProvider);
@@ -61,6 +63,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           selection: TextSelection.collapsed(offset: query.length));
     }
 
+    // 多选模式的返回键拦截挂在 ShellScaffold（分支页 PopScope 拦不住系统返回）
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -93,7 +96,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: scheme.outlineVariant),
                       ),
-                      child: const Center(child: Text('🗂', style: TextStyle(fontSize: 15))),
+                      child: const Center(
+                          child: Text('🗂', style: TextStyle(fontSize: 15))),
                     ),
                   ),
                 ],
@@ -145,11 +149,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                               ? '点击下方 ＋ 添加第一件，把囤货安排明白'
                               : '换个关键词或清除筛选试试',
                           actionLabel: query.isEmpty ? '去添加物品' : null,
-                          onAction: query.isEmpty ? () => context.push('/editor') : null,
+                          onAction: query.isEmpty
+                              ? () => context.push('/editor')
+                              : null,
                         )
                       : GridView.builder(
                           padding: const EdgeInsets.fromLTRB(
-                              AppTheme.pagePadding, 4, AppTheme.pagePadding, 120),
+                              AppTheme.pagePadding,
+                              4,
+                              AppTheme.pagePadding,
+                              120),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
@@ -203,7 +212,8 @@ class _MultiActionBar extends ConsumerWidget {
         child: Row(
           children: [
             Text('已选 $count 件',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
             const Spacer(),
             TextButton(
               onPressed: () => _move(context, ref),
@@ -233,7 +243,8 @@ class _MultiActionBar extends ConsumerWidget {
       await actions.moveAllBatches(id, loc.id);
     }
     _exitSelect(ref);
-    if (context.mounted) showToast(context, '已移动 ${ids.length} 件到「${loc.name}」');
+    if (context.mounted)
+      showToast(context, '已移动 ${ids.length} 件到「${loc.name}」');
   }
 
   Future<void> _changeCategory(BuildContext context, WidgetRef ref) async {
@@ -261,7 +272,8 @@ class _MultiActionBar extends ConsumerWidget {
     _exitSelect(ref);
     if (context.mounted) {
       showUndoBar(context, '已移出 ${ids.length} 件物品',
-          onUndo: () => ref.read(inventoryActionsProvider).undoDeleteItems(ids));
+          onUndo: () =>
+              ref.read(inventoryActionsProvider).undoDeleteItems(ids));
     }
   }
 
