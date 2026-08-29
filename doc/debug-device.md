@@ -28,6 +28,7 @@ adb -s 882QAETJEYG3S install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ## 本机型已知的适配注意点
 
+- **安装/覆盖前必须先停应用**：`adb install -r` 在 App 进程存活时执行会强杀进程，drift 的 WAL 未合并会导致库损坏、下次启动重建空库并回到 Onboarding（2026-08-29 实际发生，已从快照恢复）。规范：任何 `install`、push 库文件前先 `am force-stop com.azrng.myitems`。
 - **手势条遮挡底部内容**：悬浮 TabBar 与底部弹层需叠加系统手势条安全区；历史问题见 T009（弹层确认键被手势条遮挡），`AppBottomSheet` 已统一叠加 `MediaQuery.paddingOf(context).bottom`。
 - **通知小图标**：Android 8.1 通知渠道要求小图标资源存在，否则初始化报错；历史问题见 T008。
 - **悬浮层点击命中**：`Stack` + `Clip.none` 绘制越界的部分不可点击，中央 FAB 必须整体落在 Stack 尺寸内（历史问题见 T008）。
