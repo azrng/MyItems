@@ -329,25 +329,26 @@ class BatchCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // 危险操作「✓完」左置离手；−1 高频给主样式；Wrap 防小屏横向溢出
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _act(context, '✓完',
-                  danger: true,
-                  onTap: () =>
-                      showFinishConfirm(context, view, batchId: batch.id)),
-              if (!opened)
-                _act(context, '开封',
-                    accent: true, onTap: () => showOpenSheet(context, batch)),
-              _act(context, '−1',
-                  accent: true, onTap: () => _consume(context, ref)),
-              _act(context, '校正',
-                  onTap: () => showAdjustSheet(context, ref, batch)),
-              _act(context, '移位',
-                  onTap: () => showMoveSheet(context, ref, batch)),
-            ],
+          // 危险操作「✓完」左置离手；−1 高频给主样式；横向滚动兜底极窄屏防溢出
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _act(context, '✓完',
+                    danger: true,
+                    onTap: () =>
+                        showFinishConfirm(context, view, batchId: batch.id)),
+                if (!opened)
+                  _act(context, '开封',
+                      accent: true, onTap: () => showOpenSheet(context, batch)),
+                _act(context, '−1',
+                    accent: true, onTap: () => _consume(context, ref)),
+                _act(context, '校正',
+                    onTap: () => showAdjustSheet(context, ref, batch)),
+                _act(context, '移位',
+                    onTap: () => showMoveSheet(context, ref, batch)),
+              ],
+            ),
           ),
         ],
       ),
