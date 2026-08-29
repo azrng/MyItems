@@ -71,8 +71,9 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).extension<AppColors>()!;
+    // SingleChildScrollView 兜底：键盘弹出等空间不足时滚动而不是溢出
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
