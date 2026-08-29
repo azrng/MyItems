@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
@@ -40,6 +41,14 @@ class _WarmPantryAppState extends ConsumerState<WarmPantryApp> {
     return MaterialApp.router(
       title: '暖仓 WarmPantry',
       debugShowCheckedModeBanner: false,
+      // 界面文案全中文，选择器/弹窗固定中文，不随系统语言切换
+      locale: const Locale('zh', 'CN'),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,

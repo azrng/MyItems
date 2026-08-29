@@ -213,7 +213,7 @@ class ConsumingRow extends ConsumerWidget {
                               fontSize: 13.5, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 2),
                       Text(
-                        v.lowRemaining ? '剩 $v.percent% · 余量低' : '剩余 $v.percent%',
+                        v.lowRemaining ? '剩 ${v.percent}% · 余量低' : '剩余 ${v.percent}%',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,

@@ -19,7 +19,9 @@ class AppBottomSheet extends StatelessWidget {
           color: scheme.surfaceContainerLowest,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        // 底部叠加系统安全区（手势条/导航栏）；键盘弹出时该值归零，避让仍由外层 viewInsets 负责
+        padding: EdgeInsets.fromLTRB(
+            20, 8, 20, 20 + MediaQuery.paddingOf(context).bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
