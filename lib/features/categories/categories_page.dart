@@ -276,32 +276,37 @@ Future<void> showCategorySheet(BuildContext context, Category? edit) async {
           actions: [
             Row(
               children: [
-                if (edit != null && !edit.isPreset)
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: scheme.error,
-                        side: BorderSide(color: scheme.error.withValues(alpha: 0.5))),
-                    onPressed: () async {
-                      final actions = ProviderScope.containerOf(context)
-                          .read(inventoryActionsProvider);
-                      final ok = await confirmDialog(context,
-                          title: '删除「${edit.name}」？',
-                          content: '仅能删除没有在库物品的分类。',
-                          confirmText: '删除',
-                          danger: true);
-                      if (!ok || !context.mounted) return;
-                      final result = await actions.deleteCategory(edit.id);
-                      if (!context.mounted) return;
-                      if (result is Success) {
-                        Navigator.pop(context);
-                        showToast(context, '已删除');
-                      } else {
-                        showToast(context, (result as Failure).message);
-                      }
-                    },
-                    child: const Text('删除'),
+                // 两个按钮都Expanded：真机（Android 8.1/Skia）下弹层 Row 内
+                // 非 Expanded 按钮会收到无限宽约束导致整层布局崩溃
+                if (edit != null && !edit.isPreset) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: scheme.error,
+                          side: BorderSide(color: scheme.error.withValues(alpha: 0.5))),
+                      onPressed: () async {
+                        final actions = ProviderScope.containerOf(context)
+                            .read(inventoryActionsProvider);
+                        final ok = await confirmDialog(context,
+                            title: '删除「${edit.name}」？',
+                            content: '仅能删除没有在库物品的分类。',
+                            confirmText: '删除',
+                            danger: true);
+                        if (!ok || !context.mounted) return;
+                        final result = await actions.deleteCategory(edit.id);
+                        if (!context.mounted) return;
+                        if (result is Success) {
+                          Navigator.pop(context);
+                          showToast(context, '已删除');
+                        } else {
+                          showToast(context, (result as Failure).message);
+                        }
+                      },
+                      child: const Text('删除'),
+                    ),
                   ),
-                if (edit != null && !edit.isPreset) const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {

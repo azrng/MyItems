@@ -317,28 +317,33 @@ Future<void> showLocationSheet(BuildContext context, StorageLocation? edit) asyn
           actions: [
             Row(
               children: [
-                if (edit != null)
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: scheme.error,
-                        side: BorderSide(color: scheme.error.withValues(alpha: 0.5))),
-                    onPressed: () async {
-                      final actions = ProviderScope.containerOf(context)
-                          .read(inventoryActionsProvider);
-                      final ok = await confirmDialog(context,
-                          title: '停用「${edit.name}」？',
-                          content: '停用后不再出现在选择列表，历史记录保留。',
-                          confirmText: '停用',
-                          danger: true);
-                      if (!ok || !context.mounted) return;
-                      await actions.deactivateLocation(edit.id);
-                      if (!context.mounted) return;
-                      Navigator.pop(context);
-                      showToast(context, '已停用');
-                    },
-                    child: const Text('停用'),
+                // 两个按钮都Expanded：真机（Android 8.1/Skia）下弹层 Row 内
+                // 非 Expanded 按钮会收到无限宽约束导致整层布局崩溃
+                if (edit != null) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: scheme.error,
+                          side: BorderSide(color: scheme.error.withValues(alpha: 0.5))),
+                      onPressed: () async {
+                        final actions = ProviderScope.containerOf(context)
+                            .read(inventoryActionsProvider);
+                        final ok = await confirmDialog(context,
+                            title: '停用「${edit.name}」？',
+                            content: '停用后不再出现在选择列表，历史记录保留。',
+                            confirmText: '停用',
+                            danger: true);
+                        if (!ok || !context.mounted) return;
+                        await actions.deactivateLocation(edit.id);
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        showToast(context, '已停用');
+                      },
+                      child: const Text('停用'),
+                    ),
                   ),
-                if (edit != null) const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {
