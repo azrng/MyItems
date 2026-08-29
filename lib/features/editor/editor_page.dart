@@ -57,12 +57,16 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
   Future<void> _init() async {
     if (_editing) {
-      final item = await ref.read(inventoryRepositoryProvider).getItem(widget.editItemId!);
+      final item = await ref
+          .read(inventoryRepositoryProvider)
+          .getItem(widget.editItemId!);
       if (item == null) {
         if (mounted) Navigator.pop(context);
         return;
       }
-      final batches = await ref.read(inventoryRepositoryProvider).getBatchesOfItems([item.id]);
+      final batches = await ref
+          .read(inventoryRepositoryProvider)
+          .getBatchesOfItems([item.id]);
       final primary = batches.isEmpty ? null : batches.first;
       _name.text = item.name;
       _spec.text = item.spec ?? '';
@@ -73,7 +77,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       _reminderEnabled = item.reminderEnabled;
       _expiry = primary?.expiryDate;
       _purchaseDate = primary?.purchaseDate;
-      _price.text = primary?.purchasePrice == null ? '' : '${primary!.purchasePrice}';
+      _price.text =
+          primary?.purchasePrice == null ? '' : '${primary!.purchasePrice}';
       _notes.text = primary?.notes ?? '';
       _pickedImage = primary?.imagePath;
     } else {
@@ -88,7 +93,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       if (extra is String) {
         final item = await ref.read(inventoryRepositoryProvider).getItem(extra);
         if (item != null) {
-          final batches = await ref.read(inventoryRepositoryProvider).getBatchesOfItems([item.id]);
+          final batches = await ref
+              .read(inventoryRepositoryProvider)
+              .getBatchesOfItems([item.id]);
           final last = batches.isEmpty ? null : batches.first;
           _name.text = item.name;
           _spec.text = item.spec ?? '';
@@ -107,7 +114,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   }
 
   Future<void> _restoreDraft() async {
-    final raw = await ref.read(inventoryRepositoryProvider).getSetting(SettingKeys.draft);
+    final raw = await ref
+        .read(inventoryRepositoryProvider)
+        .getSetting(SettingKeys.draft);
     if (raw == null || raw.isEmpty) return;
     try {
       final d = jsonDecode(raw) as Map<String, dynamic>;
@@ -135,7 +144,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       'isConsumable': _isConsumable,
       'expiry': _expiry?.toIso8601String(),
     });
-    await ref.read(inventoryRepositoryProvider).setSetting(SettingKeys.draft, draft);
+    await ref
+        .read(inventoryRepositoryProvider)
+        .setSetting(SettingKeys.draft, draft);
     if (mounted) showToast(context, '草稿已保存，下次进入自动恢复');
   }
 
@@ -161,8 +172,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
     if (_editing) {
       final repo = ref.read(inventoryRepositoryProvider);
-      final batches =
-          await repo.getBatchesOfItems([widget.editItemId!]);
+      final batches = await repo.getBatchesOfItems([widget.editItemId!]);
       if (batches.isEmpty) {
         if (mounted) showToast(context, '批次缺失，无法保存');
         return;
@@ -219,7 +229,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       pickedImagePath: _pickedImageTempPath,
     );
     // 清除草稿
-    await ref.read(inventoryRepositoryProvider).setSetting(SettingKeys.draft, '');
+    await ref
+        .read(inventoryRepositoryProvider)
+        .setSetting(SettingKeys.draft, '');
 
     if (result is Success<Item>) {
       if (mounted) showToast(context, '已入库 🧾');
@@ -283,8 +295,10 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final c = Theme.of(context).extension<AppColors>()!;
-    final categories = ref.watch(categoriesProvider).value ?? const <Category>[];
-    final locations = ref.watch(locationsProvider).value ?? const <StorageLocation>[];
+    final categories =
+        ref.watch(categoriesProvider).value ?? const <Category>[];
+    final locations =
+        ref.watch(locationsProvider).value ?? const <StorageLocation>[];
     final templateDays = _categoryId == null
         ? null
         : ref.watch(expiryTemplateByCategoryProvider)[_categoryId];
@@ -331,161 +345,197 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   ? const Center(child: CircularProgressIndicator())
                   : Form(
                       key: _form,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                            AppTheme.pagePadding, 8, AppTheme.pagePadding, 40),
+                      // 主按钮固定底部（design-system form_rules.submit_position）：
+                      // 批量录入时保存键始终处于拇指热区，不必滚动到表单末尾
+                      child: Column(
                         children: [
-                          _photoPicker(scheme, c),
-                          _fieldLabel('物品名称', required: true),
-                          TextFormField(
-                            controller: _name,
-                            validator: (v) =>
-                                (v == null || v.trim().isEmpty) ? '名称不能为空' : null,
-                          ),
-                          _fieldLabel('规格（包装描述，选填）'),
-                          TextFormField(
-                            controller: _spec,
-                            decoration:
-                                const InputDecoration(hintText: '如 250ml×12 / 500g / 20片'),
-                          ),
-                          _fieldLabel('物品分类', required: true),
-                          _categoryGrid(categories, c, scheme),
-                          _fieldLabel('存放位置', required: true),
-                          _locationGrid(locations, c, scheme),
-                          if (!_editing) ...[
-                            _fieldLabel('数量与计量单位', required: true),
-                            _quantityRow(c, scheme),
-                          ] else ...[
-                            _fieldLabel('余量'),
-                            Text('编辑不直接改数量；请到物品详情页用「校正」调整余量',
-                                style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.w600, color: c.inkFaint)),
-                          ],
-                          _fieldLabel('到期日期（快捷选项按分类记忆）'),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () async {
-                                    final d = await showDatePicker(
-                                      context: context,
-                                      initialDate:
-                                          _expiry ?? DateTime.now().add(const Duration(days: 7)),
-                                      firstDate: DateTime.now(),
-                                      lastDate:
-                                          DateTime.now().add(const Duration(days: 3650)),
-                                    );
-                                    if (d != null) setState(() => _expiry = d);
-                                  },
-                                  child: Text(_expiry == null
-                                      ? '选择日期（可留空 = 无期限）'
-                                      : Fmt.date(_expiry!)),
-                                ),
-                              ),
-                              if (_expiry != null)
-                                IconButton(
-                                  onPressed: () => setState(() => _expiry = null),
-                                  icon: const Icon(Icons.close_rounded, size: 18),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final d in [3, 7, 30, 90, 180])
-                                ChoiceChip(
-                                  label: Text(_quickLabel(d)),
-                                  selected: _expiry != null &&
-                                      _expiry!
-                                          .difference(DateTime.now())
-                                          .inDays
-                                          .round() ==
-                                          d,
-                                  onSelected: (_) => setState(() {
-                                    _expiry = DateTime.now().add(Duration(days: d));
-                                  }),
-                                ),
-                              if (templateDays != null)
-                                InputChip(
-                                  label: Text('上次同类：$templateDays 天'),
-                                  onPressed: () => setState(() {
-                                    _expiry = DateTime.now()
-                                        .add(Duration(days: templateDays));
-                                  }),
-                                ),
-                            ],
-                          ),
-                          if (!_editing) ...[
-                            _fieldLabel('单价与购买日期（仅记录，不做统计）'),
-                            Row(
+                          Expanded(
+                            child: ListView(
+                              padding: const EdgeInsets.fromLTRB(
+                                  AppTheme.pagePadding,
+                                  8,
+                                  AppTheme.pagePadding,
+                                  8),
                               children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _price,
-                                    keyboardType: const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                    decoration:
-                                        const InputDecoration(hintText: '¥ 选填'),
-                                  ),
+                                _photoPicker(scheme, c),
+                                _fieldLabel('物品名称', required: true),
+                                TextFormField(
+                                  controller: _name,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                          ? '名称不能为空'
+                                          : null,
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () async {
-                                      final d = await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2020),
-                                        lastDate: DateTime.now()
-                                            .add(const Duration(days: 365)),
-                                      );
-                                      if (d != null) {
-                                        setState(() => _purchaseDate = d);
-                                      }
-                                    },
-                                    child: Text(_purchaseDate == null
-                                        ? '购买日期 选填'
-                                        : Fmt.date(_purchaseDate!)),
+                                _fieldLabel('规格（包装描述，选填）'),
+                                TextFormField(
+                                  controller: _spec,
+                                  decoration: const InputDecoration(
+                                      hintText: '如 250ml×12 / 500g / 20片'),
+                                ),
+                                _fieldLabel('物品分类', required: true),
+                                _categoryGrid(categories, c, scheme),
+                                _fieldLabel('存放位置', required: true),
+                                _locationGrid(locations, c, scheme),
+                                if (!_editing) ...[
+                                  _fieldLabel('数量与计量单位', required: true),
+                                  _quantityRow(c, scheme),
+                                ] else ...[
+                                  _fieldLabel('余量'),
+                                  Text('编辑不直接改数量；请到物品详情页用「校正」调整余量',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: c.inkFaint)),
+                                ],
+                                _fieldLabel('到期日期（快捷选项按分类记忆）'),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () async {
+                                          final d = await showDatePicker(
+                                            context: context,
+                                            initialDate: _expiry ??
+                                                DateTime.now().add(
+                                                    const Duration(days: 7)),
+                                            firstDate: DateTime.now(),
+                                            lastDate: DateTime.now().add(
+                                                const Duration(days: 3650)),
+                                          );
+                                          if (d != null) {
+                                            setState(() => _expiry = d);
+                                          }
+                                        },
+                                        child: Text(_expiry == null
+                                            ? '选择日期（可留空 = 无期限）'
+                                            : Fmt.date(_expiry!)),
+                                      ),
+                                    ),
+                                    if (_expiry != null)
+                                      IconButton(
+                                        onPressed: () =>
+                                            setState(() => _expiry = null),
+                                        icon: const Icon(Icons.close_rounded,
+                                            size: 18),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (final d in [3, 7, 30, 90, 180])
+                                      ChoiceChip(
+                                        label: Text(_quickLabel(d)),
+                                        selected: _expiry != null &&
+                                            _expiry!
+                                                    .difference(DateTime.now())
+                                                    .inDays
+                                                    .round() ==
+                                                d,
+                                        onSelected: (_) => setState(() {
+                                          _expiry = DateTime.now()
+                                              .add(Duration(days: d));
+                                        }),
+                                      ),
+                                    if (templateDays != null)
+                                      InputChip(
+                                        label: Text('上次同类：$templateDays 天'),
+                                        onPressed: () => setState(() {
+                                          _expiry = DateTime.now().add(
+                                              Duration(days: templateDays));
+                                        }),
+                                      ),
+                                  ],
+                                ),
+                                if (!_editing) ...[
+                                  _fieldLabel('单价与购买日期（仅记录，不做统计）'),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _price,
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          decoration: const InputDecoration(
+                                              hintText: '¥ 选填'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () async {
+                                            final d = await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(2020),
+                                              lastDate: DateTime.now().add(
+                                                  const Duration(days: 365)),
+                                            );
+                                            if (d != null) {
+                                              setState(() => _purchaseDate = d);
+                                            }
+                                          },
+                                          child: Text(_purchaseDate == null
+                                              ? '购买日期 选填'
+                                              : Fmt.date(_purchaseDate!)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(height: 10),
+                                  SwitchRow(
+                                    title: '计为耗材',
+                                    subtitle: '关闭后为耐用品：不参与余量消耗与用量提醒',
+                                    value: _isConsumable,
+                                    onChanged: (v) =>
+                                        setState(() => _isConsumable = v),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SwitchRow(
+                                    title: '临期提醒',
+                                    subtitle: '到期前按预警天数聚合提醒（默认开）',
+                                    value: _reminderEnabled,
+                                    onChanged: (v) =>
+                                        setState(() => _reminderEnabled = v),
+                                  ),
+                                ],
+                                _fieldLabel('备注'),
+                                TextFormField(
+                                  controller: _notes,
+                                  maxLines: 2,
+                                  decoration: const InputDecoration(
+                                      hintText: '如 已开封，开封后 4 天内吃完'),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            SwitchRow(
-                              title: '计为耗材',
-                              subtitle: '关闭后为耐用品：不参与余量消耗与用量提醒',
-                              value: _isConsumable,
-                              onChanged: (v) => setState(() => _isConsumable = v),
-                            ),
-                            const SizedBox(height: 10),
-                            SwitchRow(
-                              title: '临期提醒',
-                              subtitle: '到期前按预警天数聚合提醒（默认开）',
-                              value: _reminderEnabled,
-                              onChanged: (v) => setState(() => _reminderEnabled = v),
-                            ),
-                          ],
-                          _fieldLabel('备注'),
-                          TextFormField(
-                            controller: _notes,
-                            maxLines: 2,
-                            decoration: const InputDecoration(
-                                hintText: '如 已开封，开封后 4 天内吃完'),
                           ),
-                          const SizedBox(height: 22),
-                          FilledButton(
-                            onPressed: () => _submit(continueNext: false),
-                            child: Text(_editing ? '保存' : '加入库存'),
-                          ),
-                          if (!_editing) ...[
-                            const SizedBox(height: 10),
-                            OutlinedButton(
-                              onPressed: () => _submit(continueNext: true),
-                              child: const Text('保存并继续录入下一件'),
+                          // 提交区固定底部，键盘弹出时随 Scaffold 自动避让
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                                AppTheme.pagePadding,
+                                8,
+                                AppTheme.pagePadding,
+                                8),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FilledButton(
+                                  onPressed: () => _submit(continueNext: false),
+                                  child: Text(_editing ? '保存' : '加入库存'),
+                                ),
+                                if (!_editing) ...[
+                                  const SizedBox(height: 8),
+                                  OutlinedButton(
+                                    onPressed: () =>
+                                        _submit(continueNext: true),
+                                    child: const Text('保存并继续录入下一件'),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
@@ -496,8 +546,15 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     );
   }
 
-  String _quickLabel(int d) =>
-      d == 3 ? '3 天' : d == 7 ? '7 天' : d == 30 ? '1 个月' : d == 90 ? '3 个月' : '6 个月';
+  String _quickLabel(int d) => d == 3
+      ? '3 天'
+      : d == 7
+          ? '7 天'
+          : d == 30
+              ? '1 个月'
+              : d == 90
+                  ? '3 个月'
+                  : '6 个月';
 
   Widget _fieldLabel(String text, {bool required = false}) {
     final scheme = Theme.of(context).colorScheme;
@@ -506,7 +563,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       child: Row(
         children: [
           Text(text,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
           if (required)
             Padding(
               padding: const EdgeInsets.only(left: 2),
@@ -557,14 +615,18 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         ),
         child: _pickedImageTempPath == null
             ? Text('📷 拍照记录物品外观（选填）',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: c.inkFaint))
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: c.inkFaint))
             : const Text('已选择照片（保存时入库）✓',
                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
       ),
     );
   }
 
-  Widget _categoryGrid(List<Category> categories, AppColors c, ColorScheme scheme) {
+  Widget _categoryGrid(
+      List<Category> categories, AppColors c, ColorScheme scheme) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -584,7 +646,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     : scheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: _categoryId == cat.id ? scheme.primary : scheme.outline),
+                    color: _categoryId == cat.id
+                        ? scheme.primary
+                        : scheme.outline),
               ),
               child: Text('${cat.icon ?? ''} ${cat.name}',
                   style: TextStyle(
@@ -599,7 +663,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     );
   }
 
-  Widget _locationGrid(List<StorageLocation> locations, AppColors c, ColorScheme scheme) {
+  Widget _locationGrid(
+      List<StorageLocation> locations, AppColors c, ColorScheme scheme) {
     final active = locations.where((l) => l.isActive).toList();
     return Wrap(
       spacing: 8,
@@ -617,7 +682,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     : scheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: _locationId == l.id ? scheme.primary : scheme.outline),
+                    color:
+                        _locationId == l.id ? scheme.primary : scheme.outline),
               ),
               child: Text('${l.icon ?? '📍'} ${l.name}',
                   style: TextStyle(
@@ -638,11 +704,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: scheme.outline, style: BorderStyle.solid),
+              border:
+                  Border.all(color: scheme.outline, style: BorderStyle.solid),
             ),
             child: Text('➕ 新增位置',
                 style: TextStyle(
-                    fontSize: 12.5, fontWeight: FontWeight.w800, color: c.inkFaint)),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: c.inkFaint)),
           ),
         ),
       ],
@@ -662,9 +731,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           child: TextFormField(
             controller: _qty,
             textAlign: TextAlign.center,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? '>0' : null,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (v) =>
+                (double.tryParse(v ?? '') ?? 0) <= 0 ? '>0' : null,
           ),
         ),
         const SizedBox(width: 12),
@@ -692,8 +761,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                         style: const TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w800)),
                   ),
-                  Icon(Icons.expand_more_rounded,
-                      size: 16, color: c.inkFaint),
+                  Icon(Icons.expand_more_rounded, size: 16, color: c.inkFaint),
                 ],
               ),
             ),
