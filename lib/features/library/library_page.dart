@@ -103,7 +103,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             // 搜索 + 分类 chips + 位置/排序
             Padding(
               padding:
@@ -115,14 +115,15 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search, size: 20),
                   hintText: '搜索名称 / 备注 / 存放位置…',
+                  isDense: true,
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            CategoryChips(categories: categories),
-            const SizedBox(height: 8),
-            const FilterRow(),
             const SizedBox(height: 6),
+            CategoryChips(categories: categories),
+            const SizedBox(height: 6),
+            const FilterRow(),
+            const SizedBox(height: 4),
             // §5.3 操作提示文案
             Padding(
               padding:
@@ -136,8 +137,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                         color: c.inkFaint)),
               ),
             ),
-            const SizedBox(height: 4),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Expanded(
               child: selecting
                   ? _MultiSelectBody(views: views)
@@ -164,7 +164,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                             crossAxisCount: 2,
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
-                            childAspectRatio: 0.82,
+                            childAspectRatio: 0.80,
                           ),
                           itemCount: views.length,
                           itemBuilder: (context, i) => ItemCard(view: views[i]),
@@ -299,7 +299,7 @@ class _MultiSelectBody extends ConsumerWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 0.82,
+        childAspectRatio: 0.80,
       ),
       itemCount: views.length,
       itemBuilder: (context, i) => ItemCard(view: views[i]),
