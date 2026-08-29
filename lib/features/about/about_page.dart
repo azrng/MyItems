@@ -67,7 +67,7 @@ class AboutPage extends StatelessWidget {
             ),
             child: InkWell(
               onTap: () async {
-                await Clipboard.setData(const ClipboardData(text: 'azrng@example.com'));
+                await Clipboard.setData(const ClipboardData(text: 'itzhangyunpeng@163.com'));
                 if (context.mounted) showToast(context, '邮箱已复制 📋');
               },
               borderRadius: BorderRadius.circular(24),
