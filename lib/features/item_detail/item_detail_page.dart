@@ -29,10 +29,10 @@ class ItemDetailPage extends ConsumerWidget {
     final views = ref.watch(libraryViewsProvider);
     final v = views.where((e) => e.item.id == itemId).firstOrNull;
     final batches = ref.watch(batchesProvider).value ?? const <Batch>[];
-    final locations = ref.watch(locationsProvider).value ?? const <StorageLocation>[];
-    final itemBatches =
-        batches.where((b) => b.itemId == itemId).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final locations =
+        ref.watch(locationsProvider).value ?? const <StorageLocation>[];
+    final itemBatches = batches.where((b) => b.itemId == itemId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final now = DateTime.now();
     final expiredDays = v?.effectiveExpiry == null
         ? 0
@@ -83,10 +83,12 @@ class ItemDetailPage extends ConsumerWidget {
             if (v != null) ...[
               const SizedBox(height: 14),
               _header(v, c, scheme, now),
-              if (expiredDays > 3 && !v.item.isArchived) _expiredGuide(context, v),
+              if (expiredDays > 3 && !v.item.isArchived)
+                _expiredGuide(context, v),
               const SizedBox(height: 18),
               Text('批次列表',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w900)),
               const SizedBox(height: 10),
               for (final b in itemBatches)
                 BatchCard(
@@ -110,7 +112,8 @@ class ItemDetailPage extends ConsumerWidget {
                   const Text('🌫', style: TextStyle(fontSize: 44)),
                   const SizedBox(height: 10),
                   const Text('该物品暂无在库批次',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 18),
                   FilledButton(
                     onPressed: () => context.push('/editor/$itemId'),
@@ -124,10 +127,11 @@ class ItemDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _header(LibraryItemView v, AppColors c, ColorScheme scheme, DateTime now) {
-    final spots = v.activeBatches.map((b) => b.locationId).whereType<String>().toSet();
-    final effLabel =
-        ExpiryHelper.statusLabel(v.status, v.effectiveExpiry, now);
+  Widget _header(
+      LibraryItemView v, AppColors c, ColorScheme scheme, DateTime now) {
+    final spots =
+        v.activeBatches.map((b) => b.locationId).whereType<String>().toSet();
+    final effLabel = ExpiryHelper.statusLabel(v.status, v.effectiveExpiry, now);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -149,7 +153,9 @@ class ItemDetailPage extends ConsumerWidget {
                     Text(
                       '${v.item.spec ?? '无规格'} · ${v.category?.icon ?? ''}${v.category?.name ?? '未分类'}',
                       style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700, color: c.inkFaint),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: c.inkFaint),
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -161,7 +167,9 @@ class ItemDetailPage extends ConsumerWidget {
                                 fontSize: 16, fontWeight: FontWeight.w800)),
                         Text(' ${v.primaryBatch?.unit ?? '件'}',
                             style: TextStyle(
-                                fontSize: 11, fontWeight: FontWeight.w700, color: c.inkFaint)),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: c.inkFaint)),
                       ],
                     ),
                   ],
@@ -172,7 +180,10 @@ class ItemDetailPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text('分属 ${spots.length} 个存放位置',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: c.inkFaint)),
+              style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: c.inkFaint)),
         ],
       ),
     );
@@ -256,7 +267,8 @@ class BatchCard extends ConsumerWidget {
                       fontWeight: FontWeight.w900,
                       color: c.inkFaint)),
               const Spacer(),
-              Tag.fromStatus(status, ExpiryHelper.statusLabel(status, eff, now), scheme, c),
+              Tag.fromStatus(status, ExpiryHelper.statusLabel(status, eff, now),
+                  scheme, c),
             ],
           ),
           const SizedBox(height: 8),
@@ -265,10 +277,13 @@ class BatchCard extends ConsumerWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(Fmt.quantity(batch.remainingQuantity),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w700)),
               Text(' / ${Fmt.quantity(batch.initialQuantity)} ${batch.unit}',
                   style: TextStyle(
-                      fontSize: 11.5, fontWeight: FontWeight.w700, color: c.inkFaint)),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint)),
               const Spacer(),
               Text('$percent%',
                   style: TextStyle(
@@ -285,8 +300,12 @@ class BatchCard extends ConsumerWidget {
             runSpacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('⏰ ${batch.expiryDate == null ? '无保质期' : '保质期至 ${Fmt.shortDate(batch.expiryDate!)}'}',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.inkFaint)),
+              Text(
+                  '⏰ ${batch.expiryDate == null ? '无保质期' : '保质期至 ${Fmt.shortDate(batch.expiryDate!)}'}',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint)),
               InkWell(
                 onTap: () => showOpenInfoSheet(context, batch),
                 borderRadius: BorderRadius.circular(8),
@@ -303,23 +322,31 @@ class BatchCard extends ConsumerWidget {
                 ),
               ),
               Text('📍 ${locationName ?? '未设位置'}',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.inkFaint)),
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint)),
             ],
           ),
           const SizedBox(height: 10),
-          Row(
+          // 危险操作「✓完」左置离手；−1 高频给主样式；Wrap 防小屏横向溢出
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
+              _act(context, '✓完',
+                  danger: true,
+                  onTap: () =>
+                      showFinishConfirm(context, view, batchId: batch.id)),
               if (!opened)
-                _act(context, '开封', accent: true,
-                    onTap: () => showOpenSheet(context, batch)),
-              _act(context, '−1', onTap: () => _consume(context, ref)),
+                _act(context, '开封',
+                    accent: true, onTap: () => showOpenSheet(context, batch)),
+              _act(context, '−1',
+                  accent: true, onTap: () => _consume(context, ref)),
               _act(context, '校正',
                   onTap: () => showAdjustSheet(context, ref, batch)),
               _act(context, '移位',
                   onTap: () => showMoveSheet(context, ref, batch)),
-              _act(context, '✓完',
-                  danger: true,
-                  onTap: () => showFinishConfirm(context, view, batchId: batch.id)),
             ],
           ),
         ],
@@ -336,14 +363,17 @@ class BatchCard extends ConsumerWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          // 触摸目标高 48（design-system touch_target.minimum_android）
+          height: 48,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: danger
                 ? scheme.error.withValues(alpha: 0.1)
                 : accent
                     ? scheme.primaryContainer
                     : scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(label,
               style: TextStyle(

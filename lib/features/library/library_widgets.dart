@@ -38,9 +38,8 @@ class ItemCard extends ConsumerWidget {
       onTap: () {
         if (selecting) {
           final ids = ref.read(selectedIdsProvider);
-          ref.read(selectedIdsProvider.notifier).state = selected
-              ? (ids..remove(v.item.id))
-              : (ids..add(v.item.id));
+          ref.read(selectedIdsProvider.notifier).state =
+              selected ? (ids..remove(v.item.id)) : (ids..add(v.item.id));
         } else {
           context.push('/item/${v.item.id}');
         }
@@ -85,21 +84,25 @@ class ItemCard extends ConsumerWidget {
                 Tag.fromStatus(v.status, statusLabel, scheme, c),
                 const Spacer(),
                 if (v.hasOpened)
-                  Tag('已开封', bg: scheme.surfaceContainerHighest, fg: scheme.onSurfaceVariant),
+                  Tag('已开封',
+                      bg: scheme.surfaceContainerHighest,
+                      fg: scheme.onSurfaceVariant),
               ],
             ),
             const SizedBox(height: 8),
             Text(v.item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
             const SizedBox(height: 3),
             Text(
               '${v.category?.name ?? '未分类'}'
               '${v.item.spec == null ? '' : ' · ${v.item.spec}'}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c.inkFaint),
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w600, color: c.inkFaint),
             ),
             const Spacer(),
             Row(
@@ -112,8 +115,10 @@ class ItemCard extends ConsumerWidget {
                 Text(
                   ' ${v.primaryBatch?.unit ?? '件'}'
                   '${v.percent < 100 ? ' · $percentText' : ''}',
-                  style:
-                      TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.inkFaint),
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint),
                 ),
               ],
             ),
@@ -144,7 +149,9 @@ class ItemCard extends ConsumerWidget {
             else
               Text('耐用品 · 不参与消耗',
                   style: TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w600, color: c.inkFaint)),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: c.inkFaint)),
           ],
         ),
       ),
@@ -177,7 +184,8 @@ class _StepBtn extends StatelessWidget {
   final bool accent;
   final VoidCallback onTap;
 
-  const _StepBtn({required this.icon, required this.onTap, this.accent = false});
+  const _StepBtn(
+      {required this.icon, required this.onTap, this.accent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -186,15 +194,18 @@ class _StepBtn extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 34,
-        height: 30,
+        // 触摸目标 48x48（design-system touch_target.minimum_android）
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
-          color: accent ? scheme.primaryContainer : scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
+          color:
+              accent ? scheme.primaryContainer : scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon,
-            size: 17,
-            color: accent ? scheme.onPrimaryContainer : scheme.onSurfaceVariant),
+            size: 20,
+            color:
+                accent ? scheme.onPrimaryContainer : scheme.onSurfaceVariant),
       ),
     );
   }
@@ -220,7 +231,8 @@ class CategoryChips extends ConsumerWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final id = all[i];
-          final cat = id == null ? null : categories.firstWhere((c) => c.id == id);
+          final cat =
+              id == null ? null : categories.firstWhere((c) => c.id == id);
           final count = id == null
               ? views.length
               : views.where((v) => v.item.categoryId == id).length;
@@ -235,7 +247,8 @@ class CategoryChips extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isSel ? scheme.onSurface : scheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: isSel ? scheme.onSurface : scheme.outline),
+                border: Border.all(
+                    color: isSel ? scheme.onSurface : scheme.outline),
               ),
               child: Text(
                 id == null
@@ -244,7 +257,9 @@ class CategoryChips extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: isSel ? scheme.surfaceContainerLowest : scheme.onSurfaceVariant,
+                  color: isSel
+                      ? scheme.surfaceContainerLowest
+                      : scheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -263,7 +278,8 @@ class FilterRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final c = Theme.of(context).extension<AppColors>()!;
-    final locations = ref.watch(locationsProvider).value ?? const <StorageLocation>[];
+    final locations =
+        ref.watch(locationsProvider).value ?? const <StorageLocation>[];
     final locationId = ref.watch(selectedLocationProvider);
     final sortMode = ref.watch(sortModeProvider);
     final locName = locationId == null
@@ -288,7 +304,8 @@ class FilterRow extends ConsumerWidget {
                 color: scheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                    color: locationId == null ? scheme.outline : scheme.primary),
+                    color:
+                        locationId == null ? scheme.outline : scheme.primary),
               ),
               child: Row(
                 children: [
@@ -304,8 +321,9 @@ class FilterRow extends ConsumerWidget {
                   if (locationId != null) ...[
                     const SizedBox(width: 4),
                     InkWell(
-                      onTap: () =>
-                          ref.read(selectedLocationProvider.notifier).state = null,
+                      onTap: () => ref
+                          .read(selectedLocationProvider.notifier)
+                          .state = null,
                       child: Icon(Icons.close_rounded,
                           size: 14, color: scheme.onPrimaryContainer),
                     ),
@@ -328,10 +346,12 @@ class FilterRow extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Icon(sortMode == 0
-                      ? Icons.schedule_rounded
-                      : Icons.add_circle_outline_rounded,
-                      size: 14, color: c.inkFaint),
+                  Icon(
+                      sortMode == 0
+                          ? Icons.schedule_rounded
+                          : Icons.add_circle_outline_rounded,
+                      size: 14,
+                      color: c.inkFaint),
                   const SizedBox(width: 4),
                   Text(sortMode == 0 ? '到期时间 ↑' : '添加时间 ↓',
                       style: TextStyle(
@@ -359,11 +379,14 @@ Future<StorageLocation?> pickLocationSheet(
         children: [
           for (final l in locations.where((l) => l.isActive))
             ListTile(
-              leading: Text(l.icon ?? '📍', style: const TextStyle(fontSize: 18)),
+              leading:
+                  Text(l.icon ?? '📍', style: const TextStyle(fontSize: 18)),
               title: Text(l.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700)),
               subtitle: Text(l.region,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w600)),
               onTap: () => Navigator.pop(context, l),
             ),
         ],
@@ -383,9 +406,11 @@ Future<Category?> pickCategorySheet(
         children: [
           for (final cat in categories)
             ListTile(
-              leading: Text(cat.icon ?? '🗂', style: const TextStyle(fontSize: 18)),
+              leading:
+                  Text(cat.icon ?? '🗂', style: const TextStyle(fontSize: 18)),
               title: Text(cat.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700)),
               onTap: () => Navigator.pop(context, cat),
             ),
         ],
@@ -395,9 +420,11 @@ Future<Category?> pickCategorySheet(
 }
 
 /// 「＋」快捷再入库面板：预填上次规格，确认后新建批次（§4.3 / §4.6）。
-Future<void> showQuickIntakeSheet(BuildContext context, LibraryItemView v) async {
+Future<void> showQuickIntakeSheet(
+    BuildContext context, LibraryItemView v) async {
   final primary = v.primaryBatch;
-  final qtyCtrl = TextEditingController(text: Fmt.quantity(primary?.initialQuantity ?? 1));
+  final qtyCtrl =
+      TextEditingController(text: Fmt.quantity(primary?.initialQuantity ?? 1));
   DateTime? expiry = primary?.expiryDate;
   final form = GlobalKey<FormState>();
 
@@ -418,7 +445,8 @@ Future<void> showQuickIntakeSheet(BuildContext context, LibraryItemView v) async
             const SizedBox(height: 12),
             TextFormField(
               controller: qtyCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: '数量（${primary?.unit ?? '件'}）',
               ),
@@ -429,14 +457,17 @@ Future<void> showQuickIntakeSheet(BuildContext context, LibraryItemView v) async
             Row(
               children: [
                 Text('到期日期',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w800)),
                 const Spacer(),
                 TextButton(
                   onPressed: () async {
                     final d = await showDatePicker(
                       context: context,
-                      initialDate: expiry ?? DateTime.now().add(const Duration(days: 7)),
-                      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                      initialDate:
+                          expiry ?? DateTime.now().add(const Duration(days: 7)),
+                      firstDate:
+                          DateTime.now().subtract(const Duration(days: 1)),
                       lastDate: DateTime.now().add(const Duration(days: 3650)),
                     );
                     if (d != null) expiry = d;

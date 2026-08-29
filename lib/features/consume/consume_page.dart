@@ -84,7 +84,9 @@ class _ConsumePageState extends ConsumerState<ConsumePage> {
                 children: [
                   Expanded(
                     child: StatCard(
-                        label: '本月消耗', value: '${monthly.monthCount}', suffix: '件'),
+                        label: '本月消耗',
+                        value: '${monthly.monthCount}',
+                        suffix: '件'),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -104,13 +106,13 @@ class _ConsumePageState extends ConsumerState<ConsumePage> {
               ...ViewComposer.groupByDay(
                       logs.take(_visibleDays * 10).toList(), now)
                   .take(_visibleDays)
-                  .map((group) => DayGroupSection(day: group.$1, logs: group.$2)),
+                  .map((group) =>
+                      DayGroupSection(day: group.$1, logs: group.$2)),
               if (logs.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: OutlinedButton(
-                    onPressed: () =>
-                        setState(() => _visibleDays += 7),
+                    onPressed: () => setState(() => _visibleDays += 7),
                     child: const Text('加载更早的记录'),
                   ),
                 ),
@@ -213,12 +215,15 @@ class ConsumingRow extends ConsumerWidget {
                               fontSize: 13.5, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 2),
                       Text(
-                        v.lowRemaining ? '剩 ${v.percent}% · 余量低' : '剩余 ${v.percent}%',
+                        v.lowRemaining
+                            ? '剩 ${v.percent}% · 余量低'
+                            : '剩余 ${v.percent}%',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color:
-                                v.lowRemaining ? scheme.onPrimaryContainer : c.inkFaint),
+                            color: v.lowRemaining
+                                ? scheme.onPrimaryContainer
+                                : c.inkFaint),
                       ),
                     ],
                   ),
@@ -237,9 +242,11 @@ class ConsumingRow extends ConsumerWidget {
                       fontWeight: FontWeight.w800,
                       color: c.inkFaint)),
               const Spacer(),
+              // 危险操作左置离手，最高频的 −1 主样式放最右拇指位
               _PillBtn(
-                label: '−1',
-                onTap: () => _quickMinus(context, ref, unit),
+                label: '✓ 用完',
+                danger: true,
+                onTap: () => showFinishSheet(context, ref, v),
               ),
               const SizedBox(width: 8),
               _PillBtn(
@@ -248,9 +255,9 @@ class ConsumingRow extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               _PillBtn(
-                label: '✓ 用完',
+                label: '−1',
                 primary: true,
-                onTap: () => showFinishSheet(context, ref, v),
+                onTap: () => _quickMinus(context, ref, unit),
               ),
             ],
           ),
@@ -259,12 +266,11 @@ class ConsumingRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _quickMinus(BuildContext context, WidgetRef ref, String unit) async {
+  Future<void> _quickMinus(
+      BuildContext context, WidgetRef ref, String unit) async {
     final actions = ref.read(inventoryActionsProvider);
     final result = await actions.consume(
-        itemId: view.item.id,
-        quantity: 1,
-        source: LogSources.quickConsume);
+        itemId: view.item.id, quantity: 1, source: LogSources.quickConsume);
     if (result is Success<String?> && context.mounted) {
       final logId = result.data;
       showToast(context, '−1 $unit');
@@ -281,9 +287,15 @@ class ConsumingRow extends ConsumerWidget {
 class _PillBtn extends StatelessWidget {
   final String label;
   final bool primary;
+  final bool danger;
   final VoidCallback onTap;
 
-  const _PillBtn({required this.label, required this.onTap, this.primary = false});
+  const _PillBtn({
+    required this.label,
+    required this.onTap,
+    this.primary = false,
+    this.danger = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -292,9 +304,16 @@ class _PillBtn extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        // 触摸目标高 48（design-system touch_target.minimum_android）
+        height: 48,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: primary ? scheme.primaryContainer : scheme.surfaceContainerHighest,
+          color: danger
+              ? scheme.error.withValues(alpha: 0.1)
+              : primary
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
@@ -302,7 +321,11 @@ class _PillBtn extends StatelessWidget {
           style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w900,
-              color: primary ? scheme.onPrimaryContainer : scheme.onSurfaceVariant),
+              color: danger
+                  ? scheme.error
+                  : primary
+                      ? scheme.onPrimaryContainer
+                      : scheme.onSurfaceVariant),
         ),
       ),
     );
