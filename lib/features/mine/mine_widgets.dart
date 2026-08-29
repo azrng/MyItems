@@ -63,7 +63,9 @@ class HeroCard extends ConsumerWidget {
                   const SizedBox(height: 3),
                   Text('点一下改称呼，首页问候语会同步',
                       style: TextStyle(
-                          fontSize: 10.5, fontWeight: FontWeight.w600, color: c.inkFaint)),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: c.inkFaint)),
                 ],
               ),
             ),
@@ -74,52 +76,66 @@ class HeroCard extends ConsumerWidget {
   }
 }
 
-/// 里程碑徽章（P2 初版）：累计归档 10/50/100 件、连续记录 30 天。
+/// 里程碑徽章（P2）：仅悬挂已达成的奖牌（§5.5）——累计归档 10/50/100 件、连续记录 30 天；
+/// 一枚都没达成时显示引导占位，不做默认灰态全员展示。
 class BadgeRow extends StatelessWidget {
   final int streak;
   final int archivedTotal;
 
-  const BadgeRow({super.key, required this.streak, required this.archivedTotal});
+  const BadgeRow(
+      {super.key, required this.streak, required this.archivedTotal});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final c = Theme.of(context).extension<AppColors>()!;
-    final badges = [
+    final all = [
       (emoji: '🏅', label: '归档 10 件', ok: archivedTotal >= 10),
       (emoji: '🥈', label: '归档 50 件', ok: archivedTotal >= 50),
       (emoji: '🏆', label: '归档 100 件', ok: archivedTotal >= 100),
       (emoji: '🔥', label: '连记 30 天', ok: streak >= 30),
     ];
-    return Row(
+    final earned = all.where((b) => b.ok).toList();
+    if (earned.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Text('🎖 完成里程碑后，徽章会挂在这里',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: c.inkFaint)),
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        for (final b in badges) ...[
-          Expanded(
-            child: Opacity(
-              opacity: b.ok ? 1 : 0.35,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: b.ok ? scheme.primaryContainer : scheme.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: scheme.outlineVariant),
-                ),
-                child: Column(
-                  children: [
-                    Text(b.emoji, style: const TextStyle(fontSize: 18)),
-                    const SizedBox(height: 4),
-                    Text(b.label,
-                        style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w900,
-                            color: b.ok ? scheme.onPrimaryContainer : c.inkFaint)),
-                  ],
-                ),
-              ),
+        for (final b in earned)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(b.emoji, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 6),
+                Text(b.label,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: scheme.onPrimaryContainer)),
+              ],
             ),
           ),
-          if (b != badges.last) const SizedBox(width: 8),
-        ],
       ],
     );
   }
