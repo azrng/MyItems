@@ -17,6 +17,7 @@ import '../../core/utils/result.dart';
 import '../../widgets/common.dart';
 import '../../widgets/app_feedback.dart';
 import 'location_quick_sheet.dart';
+import 'unit_picker_sheet.dart';
 
 /// 添加 / 编辑物品（requirement.md §5.6、§4.6；编辑复用表单 §4.7）。
 class EditorPage extends ConsumerStatefulWidget {
@@ -33,14 +34,12 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   final _name = TextEditingController();
   final _spec = TextEditingController();
   final _qty = TextEditingController(text: '1');
-  final _customUnit = TextEditingController();
   final _price = TextEditingController();
   final _notes = TextEditingController();
 
   String? _categoryId;
   String? _locationId;
   String _unit = '袋';
-  bool _customUnitMode = false;
   bool _isConsumable = true;
   bool _reminderEnabled = true;
   DateTime? _expiry;
@@ -212,7 +211,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       reminderEnabled: _reminderEnabled,
       locationId: _locationId!,
       quantity: qty,
-      unit: _customUnitMode ? (_customUnit.text.trim().isEmpty ? _unit : _customUnit.text.trim()) : _unit,
+      unit: _unit,
       expiryDate: _expiry,
       purchasePrice: price,
       purchaseDate: _purchaseDate,
@@ -675,37 +674,30 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         }, scheme),
         const SizedBox(width: 12),
         Expanded(
-          child: _customUnitMode
-              ? TextField(
-                  controller: _customUnit,
-                  autofocus: true,
-                  decoration: const InputDecoration(hintText: '自定义单位'),
-                  onSubmitted: (_) => setState(() {
-                    if (_customUnit.text.trim().isNotEmpty) {
-                      _unit = _customUnit.text.trim();
-                    }
-                    _customUnitMode = false;
-                  }),
-                )
-              : InkWell(
-                  onTap: () => setState(() => _customUnitMode = true),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(_unit,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w800)),
-                        ),
-                        Icon(Icons.expand_more_rounded,
-                            size: 16, color: c.inkFaint),
-                      ],
-                    ),
+          child: InkWell(
+            onTap: () async {
+              final unit = await showUnitPickerSheet(context, current: _unit);
+              if (unit != null && unit.isNotEmpty) {
+                setState(() => _unit = unit);
+              }
+            },
+            child: InputDecorator(
+              decoration: const InputDecoration(),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(_unit,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w800)),
                   ),
-                ),
+                  Icon(Icons.expand_more_rounded,
+                      size: 16, color: c.inkFaint),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
