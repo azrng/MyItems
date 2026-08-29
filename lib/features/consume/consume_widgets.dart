@@ -178,6 +178,8 @@ Future<void> showConsumeSheet(BuildContext context, LibraryItemView v) async {
                 : () async {
                     final container = ProviderScope.containerOf(context);
                     final actions = container.read(inventoryActionsProvider);
+                    // 清零会触发自动归档并关页，await 前缓存 messenger 保证反馈可见
+                    final messenger = ScaffoldMessenger.of(context);
                     final result = await actions.consume(
                       itemId: v.item.id,
                       quantity: effective,
@@ -186,16 +188,23 @@ Future<void> showConsumeSheet(BuildContext context, LibraryItemView v) async {
                     );
                     if (context.mounted) {
                       Navigator.pop(context);
-                      if (result is Success<String?>) {
-                        showToast(context, '已记录 −${Fmt.quantity(effective)} $unit');
-                        final logId = result.data;
-                        if (logId != null) {
-                          showUndoBar(context, '已消耗 ${Fmt.quantity(effective)} $unit',
-                              onUndo: () => actions.undoConsume(logId));
-                        }
+                    }
+                    final receipt = result.dataOrNull;
+                    if (receipt != null) {
+                      final logId = receipt.logId;
+                      if (logId != null) {
+                        showUndoBarOn(messenger, '已消耗 ${Fmt.quantity(effective)} $unit',
+                            onUndo: () async {
+                          final undo = await actions.undoConsume(logId);
+                          if (undo.isFailure) {
+                            showToastOn(messenger, undo.errorMessage ?? '撤销失败');
+                          }
+                        });
                       } else {
-                        showToast(context, '记录失败，请重试');
+                        showToastOn(messenger, '已记录 −${Fmt.quantity(effective)} $unit');
                       }
+                    } else {
+                      showToastOn(messenger, '记录失败，请重试');
                     }
                   },
             child: Text('确认消耗 −${Fmt.quantity(effective)} $unit'),

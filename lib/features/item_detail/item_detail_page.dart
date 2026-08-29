@@ -14,6 +14,7 @@ import '../../data/models/view_models.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/meter.dart';
 import '../../widgets/tag.dart';
+import '../library/library_widgets.dart' show showQuickIntakeSheet;
 import 'detail_sheets.dart';
 
 /// 物品详情页（requirement.md §5.13）：同一物品多批次并存的默认落点。
@@ -28,6 +29,11 @@ class ItemDetailPage extends ConsumerWidget {
     final c = Theme.of(context).extension<AppColors>()!;
     final views = ref.watch(libraryViewsProvider);
     final v = views.where((e) => e.item.id == itemId).firstOrNull;
+    // 无在库批次时 view 为 null（物品库/首页不展示），标题与编辑仍需物品主档
+    final item = v?.item ??
+        (ref.watch(itemsProvider).value ?? const <Item>[])
+            .where((e) => e.id == itemId)
+            .firstOrNull;
     final batches = ref.watch(batchesProvider).value ?? const <Batch>[];
     final locations =
         ref.watch(locationsProvider).value ?? const <StorageLocation>[];
@@ -63,7 +69,7 @@ class ItemDetailPage extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(v?.item.name ?? '物品详情',
+                  child: Text(item?.name ?? '物品详情',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -101,26 +107,39 @@ class ItemDetailPage extends ConsumerWidget {
                 ),
               const SizedBox(height: 14),
               FilledButton(
-                onPressed: () => context.push('/editor/$itemId'),
+                // 再次入库：新建批次（挂批次会自动恢复在库状态），而非编辑主档
+                onPressed: item == null
+                    ? null
+                    : () => showQuickIntakeSheet(context,
+                        item: item, primary: v.primaryBatch),
                 child: const Text('＋ 再次入库'),
               ),
-            ] else
+            ] else ...[
               // 空态兜底（§5.13：无在库批次）
               Column(
                 children: [
                   const SizedBox(height: 60),
                   const Text('🌫', style: TextStyle(fontSize: 44)),
                   const SizedBox(height: 10),
-                  const Text('该物品暂无在库批次',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: () => context.push('/editor/$itemId'),
-                    child: const Text('＋ 再次入库'),
-                  ),
+                  Text(
+                      item == null
+                          ? '物品不存在或已删除'
+                          : item.isArchived
+                              ? '已用完，躺在归档里'
+                              : '该物品暂无在库批次',
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  if (item != null && !item.isArchived) ...[
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      onPressed: () => showQuickIntakeSheet(context,
+                          item: item, primary: null),
+                      child: const Text('＋ 再次入库'),
+                    ),
+                  ],
                 ],
               ),
+            ],
           ],
         ),
       ),
@@ -392,23 +411,30 @@ class BatchCard extends ConsumerWidget {
 
   Future<void> _consume(BuildContext context, WidgetRef ref) async {
     final actions = ref.read(inventoryActionsProvider);
+    // 清零会触发自动归档并重建本卡片，await 前缓存 messenger 保证反馈可见
+    final messenger = ScaffoldMessenger.of(context);
     final result = await actions.consume(
       itemId: batch.itemId,
       quantity: 1,
       source: LogSources.quickConsume,
       note: '批次 #${batch.batchLabel}',
     );
-    if (context.mounted) {
-      if (result is Success<String?>) {
-        showToast(context, '已记录 −1 ${batch.unit}');
-        final logId = result.data;
-        if (logId != null) {
-          showUndoBar(context, '已消耗 1 ${batch.unit}',
-              onUndo: () => actions.undoConsume(logId));
-        }
+    final receipt = result.dataOrNull;
+    if (receipt != null) {
+      final logId = receipt.logId;
+      if (logId != null) {
+        showUndoBarOn(messenger, '已消耗 ${Fmt.quantity(receipt.qty)} ${batch.unit}',
+            onUndo: () async {
+          final undo = await actions.undoConsume(logId);
+          if (undo.isFailure) {
+            showToastOn(messenger, undo.errorMessage ?? '撤销失败');
+          }
+        });
       } else {
-        showToast(context, '该批次已无余量');
+        showToastOn(messenger, '已记录 −${Fmt.quantity(receipt.qty)} ${batch.unit}');
       }
+    } else {
+      showToastOn(messenger, '该批次已无余量');
     }
   }
 }

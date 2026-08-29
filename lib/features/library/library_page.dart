@@ -266,8 +266,9 @@ class _MultiActionBar extends ConsumerWidget {
       await actions.moveAllBatches(id, loc.id);
     }
     _exitSelect(ref);
-    if (context.mounted)
+    if (context.mounted) {
       showToast(context, '已移动 ${ids.length} 件到「${loc.name}」');
+    }
   }
 
   Future<void> _changeCategory(BuildContext context, WidgetRef ref) async {
@@ -282,6 +283,8 @@ class _MultiActionBar extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    // 软删会让本页列表刷新，进异步前缓存 messenger 保证撤销条可见
+    final messenger = ScaffoldMessenger.of(context);
     final ok = await confirmDialog(
       context,
       title: '删除选中的 ${ref.read(selectedIdsProvider).length} 件物品？',
@@ -293,11 +296,9 @@ class _MultiActionBar extends ConsumerWidget {
     final ids = ref.read(selectedIdsProvider).toList();
     await ref.read(inventoryActionsProvider).deleteItems(ids);
     _exitSelect(ref);
-    if (context.mounted) {
-      showUndoBar(context, '已移出 ${ids.length} 件物品',
-          onUndo: () =>
-              ref.read(inventoryActionsProvider).undoDeleteItems(ids));
-    }
+    showUndoBarOn(messenger, '已移出 ${ids.length} 件物品',
+        onUndo: () =>
+            ref.read(inventoryActionsProvider).undoDeleteItems(ids));
   }
 
   void _exitSelect(WidgetRef ref) {

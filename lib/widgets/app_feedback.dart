@@ -64,6 +64,17 @@ void showToast(BuildContext context, String message) {
     ));
 }
 
+/// 深棕 toast 的 messenger 版：消耗等异步操作会触发列表刷新并把调用点
+/// widget 卸载（mounted=false），await 前缓存 root 级 messenger 才能可靠反馈。
+void showToastOn(ScaffoldMessengerState messenger, String message) {
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 2),
+    ));
+}
+
 /// 普通确认弹窗。
 Future<bool> confirmDialog(
   BuildContext context, {
@@ -106,8 +117,19 @@ void showUndoBar(
   required VoidCallback onUndo,
   Duration duration = const Duration(seconds: 5),
 }) {
-  final scheme = Theme.of(context).colorScheme;
-  ScaffoldMessenger.of(context)
+  showUndoBarOn(ScaffoldMessenger.of(context), message,
+      onUndo: onUndo, duration: duration);
+}
+
+/// [showUndoBar] 的 messenger 版：见 [showToastOn] 说明。
+void showUndoBarOn(
+  ScaffoldMessengerState messenger,
+  String message, {
+  required VoidCallback onUndo,
+  Duration duration = const Duration(seconds: 5),
+}) {
+  final scheme = Theme.of(messenger.context).colorScheme;
+  messenger
     ..clearSnackBars()
     ..showSnackBar(SnackBar(
       content: Text(message),

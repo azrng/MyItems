@@ -143,7 +143,8 @@ class ItemCard extends ConsumerWidget {
                   _StepBtn(
                     icon: Icons.add_rounded,
                     accent: true,
-                    onTap: () => showQuickIntakeSheet(context, v),
+                    onTap: () =>
+                        showQuickIntakeSheet(context, item: v.item, primary: v.primaryBatch),
                   ),
                 ],
               )
@@ -165,17 +166,26 @@ class ItemCard extends ConsumerWidget {
   Future<void> _quickConsume(BuildContext context, WidgetRef ref) async {
     final actions = ref.read(inventoryActionsProvider);
     final unit = view.primaryBatch?.unit ?? '件';
+    // 清零会触发自动归档并移除本卡片，await 前缓存 messenger 保证反馈可见
+    final messenger = ScaffoldMessenger.of(context);
     final result = await actions.consume(
         itemId: view.item.id, quantity: 1, source: LogSources.quickConsume);
-    if (result is Success<String?> && context.mounted) {
-      showToast(context, '−1 $unit 已记录');
-      final logId = result.data;
+    final receipt = result.dataOrNull;
+    if (receipt != null) {
+      final logId = receipt.logId;
       if (logId != null) {
-        showUndoBar(context, '已消耗 1 $unit',
-            onUndo: () => actions.undoConsume(logId));
+        showUndoBarOn(messenger, '已消耗 ${Fmt.quantity(receipt.qty)} $unit',
+            onUndo: () async {
+          final undo = await actions.undoConsume(logId);
+          if (undo.isFailure) {
+            showToastOn(messenger, undo.errorMessage ?? '撤销失败');
+          }
+        });
+      } else {
+        showToastOn(messenger, '−${Fmt.quantity(receipt.qty)} $unit 已记录');
       }
-    } else if (result is Failure<String?> && context.mounted) {
-      showToast(context, result.message);
+    } else {
+      showToastOn(messenger, result.errorMessage ?? '消耗失败');
     }
   }
 }
@@ -421,18 +431,21 @@ Future<Category?> pickCategorySheet(
 }
 
 /// 「＋」快捷再入库面板：预填上次规格，确认后新建批次（§4.3 / §4.6）。
+/// [primary] 为该物品上次主批次，可为 null（无在库批次时按默认值预填）。
 Future<void> showQuickIntakeSheet(
-    BuildContext context, LibraryItemView v) async {
-  final primary = v.primaryBatch;
+    BuildContext context,
+    {required Item item,
+    Batch? primary}) async {
   final qtyCtrl =
       TextEditingController(text: Fmt.quantity(primary?.initialQuantity ?? 1));
   DateTime? expiry = primary?.expiryDate;
+  final unit = primary?.unit ?? '件';
   final form = GlobalKey<FormState>();
 
   await showAppSheet(
     context,
     child: AppBottomSheet(
-      title: '再次入库 · ${v.item.name}',
+      title: '再次入库 · ${item.name}',
       body: Form(
         key: form,
         child: Column(
@@ -449,7 +462,7 @@ Future<void> showQuickIntakeSheet(
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: '数量（${primary?.unit ?? '件'}）',
+                labelText: '数量（$unit）',
               ),
               validator: (s) =>
                   (double.tryParse(s ?? '') ?? 0) <= 0 ? '请输入大于 0 的数量' : null,
@@ -487,17 +500,17 @@ Future<void> showQuickIntakeSheet(
             final container = ProviderScope.containerOf(context);
             final actions = container.read(inventoryActionsProvider);
             final result = await actions.saveIntake(
-              existingItemId: v.item.id,
-              name: v.item.name,
-              categoryId: v.item.categoryId,
-              icon: v.item.icon,
-              isConsumable: v.item.isConsumable,
-              reminderEnabled: v.item.reminderEnabled,
-              locationId: (primary?.locationId ?? v.item.lastLocationId ?? ''),
+              existingItemId: item.id,
+              name: item.name,
+              categoryId: item.categoryId,
+              icon: item.icon,
+              isConsumable: item.isConsumable,
+              reminderEnabled: item.reminderEnabled,
+              locationId: (primary?.locationId ?? item.lastLocationId ?? ''),
               quantity: double.parse(qtyCtrl.text),
-              unit: primary?.unit ?? '件',
+              unit: unit,
               expiryDate: expiry,
-              spec: v.item.spec,
+              spec: item.spec,
             );
             if (result is Success && context.mounted) {
               Navigator.pop(context);

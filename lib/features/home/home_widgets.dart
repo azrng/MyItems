@@ -307,17 +307,26 @@ class _QuickLogRow extends ConsumerWidget {
 
   Future<void> _log(BuildContext context, WidgetRef ref, String unit) async {
     final actions = ref.read(inventoryActionsProvider);
+    // 清零会触发自动归档并移除本行，await 前缓存 messenger 保证反馈可见
+    final messenger = ScaffoldMessenger.of(context);
     final result = await actions.consume(
         itemId: view.item.id, quantity: 1, source: LogSources.quickConsume);
-    if (result is Success<String?> && context.mounted) {
-      final logId = result.data;
-      showToast(context, '−1 $unit');
+    final receipt = result.dataOrNull;
+    if (receipt != null) {
+      final logId = receipt.logId;
       if (logId != null) {
-        showUndoBar(context, '已消耗 1 $unit',
-            onUndo: () => actions.undoConsume(logId));
+        showUndoBarOn(messenger, '已消耗 ${Fmt.quantity(receipt.qty)} $unit',
+            onUndo: () async {
+          final undo = await actions.undoConsume(logId);
+          if (undo.isFailure) {
+            showToastOn(messenger, undo.errorMessage ?? '撤销失败');
+          }
+        });
+      } else {
+        showToastOn(messenger, '−${Fmt.quantity(receipt.qty)} $unit');
       }
-    } else if (result is Failure<String?> && context.mounted) {
-      showToast(context, result.message);
+    } else {
+      showToastOn(messenger, result.errorMessage ?? '消耗失败');
     }
   }
 }
