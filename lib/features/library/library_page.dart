@@ -231,9 +231,11 @@ class _MultiActionBar extends ConsumerWidget {
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w800)),
                   const Spacer(),
-                  TextButton(
+                  // 取消/删除用图标钮：360dp 宽下文字按钮并排会横向溢出（真机实测 27px）
+                  IconButton(
                     onPressed: () => _exitSelect(ref),
-                    child: const Text('取消'),
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    tooltip: '取消多选',
                   ),
                   TextButton(
                     onPressed: () => _move(context, ref),
@@ -243,10 +245,11 @@ class _MultiActionBar extends ConsumerWidget {
                     onPressed: () => _changeCategory(context, ref),
                     child: const Text('改分类'),
                   ),
-                  TextButton(
+                  IconButton(
                     onPressed: () => _delete(context, ref),
-                    style: TextButton.styleFrom(foregroundColor: scheme.error),
-                    child: const Text('删除'),
+                    icon: Icon(Icons.delete_outline_rounded,
+                        size: 20, color: scheme.error),
+                    tooltip: '删除',
                   ),
                 ],
               ),
