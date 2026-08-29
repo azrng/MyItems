@@ -98,7 +98,8 @@ class _CategoryRowState extends ConsumerState<_CategoryRow> {
   }
 
   Future<void> _load() async {
-    final repo = ProviderScope.containerOf(context).read(inventoryRepositoryProvider);
+    // ConsumerState 自带 ref；initState 期间禁止 containerOf（会建立 inherited 依赖导致构建中断）
+    final repo = ref.read(inventoryRepositoryProvider);
     final n = await repo.countItemsOfCategory(widget.category.id);
     if (mounted) setState(() => _count = n);
   }

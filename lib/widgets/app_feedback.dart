@@ -112,6 +112,8 @@ void showUndoBar(
     ..showSnackBar(SnackBar(
       content: Text(message),
       duration: duration,
+      // 新版 SDK 带 action 的 SnackBar 默认 persist=true（超时不关）；撤销窗口须 5 秒自动关闭
+      persist: false,
       action: SnackBarAction(
         label: '撤销',
         textColor: scheme.onPrimaryContainer,
