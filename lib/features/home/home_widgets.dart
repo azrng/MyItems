@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/expiry_helper.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/result.dart';
+import '../../providers/actions.dart';
 import '../../providers/inventory_providers.dart';
 import '../../data/models/view_models.dart';
+import '../../widgets/app_feedback.dart';
 import '../../widgets/meter.dart';
 import '../../widgets/tag.dart';
 
@@ -30,10 +34,8 @@ class ExpiringCard extends ConsumerWidget {
             ? '今天到期'
             : '还剩 ${entry.days} 天';
     final locations = ref.watch(locationsProvider).value ?? const [];
-    final locName = locations
-        .where((l) => l.id == primary?.locationId)
-        .firstOrNull
-        ?.name;
+    final locName =
+        locations.where((l) => l.id == primary?.locationId).firstOrNull?.name;
 
     return InkWell(
       onTap: () => context.push('/item/${v.item.id}'),
@@ -60,7 +62,8 @@ class ExpiringCard extends ConsumerWidget {
             Text(v.item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800)),
+                style: const TextStyle(
+                    fontSize: 13.5, fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
             Text(
               '${locName ?? '未设位置'} · ${ExpiryHelper.contextLabel(
@@ -71,7 +74,8 @@ class ExpiringCard extends ConsumerWidget {
               )}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c.inkFaint),
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w600, color: c.inkFaint),
             ),
             const SizedBox(height: 8),
             Meter(value: v.percent / 100),
@@ -125,7 +129,10 @@ class WeekBars extends StatelessWidget {
                               : const LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [Color(0xFFDE7931), Color(0xFFBE5E18)]),
+                                  colors: [
+                                      Color(0xFFDE7931),
+                                      Color(0xFFBE5E18)
+                                    ]),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -151,7 +158,9 @@ class WeekBars extends StatelessWidget {
                       color: scheme.onPrimaryContainer)),
               Text(' 件 / 本周',
                   style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: c.inkFaint)),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.inkFaint)),
             ],
           ),
         ],
@@ -168,7 +177,8 @@ class RecentIntakeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final locText = log.log.locationText == null ? '' : ' · ${log.log.locationText}';
+    final locText =
+        log.log.locationText == null ? '' : ' · ${log.log.locationText}';
     return InkWell(
       onTap: () => context.push('/item/${log.log.itemId}'),
       borderRadius: BorderRadius.circular(16),
@@ -183,7 +193,8 @@ class RecentIntakeRow extends StatelessWidget {
                 '${log.displayName} · ${Fmt.relative(log.log.createdAt, DateTime.now())}$locText',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ),
             Text('＋${Fmt.quantity(log.log.quantity)} ${log.log.unit}',
@@ -195,5 +206,118 @@ class RecentIntakeRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 「记一笔」快速消耗弹层：首页直达记账，列出在库可消耗物品，一键 −1。
+Future<void> showQuickConsumeSheet(BuildContext context) {
+  return showAppSheet(
+    context,
+    child: Consumer(builder: (context, ref, _) {
+      final views = ref.watch(activeViewsProvider);
+      final consumables = views
+          .where((v) => v.item.isConsumable && v.totalRemaining > 0)
+          .toList()
+        ..sort((a, b) =>
+            (b.lowRemaining ? 1 : 0).compareTo(a.lowRemaining ? 1 : 0));
+      return AppBottomSheet(
+        title: '记一笔 · 今天用了什么',
+        body: consumables.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text('在库没有可消耗的物品，先用中央 ＋ 录入一件吧',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context)
+                            .extension<AppColors>()!
+                            .inkFaint)),
+              )
+            : ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 420),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: consumables.length,
+                  itemBuilder: (context, i) =>
+                      _QuickLogRow(view: consumables[i]),
+                ),
+              ),
+      );
+    }),
+  );
+}
+
+class _QuickLogRow extends ConsumerWidget {
+  final LibraryItemView view;
+
+  const _QuickLogRow({required this.view});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final c = Theme.of(context).extension<AppColors>()!;
+    final unit = view.primaryBatch?.unit ?? '件';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Text(view.item.icon ?? '📦', style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(view.item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13.5, fontWeight: FontWeight.w800)),
+                Text(
+                  '剩 ${view.percent}% · ${Fmt.quantity(view.totalRemaining)} $unit',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: view.lowRemaining
+                          ? scheme.onPrimaryContainer
+                          : c.inkFaint),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => _log(context, ref, unit),
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              // 触摸目标 48x48（design-system touch_target.minimum_android）
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color: scheme.primaryContainer, shape: BoxShape.circle),
+              child: Icon(Icons.remove_rounded,
+                  size: 22, color: scheme.onPrimaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _log(BuildContext context, WidgetRef ref, String unit) async {
+    final actions = ref.read(inventoryActionsProvider);
+    final result = await actions.consume(
+        itemId: view.item.id, quantity: 1, source: LogSources.quickConsume);
+    if (result is Success<String?> && context.mounted) {
+      final logId = result.data;
+      showToast(context, '−1 $unit');
+      if (logId != null) {
+        showUndoBar(context, '已消耗 1 $unit',
+            onUndo: () => actions.undoConsume(logId));
+      }
+    } else if (result is Failure<String?> && context.mounted) {
+      showToast(context, result.message);
+    }
   }
 }

@@ -96,7 +96,9 @@ class HomePage extends ConsumerWidget {
               action: '查看记录 ›',
               onAction: () => context.go('/consume'),
             ),
-            WeekBars(values: stats.weekBars, total: stats.weekBars.fold(0, (a, b) => a + b)),
+            WeekBars(
+                values: stats.weekBars,
+                total: stats.weekBars.fold(0, (a, b) => a + b)),
             const SizedBox(height: 8),
             _StreakLine(stats.streak),
             const SizedBox(height: 24),
@@ -134,7 +136,10 @@ class HomePage extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text('一切安好，没有需要优先处理的临期件',
-                style: TextStyle(fontSize: 12.5, color: c.inkFaint, fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontSize: 12.5,
+                    color: c.inkFaint,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -174,7 +179,8 @@ class _GreetHeader extends ConsumerWidget {
               const SizedBox(height: 6),
               Text(
                 '${Fmt.greeting(now)}，${settings.nickname} 👋',
-                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                style:
+                    const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -238,8 +244,8 @@ class _BellButton extends StatelessWidget {
                 child: Container(
                   width: 8,
                   height: 8,
-                  decoration:
-                      BoxDecoration(color: scheme.error, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                      color: scheme.error, shape: BoxShape.circle),
                 ),
               ),
           ],
@@ -249,17 +255,19 @@ class _BellButton extends StatelessWidget {
   }
 }
 
-class _QuickEntries extends StatelessWidget {
+class _QuickEntries extends ConsumerWidget {
   const _QuickEntries();
+
+  // '#quick-log' 为哨兵值：打开记一笔弹层，不走路由
   static const entries = [
-    (emoji: '➕', label: '添加', route: '/editor'),
+    (emoji: '📝', label: '记一笔', route: '#quick-log'),
     (emoji: '🗂', label: '分类', route: '/categories'),
     (emoji: '📍', label: '位置', route: '/locations'),
     (emoji: '🗄', label: '归档', route: '/archive'),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
@@ -267,8 +275,8 @@ class _QuickEntries extends StatelessWidget {
           Expanded(
             child: InkWell(
               onTap: () {
-                if (e.route == '/editor') {
-                  context.push(e.route);
+                if (e.route == '#quick-log') {
+                  showQuickConsumeSheet(context);
                 } else {
                   context.push(e.route);
                 }
@@ -313,6 +321,7 @@ class _StreakLine extends StatelessWidget {
             ? '连续记录 $streak 天，继续保持'
             : '记录一次消耗，开启你的连续打卡';
     return Text(text,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.inkFaint));
+        style: TextStyle(
+            fontSize: 12, fontWeight: FontWeight.w700, color: c.inkFaint));
   }
 }
