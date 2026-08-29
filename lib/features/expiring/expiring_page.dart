@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/expiry_helper.dart';
@@ -24,11 +25,11 @@ class _ExpiringPageState extends ConsumerState<ExpiringPage> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final c = Theme.of(context).extension<AppColors>()!;
-    final warningDays = ref.watch(settingsProvider.select((s) => s.expiryWarningDays));
+    final warningDays =
+        ref.watch(settingsProvider.select((s) => s.expiryWarningDays));
     final all = ref.watch(expiringEntriesProvider);
     final now = DateTime.now();
-    final entries =
-        all.where((e) => e.matches(_chip, warningDays)).toList();
+    final entries = all.where((e) => e.matches(_chip, warningDays)).toList();
 
     return SubPage(
       title: '临期预警',
@@ -104,8 +105,8 @@ class _ExpiringPageState extends ConsumerState<ExpiringPage> {
                     padding: const EdgeInsets.fromLTRB(
                         AppTheme.pagePadding, 8, AppTheme.pagePadding, 130),
                     itemCount: entries.length,
-                    itemBuilder: (context, i) => _ExpiringRow(
-                        entry: entries[i], now: now),
+                    itemBuilder: (context, i) =>
+                        _ExpiringRow(entry: entries[i], now: now),
                   ),
           ),
         ],
@@ -163,51 +164,61 @@ class _ExpiringRow extends StatelessWidget {
             ? 'DUE IN 0 天'
             : 'DUE IN ${e.days} 天';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(e.view.item.icon ?? '📦', style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.view.item.name,
-                        style: const TextStyle(
-                            fontSize: 13.5, fontWeight: FontWeight.w800)),
-                    Text(
-                      '${primary?.locationId == null ? '未设位置' : ''}'
-                      ' ${ExpiryHelper.contextLabel(
-                        opened: primary?.openedAt != null,
-                        openedAt: primary?.openedAt,
-                        openShelfLifeDays: primary?.openShelfLifeDays,
-                        expiryDate: primary?.expiryDate,
-                      )}',
-                      style: TextStyle(
-                          fontSize: 10.5, fontWeight: FontWeight.w600, color: c.inkFaint),
-                    ),
-                  ],
+    // 整行可点直达详情（§5.9：临期页是行动页，看到即需可处理）
+    return InkWell(
+      onTap: () => context.push('/item/${e.view.item.id}'),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(e.view.item.icon ?? '📦',
+                    style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(e.view.item.name,
+                          style: const TextStyle(
+                              fontSize: 13.5, fontWeight: FontWeight.w800)),
+                      Text(
+                        '${primary?.locationId == null ? '未设位置' : ''}'
+                        ' ${ExpiryHelper.contextLabel(
+                          opened: primary?.openedAt != null,
+                          openedAt: primary?.openedAt,
+                          openShelfLifeDays: primary?.openShelfLifeDays,
+                          expiryDate: primary?.expiryDate,
+                        )}',
+                        style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: c.inkFaint),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Text(dueLabel,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: e.days <= 1 ? scheme.error : scheme.onPrimaryContainer)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Meter(value: urgency, height: 5),
-        ],
+                Text(dueLabel,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: e.days <= 1
+                            ? scheme.error
+                            : scheme.onPrimaryContainer)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Meter(value: urgency, height: 5),
+          ],
+        ),
       ),
     );
   }
