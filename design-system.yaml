@@ -360,6 +360,26 @@ mobile_patterns:
     swipe: "左滑删除、临期专区横滑专区"
 
 # ============================================================
+# 启动图标（App Icon）
+# ============================================================
+app_icon:
+  type: "adaptive_icon（minSdk 26，无旧版位图回退）"
+  background: "cream-1 #FBF4E8（values/colors.xml ic_launcher_background）"
+  foreground: "drawable/ic_launcher_foreground.xml：陶土橙编织提篮"
+  motif: "提篮（呼应 🧺 篮子意象与「暖仓」仓储概念）"
+  colors:
+    body: "accent #DE7931 → accent-deep #BE5E18 纵向渐变"
+    rim_handle: "accent-deep #BE5E18"
+    weave: "on-accent #FFF7EC 40% 透明度"
+  safe_zone: "108dp 视口，内容收在中央 21..87 安全区，防桌面遮罩裁切"
+  monochrome: "Android 13 主题图标复用前景层"
+  files:
+    - "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+    - "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+    - "android/app/src/main/res/drawable/ic_launcher_foreground.xml"
+    - "android/app/src/main/res/values/colors.xml"
+
+# ============================================================
 # 页面状态规范
 # ============================================================
 page_states:
