@@ -118,6 +118,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             CategoryChips(categories: categories),
             const SizedBox(height: 8),
             const FilterRow(),
+            const SizedBox(height: 6),
+            // §5.3 操作提示文案
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppTheme.pagePadding),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('💡 点卡片可编辑详情，长按可多选批量调整',
+                    style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: c.inkFaint)),
+              ),
+            ),
+            const SizedBox(height: 4),
             const SizedBox(height: 8),
             Expanded(
               child: selecting

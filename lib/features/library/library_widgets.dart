@@ -128,20 +128,11 @@ class ItemCard extends ConsumerWidget {
               ),
             if (consumable)
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _StepBtn(
                     icon: Icons.remove_rounded,
                     onTap: () => _quickConsume(context, ref),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '点卡片可编辑详情',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 10, fontWeight: FontWeight.w600, color: c.inkFaint),
-                    ),
                   ),
                   _StepBtn(
                     icon: Icons.add_rounded,
@@ -160,7 +151,7 @@ class ItemCard extends ConsumerWidget {
     );
   }
 
-  String get percentText => '$appendixPercent';
+  String get percentText => '$appendixPercent%';
   int get appendixPercent => view.percent;
 
   Future<void> _quickConsume(BuildContext context, WidgetRef ref) async {
