@@ -128,6 +128,8 @@ flutter devices
 flutter run -d <device-id> --debug
 ```
 
+调试手机的完整档案（机型参数、已知适配注意点、更新约定）见 `doc/debug-device.md`；换手机时同步更新该档案。
+
 如果只想构建 Debug APK，不进入驻留调试会话，执行：
 
 ```powershell
