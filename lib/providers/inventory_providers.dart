@@ -170,13 +170,18 @@ final expiryTemplateByCategoryProvider = Provider<Map<String, int>>((ref) {
   final items = ref.watch(itemsProvider).value ?? const <Item>[];
   final catOf = {for (final i in items) i.id: i.categoryId};
   final map = <String, int>{};
+  int dayDiff(DateTime a, DateTime b) => DateTime(a.year, a.month, a.day)
+      .difference(DateTime(b.year, b.month, b.day))
+      .inDays;
   for (final b in batches
       .where((b) => b.expiryDate != null)
       .toList()
     ..sort((a, b) => a.createdAt.compareTo(b.createdAt))) {
     final cat = catOf[b.itemId];
     if (cat != null) {
-      map[cat] = b.expiryDate!.difference(b.createdAt).inDays.clamp(1, 3650);
+      // 按日历日差计算（expiry 与 createdAt 均带时刻，直接相减会少一天甚至为负）
+      final days = dayDiff(b.expiryDate!, b.createdAt);
+      if (days >= 1) map[cat] = days.clamp(1, 3650);
     }
   }
   return map;

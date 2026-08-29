@@ -22,6 +22,15 @@ class SettingsState {
   final bool onboardingDone;
   final String? lastUsedUnit;
   final DateTime? bellReadDate;
+  // 坚果云 WebDAV 同步（§7.2）。应用密码不入快照，仅记是否已设置。
+  final String cloudSyncUrl;
+  final String cloudSyncUser;
+  final bool cloudSyncHasToken;
+  final int cloudSyncKeepCount;
+  final bool cloudSyncAutoPush;
+  final DateTime? cloudSyncLastAt;
+  final bool cloudSyncLastOk;
+  final String cloudSyncLastError;
 
   const SettingsState({
     this.themeMode = ThemeMode.system,
@@ -40,6 +49,14 @@ class SettingsState {
     this.onboardingDone = false,
     this.lastUsedUnit,
     this.bellReadDate,
+    this.cloudSyncUrl = SettingDefaults.cloudSyncUrl,
+    this.cloudSyncUser = '',
+    this.cloudSyncHasToken = false,
+    this.cloudSyncKeepCount = SettingDefaults.cloudSyncKeepCount,
+    this.cloudSyncAutoPush = false,
+    this.cloudSyncLastAt,
+    this.cloudSyncLastOk = true,
+    this.cloudSyncLastError = '',
   });
 
   SettingsState copyWith({
@@ -49,6 +66,9 @@ class SettingsState {
     DateTime? lastBackupAt, int? lastBackupSize, bool? lastBackupOk,
     String? lastBackupError, bool? onboardingDone, String? lastUsedUnit,
     DateTime? bellReadDate, bool clearBellRead = false,
+    String? cloudSyncUrl, String? cloudSyncUser, bool? cloudSyncHasToken,
+    int? cloudSyncKeepCount, bool? cloudSyncAutoPush,
+    DateTime? cloudSyncLastAt, bool? cloudSyncLastOk, String? cloudSyncLastError,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -67,6 +87,14 @@ class SettingsState {
       onboardingDone: onboardingDone ?? this.onboardingDone,
       lastUsedUnit: lastUsedUnit ?? this.lastUsedUnit,
       bellReadDate: clearBellRead ? null : (bellReadDate ?? this.bellReadDate),
+      cloudSyncUrl: cloudSyncUrl ?? this.cloudSyncUrl,
+      cloudSyncUser: cloudSyncUser ?? this.cloudSyncUser,
+      cloudSyncHasToken: cloudSyncHasToken ?? this.cloudSyncHasToken,
+      cloudSyncKeepCount: cloudSyncKeepCount ?? this.cloudSyncKeepCount,
+      cloudSyncAutoPush: cloudSyncAutoPush ?? this.cloudSyncAutoPush,
+      cloudSyncLastAt: cloudSyncLastAt ?? this.cloudSyncLastAt,
+      cloudSyncLastOk: cloudSyncLastOk ?? this.cloudSyncLastOk,
+      cloudSyncLastError: cloudSyncLastError ?? this.cloudSyncLastError,
     );
   }
 }
@@ -149,6 +177,63 @@ class SettingsController extends Notifier<SettingsState> {
     await _write({SettingKeys.bellReadDate: value});
   }
 
+  /// 备份服务直写 DB，不经过本控制器；备份完成后从 DB 回读备份状态，
+  /// 让「存储与备份」状态行实时反映最近一次成功/失败。
+  Future<void> refreshBackupStatus() async {
+    final m = await ref.read(inventoryRepositoryProvider).getAllSettings();
+    state = state.copyWith(
+      lastBackupAt: m[SettingKeys.lastBackupAt] != null
+          ? DateTime.tryParse(m[SettingKeys.lastBackupAt]!)
+          : null,
+      lastBackupSize: int.tryParse(m[SettingKeys.lastBackupSize] ?? ''),
+      lastBackupOk: m[SettingKeys.lastBackupOk] != '0',
+      lastBackupError: m[SettingKeys.lastBackupError] ?? '',
+    );
+  }
+
+  /// 保存坚果云配置。[token] 为 null 或空串表示保持已存应用密码不变
+  /// （与 SmartVault「留空不修改」一致），非空则覆盖。
+  Future<void> setCloudSyncConfig({
+    required String url,
+    required String user,
+    String? token,
+  }) async {
+    final u = url.trim().isEmpty ? SettingDefaults.cloudSyncUrl : url.trim();
+    state = state.copyWith(cloudSyncUrl: u, cloudSyncUser: user.trim());
+    final entries = {
+      SettingKeys.cloudSyncUrl: u,
+      SettingKeys.cloudSyncUser: user.trim(),
+    };
+    if (token != null && token.isNotEmpty) {
+      entries[SettingKeys.cloudSyncToken] = token;
+      state = state.copyWith(cloudSyncHasToken: true);
+    }
+    await _write(entries);
+  }
+
+  Future<void> setCloudSyncOptions({int? keepCount, bool? autoPush}) async {
+    state = state.copyWith(
+      cloudSyncKeepCount: keepCount ?? state.cloudSyncKeepCount,
+      cloudSyncAutoPush: autoPush ?? state.cloudSyncAutoPush,
+    );
+    await _write({
+      SettingKeys.cloudSyncKeepCount: '${state.cloudSyncKeepCount}',
+      SettingKeys.cloudSyncAutoPush: state.cloudSyncAutoPush ? '1' : '0',
+    });
+  }
+
+  /// 云端推送状态与 BackupService 一样直写 DB，完成后回读刷新快照。
+  Future<void> refreshCloudSyncStatus() async {
+    final m = await ref.read(inventoryRepositoryProvider).getAllSettings();
+    state = state.copyWith(
+      cloudSyncLastAt: m[SettingKeys.cloudSyncLastAt] != null
+          ? DateTime.tryParse(m[SettingKeys.cloudSyncLastAt]!)
+          : null,
+      cloudSyncLastOk: m[SettingKeys.cloudSyncLastOk] != '0',
+      cloudSyncLastError: m[SettingKeys.cloudSyncLastError] ?? '',
+    );
+  }
+
   bool get bellHasUnread {
     final now = DateTime.now();
     final read = state.bellReadDate;
@@ -193,6 +278,18 @@ SettingsState settingsFromMap(Map<String, String> m) {
     bellReadDate: m[SettingKeys.bellReadDate] != null
         ? _parseLocalDay(m[SettingKeys.bellReadDate]!)
         : null,
+    cloudSyncUrl: m[SettingKeys.cloudSyncUrl] ?? SettingDefaults.cloudSyncUrl,
+    cloudSyncUser: m[SettingKeys.cloudSyncUser] ?? '',
+    cloudSyncHasToken:
+        (m[SettingKeys.cloudSyncToken] ?? '').isNotEmpty,
+    cloudSyncKeepCount: intOf(m[SettingKeys.cloudSyncKeepCount]) ??
+        SettingDefaults.cloudSyncKeepCount,
+    cloudSyncAutoPush: m[SettingKeys.cloudSyncAutoPush] == '1',
+    cloudSyncLastAt: m[SettingKeys.cloudSyncLastAt] != null
+        ? DateTime.tryParse(m[SettingKeys.cloudSyncLastAt]!)
+        : null,
+    cloudSyncLastOk: m[SettingKeys.cloudSyncLastOk] != '0',
+    cloudSyncLastError: m[SettingKeys.cloudSyncLastError] ?? '',
   );
 }
 

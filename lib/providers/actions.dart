@@ -10,9 +10,10 @@ import '../core/utils/formatters.dart';
 import '../core/utils/result.dart';
 import '../data/database/app_database.dart';
 import '../data/services/inventory_service.dart';
-import '../data/repositories/inventory_repository.dart' show BatchDeduction;
 import '../data/services/backup_service.dart';
 import '../data/services/notification_service.dart';
+import '../data/services/sync_service.dart';
+import '../data/services/webdav_client.dart';
 import 'core_providers.dart';
 import 'inventory_providers.dart';
 import 'settings_provider.dart';
@@ -28,6 +29,7 @@ class InventoryActions {
   InventoryService get _svc =>
       InventoryService(_ref.read(inventoryRepositoryProvider));
   BackupService get _backup => _ref.read(backupServiceProvider);
+  CloudSyncService get _cloudSync => _ref.read(cloudSyncServiceProvider);
   SettingsController get _settings => _ref.read(settingsProvider.notifier);
 
   Future<Result<T>> _afterChange<T>(Future<Result<T>> action,
@@ -53,8 +55,18 @@ class InventoryActions {
     final s = _ref.read(settingsProvider);
     if (!s.autoBackupEnabled) return;
     await _backup.exportBackupSafely(kind: 'auto');
+    await _settings.refreshBackupStatus();
     // 备份后孤儿扫描：先备份后清理，顺序不可反（§4.10）
     await _sweepOrphanImages();
+    await _autoCloudPush();
+  }
+
+  /// 坚果云跟随推送：用户开启「自动备份同时推送云端」后，
+  /// 本地自动备份成功的同时上传一份到云端；失败只记状态，不打断本地链路。
+  Future<void> _autoCloudPush() async {
+    final s = _ref.read(settingsProvider);
+    if (!s.cloudSyncAutoPush) return;
+    await pushCloudBackup();
   }
 
   Future<void> _sweepOrphanImages() async {
@@ -101,7 +113,9 @@ class InventoryActions {
     _ref.invalidate(pendingDeletesProvider);
     final s = _ref.read(settingsProvider);
     if (s.onboardingDone && s.autoBackupEnabled) {
-      await _backup.autoBackupIfNeeded();
+      final backed = await _backup.autoBackupIfNeeded();
+      // 每日首次补备份的这一次同样跟随云端推送
+      if (backed) await _autoCloudPush();
     }
     _rescheduleNotifications();
   }
@@ -124,6 +138,7 @@ class InventoryActions {
     DateTime? purchaseDate,
     String? notes,
     String? pickedImagePath,
+    String? source,
   }) async {
     final imagePath =
         await _ref.read(imageServiceProvider).importPicked(pickedImagePath);
@@ -143,6 +158,7 @@ class InventoryActions {
       purchaseDate: purchaseDate,
       notes: notes,
       imagePath: imagePath,
+      source: source,
     ));
     await _settings.setLastUsedUnit(unit);
     return result;
@@ -193,8 +209,8 @@ class InventoryActions {
 
   // ============ 消耗 / 归档 ============
 
-  /// 返回新增 consume 流水 id（供 5 秒撤销）。
-  Future<Result<String?>> consume({
+  /// 返回 (流水 id, 实际扣减量)——流水 id 供 5 秒撤销，扣减量供 toast 文案。
+  Future<Result<({String? logId, double qty})?>> consume({
     required String itemId,
     required double quantity,
     required String source,
@@ -202,9 +218,10 @@ class InventoryActions {
   }) async {
     final result = await _afterChange(_svc.consumeFifo(
         itemId: itemId, quantity: quantity, source: source, note: note));
-    if (result is! Success<List<BatchDeduction>>) return const Success(null);
-    final logs = await _ref.read(inventoryRepositoryProvider).getLogs(limit: 1);
-    return Success(logs.isEmpty ? null : logs.first.id);
+    final data = result.dataOrNull;
+    if (data == null) return const Success(null);
+    final qty = data.deductions.fold<double>(0, (s, d) => s + d.amount);
+    return Success((logId: data.logId, qty: qty));
   }
 
   Future<Result<void>> undoConsume(String logId) =>
@@ -404,8 +421,9 @@ class InventoryActions {
 
   // ============ 备份 / 恢复 / 存储 ============
 
-  Future<File> exportNow() {
-    final f = _backup.exportBackup(kind: 'manual');
+  Future<File> exportNow() async {
+    final f = await _backup.exportBackup(kind: 'manual');
+    await _settings.refreshBackupStatus();
     _ref.invalidate(lastBackupInfoProvider);
     return f;
   }
@@ -418,6 +436,7 @@ class InventoryActions {
 
   Future<void> runAutoBackupNow() async {
     await _backup.exportBackupSafely(kind: 'auto');
+    await _settings.refreshBackupStatus();
     await _sweepOrphanImages();
     _ref.invalidate(lastBackupInfoProvider);
   }
@@ -426,6 +445,92 @@ class InventoryActions {
       _backup.storageUsage();
 
   Future<void> clearCache() => _backup.clearCache();
+
+  // ============ 坚果云 WebDAV 同步（§7.2） ============
+
+  /// 读取已保存的坚果云凭据；账号或应用密码未配置时返回 null。
+  Future<WebDavCredentials?> _savedCloudCredentials() async {
+    final s = _ref.read(settingsProvider);
+    if (s.cloudSyncUser.trim().isEmpty) return null;
+    final token = await _ref
+        .read(inventoryRepositoryProvider)
+        .getSetting(SettingKeys.cloudSyncToken);
+    if (token == null || token.isEmpty) return null;
+    return WebDavCredentials(
+        url: s.cloudSyncUrl, user: s.cloudSyncUser, token: token);
+  }
+
+  Future<void> saveCloudSyncConfig({
+    required String url,
+    required String user,
+    String? token,
+  }) async {
+    await _settings.setCloudSyncConfig(url: url, user: user, token: token);
+  }
+
+  Future<void> setCloudSyncOptions({int? keepCount, bool? autoPush}) async {
+    await _settings.setCloudSyncOptions(keepCount: keepCount, autoPush: autoPush);
+  }
+
+  Future<({bool ok, String message})> testCloudSync() async {
+    final c = await _savedCloudCredentials();
+    if (c == null) {
+      return (ok: false, message: '请先保存账号与应用密码');
+    }
+    final r = await _cloudSync.testConnection(c);
+    return (ok: r.ok, message: r.message);
+  }
+
+  /// 立即推送备份到坚果云（导出 → 上传 → 按保留数清理），并记录推送状态。
+  Future<({bool ok, String message})> pushCloudBackup() async {
+    final c = await _savedCloudCredentials();
+    if (c == null) {
+      return (ok: false, message: '请先保存账号与应用密码');
+    }
+    final s = _ref.read(settingsProvider);
+    try {
+      final entry =
+          await _cloudSync.uploadBackup(c, keepCount: s.cloudSyncKeepCount);
+      await _recordCloudSync(ok: true, error: '');
+      return (ok: true, message: '已推送 ${entry.name}');
+    } on SyncException catch (e) {
+      await _recordCloudSync(ok: false, error: e.message);
+      return (ok: false, message: e.message);
+    } catch (e) {
+      await _recordCloudSync(ok: false, error: '$e');
+      return (ok: false, message: '推送失败：$e');
+    }
+  }
+
+  Future<void> _recordCloudSync({required bool ok, required String error}) async {
+    await _ref.read(inventoryRepositoryProvider).setSettings({
+      SettingKeys.cloudSyncLastAt: DateTime.now().toIso8601String(),
+      SettingKeys.cloudSyncLastOk: ok ? '1' : '0',
+      SettingKeys.cloudSyncLastError: error,
+    });
+    await _settings.refreshCloudSyncStatus();
+  }
+
+  Future<List<CloudBackupEntry>> loadCloudBackups() async {
+    final c = await _savedCloudCredentials();
+    if (c == null) throw const SyncException('请先保存账号与应用密码');
+    return _cloudSync.listBackups(c);
+  }
+
+  /// 从云端备份恢复：下载 → 全量覆盖导入（内含后悔药预导出）。
+  Future<void> restoreCloudBackup(String name) async {
+    final c = await _savedCloudCredentials();
+    if (c == null) throw const SyncException('请先保存账号与应用密码');
+    await _cloudSync.restoreBackup(c, name);
+    _ref.invalidate(pendingDeletesProvider);
+    _onDataChanged();
+  }
+
+  Future<void> deleteCloudBackup(String name) async {
+    final c = await _savedCloudCredentials();
+    if (c == null) throw const SyncException('请先保存账号与应用密码');
+    await _cloudSync.deleteBackup(c, name);
+  }
 
   /// 铃铛点击：申请通知权限（拒绝则降级站内红点，不反复弹）→ 置当日已读。
   Future<void> onBellTapped() async {

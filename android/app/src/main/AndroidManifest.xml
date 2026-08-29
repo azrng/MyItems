@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 暖仓：无网络红线（requirement.md §8），仅本地通知 / 图片 / 备份所需权限 -->
+    <!-- 暖仓：除坚果云 WebDAV 同步（用户主动配置后启用，requirement.md §8 修订）外无网络传输，
+         其余仅为本地通知 / 图片 / 备份所需权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

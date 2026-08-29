@@ -21,6 +21,8 @@ class InventoryService {
           (list) => list.where((e) => !e.isArchived).toList());
 
   /// 入库： newItem 为空表示挂到 existingItemId 名下新建批次。
+  /// [source] 覆盖 intake 流水来源；挂已有批次默认「快捷再入库」，
+  /// 添加页同名挂批次应显式传「手动录入」。
   Future<Result<Item>> saveIntake({
     String? existingItemId,
     required String name,
@@ -37,6 +39,7 @@ class InventoryService {
     DateTime? purchaseDate,
     String? notes,
     String? imagePath,
+    String? source,
   }) async {
     final now = DateTime.now();
     final String itemId;
@@ -46,6 +49,9 @@ class InventoryService {
         id: Value(itemId),
         updatedAt: Value(now),
         lastLocationId: Value(locationId),
+        // 挂新批次即回到在库：再次入库会复活已归档物品
+        isArchived: const Value(false),
+        archivedAt: const Value(null),
       ));
     } else {
       itemId = newId();
@@ -90,7 +96,8 @@ class InventoryService {
         quantity: quantity,
         unit: unit,
         locationText: Value(location == null ? null : '来自 ${location.name}'),
-        source: existingItemId == null ? LogSources.manual : LogSources.quickIntake,
+        source: source ??
+            (existingItemId == null ? LogSources.manual : LogSources.quickIntake),
         note: const Value(null),
         createdAt: now,
       ),
@@ -121,8 +128,8 @@ class InventoryService {
     return list;
   }
 
-  /// 对物品 FIFO 扣减 qty（跨批次），写入 consume 流水，返回本次扣减明细。
-  Future<Result<List<BatchDeduction>>> consumeFifo({
+  /// 对物品 FIFO 扣减 qty（跨批次），写入 consume 流水，返回本次扣减明细与流水 id。
+  Future<Result<({String logId, List<BatchDeduction> deductions})>> consumeFifo({
     required String itemId,
     required double quantity,
     required String source,
@@ -146,9 +153,10 @@ class InventoryService {
     }
     await repo.applyDeductions(deductions);
     final first = fifo.first;
+    final logId = newId();
     await repo.insertLogs([
       InventoryLogsCompanion.insert(
-        id: newId(),
+        id: logId,
         itemId: itemId,
         batchId: Value(deductions.first.batch.id),
         type: LogTypes.consume,
@@ -160,7 +168,39 @@ class InventoryService {
         createdAt: now,
       ),
     ]);
-    return Success(deductions);
+    await _archiveItemWhenEmptied(itemId, now, consumeAt: now);
+    return Success((logId: logId, deductions: deductions));
+  }
+
+  /// 自动归档流水的留痕标记：undoConsume 只回滚带此标记的归档。
+  static const _autoArchiveNote = '最后一批耗尽，自动并入归档';
+
+  /// 快捷消耗/校正把最后在库余量清零时，自动并入耗尽归档，
+  /// 避免物品既不在物品库也不在归档页（用户视角数据消失）。
+  /// 返回 true 表示本次触发了归档；undoConsume 依据此留痕回滚。
+  Future<bool> _archiveItemWhenEmptied(String itemId, DateTime now,
+      {required DateTime consumeAt}) async {
+    final item = await repo.getItem(itemId);
+    if (item == null || item.isArchived) return false;
+    final batches = await repo.getBatchesOfItems([itemId]);
+    if (batches.any((b) => b.remainingQuantity > 0)) return false;
+    final firstUnit = batches.isEmpty ? '件' : batches.first.unit;
+    await repo.insertLogs([
+      InventoryLogsCompanion.insert(
+        id: newId(),
+        itemId: itemId,
+        batchId: const Value(null),
+        type: LogTypes.archive,
+        quantity: 0,
+        unit: firstUnit,
+        locationText: const Value(null),
+        source: LogSources.quickConsume,
+        note: const Value(_autoArchiveNote),
+        createdAt: consumeAt,
+      ),
+    ]);
+    await repo.markArchived(itemId, true, at: now);
+    return true;
   }
 
   static String? _multiBatchNote(List<BatchDeduction> ds, String unit) {
@@ -169,6 +209,7 @@ class InventoryService {
   }
 
   /// 撤销最近一笔消耗（§3.5：物理删除流水并还原批次余量，仅 5 秒窗口内可用）。
+  /// 若该笔消耗把最后余量扣尽并触发了自动归档，一并回滚归档状态。
   Future<Result<void>> undoConsume(String logId) async {
     final logs = await repo.getLogs(limit: 500);
     final log = logs.where((l) => l.id == logId).firstOrNull;
@@ -183,7 +224,26 @@ class InventoryService {
       }
     }
     await repo.deleteLog(logId);
+    await _undoAutoArchiveIfMine(log.itemId, log.createdAt);
     return const Success(null);
+  }
+
+  /// 自动归档回滚：物品已归档、归档流水带自动标记且晚于被撤销的消耗时，
+  /// 删除该归档流水并恢复在库状态。
+  Future<void> _undoAutoArchiveIfMine(String itemId, DateTime consumeAt) async {
+    final item = await repo.getItem(itemId);
+    if (item == null || !item.isArchived) return;
+    final logs = await repo.getLogs(limit: 500);
+    final autoArchive = logs
+        .where((l) =>
+            l.itemId == itemId &&
+            l.type == LogTypes.archive &&
+            l.note == _autoArchiveNote &&
+            !l.createdAt.isBefore(consumeAt))
+        .firstOrNull;
+    if (autoArchive == null) return;
+    await repo.deleteLog(autoArchive.id);
+    await repo.markArchived(itemId, false);
   }
 
   // ================= 用完归档（§4.3 / §4.4） =================
@@ -304,6 +364,10 @@ class InventoryService {
         createdAt: DateTime.now(),
       ),
     ]);
+    if (newValue == 0) {
+      await _archiveItemWhenEmptied(batch.itemId, DateTime.now(),
+          consumeAt: DateTime.now());
+    }
     return const Success(null);
   }
 
@@ -491,11 +555,12 @@ class InventoryService {
     return streak;
   }
 
-  /// 近 7 天每日消耗件数（周一 → 周日顺序由界面按需取）。
+  /// 本周（周一 → 周日）每日消耗件数，与界面固定星期标签对齐；未来日期为 0。
   static List<int> weeklyConsume(List<InventoryLog> logs, DateTime now) {
     final today = DateTime(now.year, now.month, now.day);
+    final weekStart = today.subtract(Duration(days: today.weekday - 1));
     return List.generate(7, (i) {
-      final day = today.subtract(Duration(days: 6 - i));
+      final day = weekStart.add(Duration(days: i));
       return logs
           .where((l) =>
               l.type == LogTypes.consume &&

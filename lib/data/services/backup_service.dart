@@ -40,12 +40,21 @@ class BackupService {
 
   // ============ 导出 ============
 
-  /// 执行完整备份并校验。[kind] = auto | manual | pre_restore。
-  Future<File> exportBackup({required String kind}) async {
-    final dir = kind == 'auto' ? backupDir : exportDir;
+  /// 执行完整备份并校验。[kind] = auto | manual | sync | pre_restore。
+  /// sync 供坚果云推送复用：写缓存目录、不记本地备份状态（云端另有状态键）。
+  Future<File> exportBackup({required String kind, bool record = true}) async {
+    final dir = switch (kind) {
+      'auto' => backupDir,
+      'sync' => cacheDir,
+      _ => exportDir,
+    };
     if (!await dir.exists()) await dir.create(recursive: true);
     final stamp = DateTime.now();
-    final prefix = kind == 'pre_restore' ? 'warmpantry_pre_restore' : 'warmpantry_backup';
+    final prefix = switch (kind) {
+      'pre_restore' => 'warmpantry_pre_restore',
+      'sync' => 'warmpantry_sync',
+      _ => 'warmpantry_backup',
+    };
     final file = File(p.join(
         dir.path, '${prefix}_${_stamp(stamp)}.myitems.zip'));
 
@@ -55,7 +64,7 @@ class BackupService {
       if (await file.exists()) await file.delete();
       throw const BackupException('校验未通过，请重新导出');
     }
-    await _recordSuccess(file);
+    if (record) await _recordSuccess(file);
     if (kind == 'auto') await _rollOldBackups();
     return file;
   }
@@ -195,15 +204,18 @@ class BackupService {
   }
 
   /// 自动备份：每日首次启动补做 + 变更后防抖由 Provider 层调度。
-  Future<void> autoBackupIfNeeded() async {
+  /// 返回本次是否执行了备份（供坚果云跟随推送判断）。
+  Future<bool> autoBackupIfNeeded() async {
     final enabled = await repo.getSetting(SettingKeys.autoBackupEnabled);
-    if (enabled == '0') return;
+    if (enabled == '0') return false;
     final last = await repo.getSetting(SettingKeys.lastBackupAt);
     final today = Fmt.date(DateTime.now());
     final lastDay = last == null ? null : Fmt.date(DateTime.tryParse(last) ?? DateTime(0));
     if (lastDay != today) {
       await exportBackupSafely(kind: 'auto');
+      return true;
     }
+    return false;
   }
 
   Future<void> _rollOldBackups() async {

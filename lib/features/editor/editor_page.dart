@@ -227,6 +227,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       purchaseDate: _purchaseDate,
       notes: _notes.text.isEmpty ? null : _notes.text,
       pickedImagePath: _pickedImageTempPath,
+      source: LogSources.manual, // 添加页挂批次是手动录入，不是快捷再入库
     );
     // 清除草稿
     await ref
@@ -248,6 +249,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   String? get _categoryIcon {
     final cats = ref.read(categoriesProvider).value ?? const <Category>[];
     return cats.where((c) => c.id == _categoryId).firstOrNull?.icon;
+  }
+
+  /// 日历日差（同日为 0），避免带时刻相减导致快捷选中态漂移。
+  int _daysFromToday(DateTime d) {
+    final now = DateTime.now();
+    return DateTime(d.year, d.month, d.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
   }
 
   /// 同名检查（§4.6）：挂到已有物品作为新批次，或确认为新物品。
@@ -429,11 +438,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                                       ChoiceChip(
                                         label: Text(_quickLabel(d)),
                                         selected: _expiry != null &&
-                                            _expiry!
-                                                    .difference(DateTime.now())
-                                                    .inDays
-                                                    .round() ==
-                                                d,
+                                            _daysFromToday(_expiry!) == d,
                                         onSelected: (_) => setState(() {
                                           _expiry = DateTime.now()
                                               .add(Duration(days: d));

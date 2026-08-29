@@ -30,6 +30,8 @@ dependencies:
   archive: ^3.6.1
   file_picker: ^8.1.2
   share_plus: ^10.0.0
+  # 坚果云 WebDAV 同步：解析 PROPFIND multistatus 响应（§7.2）
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:

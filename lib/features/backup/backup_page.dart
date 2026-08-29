@@ -11,6 +11,7 @@ import '../../providers/actions.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/common.dart';
+import 'cloud_sync_section.dart';
 
 /// 存储与备份（requirement.md §5.11 / §7.1）。
 class BackupPage extends ConsumerStatefulWidget {
@@ -150,6 +151,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             ),
           ),
           const SizedBox(height: 18),
+          // 坚果云 WebDAV 同步（§7.2）
+          const CloudSyncSection(),
+          const SizedBox(height: 18),
           // 状态行
           Container(
             padding: const EdgeInsets.all(13),
@@ -222,7 +226,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ),
           const SizedBox(height: 24),
           Center(
-            child: Text('🔒 备份文件均为本地生成，不上传任何服务器',
+            child: Text('🔒 备份默认仅存本地设备；仅在你配置坚果云后才会推送，且直连坚果云官方接口',
                 style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w700, color: c.inkFaint)),
           ),

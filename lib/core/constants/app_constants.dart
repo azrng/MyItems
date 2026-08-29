@@ -22,6 +22,15 @@ class SettingKeys {
   static const bellReadDate = 'bell_read_date';
   static const draft = 'draft';
   static const pendingDeletes = 'pending_deletes';
+  // 坚果云 WebDAV 同步（§7.2；应用密码存 settings 表，仅应用私有目录可见）
+  static const cloudSyncUrl = 'cloud_sync_url';
+  static const cloudSyncUser = 'cloud_sync_user';
+  static const cloudSyncToken = 'cloud_sync_token';
+  static const cloudSyncKeepCount = 'cloud_sync_keep_count';
+  static const cloudSyncAutoPush = 'cloud_sync_auto_push';
+  static const cloudSyncLastAt = 'cloud_sync_last_at';
+  static const cloudSyncLastOk = 'cloud_sync_last_ok';
+  static const cloudSyncLastError = 'cloud_sync_last_error';
 }
 
 /// 默认设置值
@@ -32,6 +41,8 @@ class SettingDefaults {
   static const summaryHour = 8;
   static const summaryMinute = 30;
   static const backupKeepCount = 5;
+  static const cloudSyncUrl = 'https://dav.jianguoyun.com/dav/';
+  static const cloudSyncKeepCount = 5;
 }
 
 /// 阈值档位（我的 → 提醒设置弹层可调）

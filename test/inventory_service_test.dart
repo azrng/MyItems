@@ -122,17 +122,24 @@ void main() {
       expect(InventoryService.todayConsumeCount(logs, now), 2);
     });
 
-    test('近 7 天消耗柱状图', () {
+    test('本周消耗柱状图（周一 → 周日对齐）', () {
+      // 2026-08-28 是周五；本周一为 08-24
       final logs = [
-        mkLog(type: LogTypes.consume, at: now), // 今天
-        mkLog(type: LogTypes.consume, at: now), // 今天第二笔
-        mkLog(type: LogTypes.consume, at: now.subtract(const Duration(days: 6))),
+        mkLog(type: LogTypes.consume, at: now), // 周五（今天）第 1 笔
+        mkLog(type: LogTypes.consume, at: now), // 周五（今天）第 2 笔
+        mkLog(
+            type: LogTypes.consume,
+            at: DateTime(2026, 8, 24, 9)), // 本周一
+        mkLog(
+            type: LogTypes.consume,
+            at: DateTime(2026, 8, 23, 20)), // 上周日：不计入本周
       ];
       final bars = InventoryService.weeklyConsume(logs, now);
       expect(bars.length, 7);
-      expect(bars.last, 2, reason: '今天');
-      expect(bars.first, 1, reason: '6 天前');
-      expect(bars.take(6).skip(1).every((e) => e == 0), isTrue);
+      expect(bars.first, 1, reason: '本周一');
+      expect(bars[4], 2, reason: '周五 = 今天');
+      expect(bars[6], 0, reason: '周日尚未到来');
+      expect(bars[1] + bars[2] + bars[3] + bars[5], 0);
     });
 
     test('连续记录天数：中断清零、当天无记录看昨天', () {

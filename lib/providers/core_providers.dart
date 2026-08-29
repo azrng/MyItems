@@ -9,6 +9,8 @@ import '../data/services/backup_service.dart';
 import '../data/services/image_service.dart';
 import '../data/services/notification_service.dart';
 import '../data/services/seed_service.dart';
+import '../data/services/sync_service.dart';
+import '../data/services/webdav_client.dart';
 
 /// 应用级依赖注入（backend-AGENTS.md：Provider 声明式注册，应用生命周期内保持）。
 
@@ -51,6 +53,16 @@ final backupServiceProvider = Provider<BackupService>((ref) {
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
+});
+
+/// 坚果云 WebDAV 同步（§7.2）：备份导出复用 BackupService，网络走 WebDavClient。
+final cloudSyncServiceProvider = Provider<CloudSyncService>((ref) {
+  final webdav = WebDavClient();
+  ref.onDispose(webdav.close);
+  return CloudSyncService(
+    backup: ref.watch(backupServiceProvider),
+    webdav: webdav,
+  );
 });
 
 /// 启动期一次性目录装配（main() 调用）。

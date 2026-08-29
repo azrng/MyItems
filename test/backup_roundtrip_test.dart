@@ -68,7 +68,9 @@ void main() {
     // 2. 消耗 1 → 用完归档
     final consume = await svc.consumeFifo(
         itemId: item.id, quantity: 1, source: LogSources.quickConsume);
-    expect(consume, isA<Success<List<BatchDeduction>>>());
+    expect(
+        consume,
+        isA<Success<({String logId, List<BatchDeduction> deductions})>>());
     final finish = await svc.finishAndArchive(itemId: item.id);
     expect(finish, isA<Success<int>>());
 
