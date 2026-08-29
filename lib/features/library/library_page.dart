@@ -173,7 +173,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           ],
         ),
       ),
-      bottomNavigationBar: selecting && selectedIds.isNotEmpty
+      // 多选模式下常驻：未选中时也显示，提供「取消」退出多选的出口
+      bottomNavigationBar: selecting
           ? _MultiActionBar(
               count: selectedIds.length,
               locations: locations,
@@ -209,27 +210,46 @@ class _MultiActionBar extends ConsumerWidget {
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: scheme.outline),
         ),
-        child: Row(
-          children: [
-            Text('已选 $count 件',
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
-            const Spacer(),
-            TextButton(
-              onPressed: () => _move(context, ref),
-              child: const Text('移动位置'),
-            ),
-            TextButton(
-              onPressed: () => _changeCategory(context, ref),
-              child: const Text('改分类'),
-            ),
-            TextButton(
-              onPressed: () => _delete(context, ref),
-              style: TextButton.styleFrom(foregroundColor: scheme.error),
-              child: const Text('删除'),
-            ),
-          ],
-        ),
+        child: count == 0
+            ? Row(
+                children: [
+                  Text('点选物品加入批量',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: scheme.onSurfaceVariant)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => _exitSelect(ref),
+                    child: const Text('取消多选'),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Text('已选 $count 件',
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w800)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => _exitSelect(ref),
+                    child: const Text('取消'),
+                  ),
+                  TextButton(
+                    onPressed: () => _move(context, ref),
+                    child: const Text('移动位置'),
+                  ),
+                  TextButton(
+                    onPressed: () => _changeCategory(context, ref),
+                    child: const Text('改分类'),
+                  ),
+                  TextButton(
+                    onPressed: () => _delete(context, ref),
+                    style: TextButton.styleFrom(foregroundColor: scheme.error),
+                    child: const Text('删除'),
+                  ),
+                ],
+              ),
       ),
     );
   }

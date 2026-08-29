@@ -37,9 +37,10 @@ class ItemCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         if (selecting) {
+          // 必须赋新 Set：原地 add/remove 后回填同一实例，Riverpod 判 identical 不通知，UI 冻结
           final ids = ref.read(selectedIdsProvider);
           ref.read(selectedIdsProvider.notifier).state =
-              selected ? (ids..remove(v.item.id)) : (ids..add(v.item.id));
+              selected ? ({...ids}..remove(v.item.id)) : ({...ids, v.item.id});
         } else {
           context.push('/item/${v.item.id}');
         }
