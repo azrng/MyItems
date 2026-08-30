@@ -46,8 +46,38 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   DateTime? _purchaseDate;
   String? _pickedImage;
   bool _initialized = false;
+  bool _submitting = false; // 提交防重：保存进行中禁用按钮并拦截重复提交
+  late String _pristine; // 初始化完成时的字段快照，作为返回脏检查基线
 
   bool get _editing => widget.editItemId != null;
+
+  /// 主批次 = 最新入库批次（与详情页批次列表排序一致，避免编辑落到最旧批次）。
+  Batch? _primaryOf(List<Batch> batches) {
+    if (batches.isEmpty) return null;
+    final sorted = [...batches]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return sorted.first;
+  }
+
+  /// 表单字段快照：返回时与 [_pristine] 对比判断是否有未保存修改。
+  String _snapshot() => [
+        _name.text,
+        _spec.text,
+        _qty.text,
+        _price.text,
+        _notes.text,
+        _categoryId,
+        _locationId,
+        _unit,
+        _isConsumable,
+        _reminderEnabled,
+        _expiry?.toIso8601String(),
+        _purchaseDate?.toIso8601String(),
+        _pickedImageTempPath,
+        _pickedImage,
+      ].join('\u241F');
+
+  bool get _dirty => _initialized && _snapshot() != _pristine;
 
   @override
   void initState() {
@@ -67,7 +97,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       final batches = await ref
           .read(inventoryRepositoryProvider)
           .getBatchesOfItems([item.id]);
-      final primary = batches.isEmpty ? null : batches.first;
+      final primary = _primaryOf(batches);
       _name.text = item.name;
       _spec.text = item.spec ?? '';
       _categoryId = item.categoryId;
@@ -96,7 +126,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           final batches = await ref
               .read(inventoryRepositoryProvider)
               .getBatchesOfItems([item.id]);
-          final last = batches.isEmpty ? null : batches.first;
+          final last = _primaryOf(batches);
           _name.text = item.name;
           _spec.text = item.spec ?? '';
           _categoryId = item.categoryId;
@@ -110,6 +140,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
       await _restoreDraft();
     }
+    _pristine = _snapshot();
     if (mounted) setState(() => _initialized = true);
   }
 
@@ -150,7 +181,20 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (mounted) showToast(context, '草稿已保存，下次进入自动恢复');
   }
 
+  /// 提交防重外壳：保存进行中忽略重复点击，按钮由 [_submitting] 禁用。
   Future<void> _submit({required bool continueNext}) async {
+    if (_submitting) return;
+    _submitting = true;
+    if (mounted) setState(() {});
+    try {
+      await _doSubmit(continueNext: continueNext);
+    } finally {
+      _submitting = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _doSubmit({required bool continueNext}) async {
     FocusScope.of(context).unfocus();
     if (!(_form.currentState?.validate() ?? false)) return;
     if (_categoryId == null) {
@@ -172,14 +216,15 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
     if (_editing) {
       final repo = ref.read(inventoryRepositoryProvider);
-      final batches = await repo.getBatchesOfItems([widget.editItemId!]);
-      if (batches.isEmpty) {
+      final primary =
+          _primaryOf(await repo.getBatchesOfItems([widget.editItemId!]));
+      if (primary == null) {
         if (mounted) showToast(context, '批次缺失，无法保存');
         return;
       }
       final result = await actions.saveEdits(
         itemId: widget.editItemId!,
-        batchId: batches.first.id,
+        batchId: primary.id,
         name: _name.text,
         spec: _spec.text.isEmpty ? null : _spec.text,
         categoryId: _categoryId!,
@@ -297,6 +342,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _notes.clear();
     _expiry = null;
     _purchaseDate = null;
+    // 照片属单件私有，不随连续录入带入下一件
+    _pickedImageTempPath = null;
+    _pristine = _snapshot(); // 重置后以清空态为脏检查基线
     setState(() {});
   }
 
@@ -312,7 +360,26 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         ? null
         : ref.watch(expiryTemplateByCategoryProvider)[_categoryId];
 
-    return Scaffold(
+    return PopScope(
+      // canPop 恒 false：返回一律先进脏检查，未保存修改时二次确认防误滑丢弃
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _submitting) return;
+        // await 前先取 router：避免把 BuildContext 带过 async gap
+        final router = GoRouter.of(context);
+        if (_dirty) {
+          final ok = await confirmDialog(
+            context,
+            title: _editing ? '放弃本次修改？' : '放弃录入内容？',
+            content: '当前内容尚未保存，离开后将丢失。',
+            confirmText: '放弃修改',
+            danger: true,
+          );
+          if (!ok || !mounted) return;
+        }
+        router.pop();
+      },
+      child: Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -322,7 +389,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               child: Row(
                 children: [
                   InkWell(
-                    onTap: () => context.pop(),
+                    // 走 maybePop 让 PopScope 脏检查拦截；context.pop 会绕过
+                    onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(14),
                     child: Container(
                       width: 40,
@@ -527,14 +595,23 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 FilledButton(
-                                  onPressed: () => _submit(continueNext: false),
-                                  child: Text(_editing ? '保存' : '加入库存'),
+                                  onPressed: _submitting
+                                      ? null
+                                      : () => _submit(continueNext: false),
+                                  child: _submitting
+                                      ? const SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))
+                                      : Text(_editing ? '保存' : '加入库存'),
                                 ),
                                 if (!_editing) ...[
                                   const SizedBox(height: 8),
                                   OutlinedButton(
-                                    onPressed: () =>
-                                        _submit(continueNext: true),
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _submit(continueNext: true),
                                     child: const Text('保存并继续录入下一件'),
                                   ),
                                 ],
@@ -547,6 +624,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

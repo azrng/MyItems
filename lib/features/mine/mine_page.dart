@@ -325,13 +325,11 @@ Future<void> showReminderSheet(BuildContext context) async {
                           initialTime: TimeOfDay(hour: hour, minute: minute),
                         );
                         if (t != null) {
+                          // 只更新本地渲染，点「保存」才持久化（与其他设置项语义一致）
                           setState(() {
                             hour = t.hour;
                             minute = t.minute;
                           });
-                          await container
-                              .read(settingsProvider.notifier)
-                              .setSummary(hour: t.hour, minute: t.minute);
                         }
                       }
                     : null,
@@ -416,7 +414,8 @@ Future<void> showReminderSheet(BuildContext context) async {
                       .read(notificationServiceProvider)
                       .requestPermission();
                 }
-                await notifier.setSummary(enabled: enabled);
+                await notifier.setSummary(
+                    enabled: enabled, hour: hour, minute: minute);
                 await notifier.setWarningDays(warningDays);
                 await notifier.setLowRemaining(lowPercent);
                 // 设置变更立即重挂摘要闹钟（否则新时间要等下次冷启动才生效）

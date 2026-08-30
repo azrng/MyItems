@@ -205,7 +205,8 @@ Future<void> showConsumeSheet(BuildContext context, LibraryItemView v) async {
                         showToastOn(messenger, '已记录 −${Fmt.quantity(effective)} $unit');
                       }
                     } else {
-                      showToastOn(messenger, '记录失败，请重试');
+                      showToastOn(
+                          messenger, result.errorMessage ?? '记录失败，请重试');
                     }
                   },
             child: Text('确认消耗 −${Fmt.quantity(effective)} $unit'),

@@ -434,7 +434,7 @@ class BatchCard extends ConsumerWidget {
         showToastOn(messenger, '已记录 −${Fmt.quantity(receipt.qty)} ${batch.unit}');
       }
     } else {
-      showToastOn(messenger, '该批次已无余量');
+      showToastOn(messenger, result.errorMessage ?? '该批次已无余量');
     }
   }
 }

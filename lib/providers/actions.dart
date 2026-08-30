@@ -218,6 +218,10 @@ class InventoryActions {
   }) async {
     final result = await _afterChange(_svc.consumeFifo(
         itemId: itemId, quantity: quantity, source: source, note: note));
+    // Failure 必须原样透传：包成 Success(null) 会丢 errorMessage，UI 只能笼统报错
+    if (result.isFailure) {
+      return Failure(result.errorMessage ?? '消耗失败');
+    }
     final data = result.dataOrNull;
     if (data == null) return const Success(null);
     final qty = data.deductions.fold<double>(0, (s, d) => s + d.amount);
@@ -449,11 +453,12 @@ class InventoryActions {
     _onDataChanged();
   }
 
-  Future<void> runAutoBackupNow() async {
-    await _backup.exportBackupSafely(kind: 'auto');
+  Future<bool> runAutoBackupNow() async {
+    final ok = await _backup.exportBackupSafely(kind: 'auto');
     await _settings.refreshBackupStatus();
     await _sweepOrphanImages();
     _ref.invalidate(lastBackupInfoProvider);
+    return ok;
   }
 
   Future<({int db, int images, int backups, int cache})> storageUsage() =>

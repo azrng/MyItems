@@ -191,10 +191,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await ref
+                    final ok = await ref
                         .read(inventoryActionsProvider)
                         .runAutoBackupNow();
-                    if (context.mounted) showToast(context, '备份完成');
+                    if (context.mounted) {
+                      // exportBackupSafely 吞错只落状态，必须按返回值分流提示
+                      showToast(context, ok ? '备份完成' : '备份失败，详见上方状态行');
+                    }
                   },
                   child: const Text('立即备份'),
                 ),

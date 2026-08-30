@@ -441,6 +441,7 @@ Future<void> showQuickIntakeSheet(
   DateTime? expiry = primary?.expiryDate;
   final unit = primary?.unit ?? '件';
   final form = GlobalKey<FormState>();
+  bool saving = false; // 提交防重：保存进行中禁用按钮
 
   await showAppSheet(
     context,
@@ -494,30 +495,49 @@ Future<void> showQuickIntakeSheet(
         ),
       ),
       actions: [
-        FilledButton(
-          onPressed: () async {
-            if (!(form.currentState?.validate() ?? false)) return;
-            final container = ProviderScope.containerOf(context);
-            final actions = container.read(inventoryActionsProvider);
-            final result = await actions.saveIntake(
-              existingItemId: item.id,
-              name: item.name,
-              categoryId: item.categoryId,
-              icon: item.icon,
-              isConsumable: item.isConsumable,
-              reminderEnabled: item.reminderEnabled,
-              locationId: (primary?.locationId ?? item.lastLocationId ?? ''),
-              quantity: double.parse(qtyCtrl.text),
-              unit: unit,
-              expiryDate: expiry,
-              spec: item.spec,
-            );
-            if (result is Success && context.mounted) {
-              Navigator.pop(context);
-              showToast(context, '已再入库，账记上了 🧾');
-            }
-          },
-          child: const Text('确认入库'),
+        StatefulBuilder(
+          builder: (context, setBtn) => FilledButton(
+            onPressed: saving
+                ? null
+                : () async {
+                    if (!(form.currentState?.validate() ?? false)) return;
+                    setBtn(() => saving = true);
+                    final container = ProviderScope.containerOf(context);
+                    final actions = container.read(inventoryActionsProvider);
+                    // 保存成功会 pop 本弹层，反馈统一走根 messenger
+                    final messenger = ScaffoldMessenger.of(context);
+                    final result = await actions.saveIntake(
+                      existingItemId: item.id,
+                      name: item.name,
+                      categoryId: item.categoryId,
+                      icon: item.icon,
+                      isConsumable: item.isConsumable,
+                      reminderEnabled: item.reminderEnabled,
+                      locationId: (primary?.locationId ?? item.lastLocationId ?? ''),
+                      quantity: double.parse(qtyCtrl.text),
+                      unit: unit,
+                      expiryDate: expiry,
+                      spec: item.spec,
+                    );
+                    if (result is Success) {
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        showToastOn(messenger, '已再入库，账记上了 🧾');
+                      }
+                    } else {
+                      // 失败保留弹层供修改重试，并明确报错而非静默
+                      setBtn(() => saving = false);
+                      showToastOn(
+                          messenger, result.errorMessage ?? '入库失败，请重试');
+                    }
+                  },
+            child: saving
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('确认入库'),
+          ),
         ),
       ],
     ),

@@ -193,13 +193,17 @@ class BackupService {
   }
 
   /// 失败静默落状态，由界面红色 pill 展示（requirement.md §7.1 失败态）。
-  Future<void> exportBackupSafely({required String kind}) async {
+  /// 返回本次导出是否成功，供调用方分流提示（避免失败仍 toast 成功）。
+  Future<bool> exportBackupSafely({required String kind}) async {
     try {
       await exportBackup(kind: kind);
+      return true;
     } on BackupException catch (e) {
       await _recordFailure(e.message);
+      return false;
     } catch (e) {
       await _recordFailure('备份失败：$e');
+      return false;
     }
   }
 
