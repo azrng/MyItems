@@ -469,27 +469,32 @@ Future<void> showQuickIntakeSheet(
                   (double.tryParse(s ?? '') ?? 0) <= 0 ? '请输入大于 0 的数量' : null,
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Text('到期日期',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w800)),
-                const Spacer(),
-                TextButton(
-                  onPressed: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate:
-                          expiry ?? DateTime.now().add(const Duration(days: 7)),
-                      firstDate:
-                          DateTime.now().subtract(const Duration(days: 1)),
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (d != null) expiry = d;
-                  },
-                  child: Text(expiry == null ? '沿用上次（可改）' : Fmt.date(expiry)),
-                ),
-              ],
+            StatefulBuilder(
+              builder: (context, setExpiry) => Row(
+                children: [
+                  Text('到期日期',
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w800)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        initialDate:
+                            expiry ?? DateTime.now().add(const Duration(days: 7)),
+                        firstDate:
+                            DateTime.now().subtract(const Duration(days: 1)),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      );
+                      // 必须 setState 刷新按钮文案，否则选完仍显示旧占位
+                      if (d != null) setExpiry(() => expiry = d);
+                    },
+                    child: Text(expiry == null
+                        ? '沿用上次（可改）'
+                        : Fmt.date(expiry!)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
