@@ -109,7 +109,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             ),
           ),
           const SizedBox(height: 18),
-          // 自动备份组
+          // 本地备份分区（§7.1 本机通道）
+          _groupLabel('本地备份', c),
           SwitchRow(
             title: '自动备份',
             subtitle: '每日首次启动补做 + 变更后 30 秒防抖，写应用私有目录',
@@ -150,10 +151,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
-          // 坚果云 WebDAV 同步（§7.2）
-          const CloudSyncSection(),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
           // 状态行
           Container(
             padding: const EdgeInsets.all(13),
@@ -179,12 +177,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   child: Text(
                     info.lastBackupOk
                         ? (info.lastBackupAt == null
-                            ? '还没有成功备份过'
-                            : '上次成功备份：${Fmt.relative(info.lastBackupAt!, DateTime.now())}'
+                            ? '还没有本地备份'
+                            : '上次本地备份：${Fmt.relative(info.lastBackupAt!, DateTime.now())}'
                                 '${info.lastBackupSize == null ? '' : ' · ${Fmt.bytes(info.lastBackupSize!)}'} · 校验通过')
                         : (info.lastBackupError.isEmpty
-                            ? '上次备份失败'
-                            : '上次备份失败：${info.lastBackupError}'),
+                            ? '上次本地备份失败'
+                            : '上次本地备份失败：${info.lastBackupError}'),
                     style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -203,7 +201,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
           // 导出按钮组
           FilledButton(
             onPressed: _exporting ? null : () => _export(context),
@@ -224,7 +222,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             onPressed: () => _restore(context),
             child: const Text('从备份文件恢复'),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+          // 云端备份分区（§7.2 云端通道）
+          _groupLabel('云端备份（坚果云）', c),
+          const CloudSyncSection(),
+          const SizedBox(height: 18),
           Center(
             child: Text('🔒 备份默认仅存本地设备；仅在你配置坚果云后才会推送，且直连坚果云官方接口',
                 style: TextStyle(
@@ -234,6 +236,17 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       ),
     );
   }
+
+  /// 分区标题，样式对齐我的页 `_groupLabel`（mine_page.dart）。
+  Widget _groupLabel(String text, AppColors c) => Padding(
+        padding: const EdgeInsets.fromLTRB(6, 0, 0, 8),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.4,
+                fontWeight: FontWeight.w900,
+                color: c.inkFaint)),
+      );
 
   Widget _usageRow(String label, int bytes, ColorScheme scheme) {
     final total = (_usage == null
