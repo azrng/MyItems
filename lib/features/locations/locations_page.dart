@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/result.dart';
 import '../../data/database/app_database.dart';
 import '../../providers/actions.dart';
+import '../../providers/core_providers.dart';
 import '../../providers/inventory_providers.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/common.dart';
 import '../../widgets/meter.dart';
 import '../../widgets/tag.dart';
+import '../library/library_state.dart';
 
 /// 存放位置（requirement.md §5.8）：区域分组 + 容量 + 临期计数 + 反查。
 class LocationsPage extends ConsumerWidget {
@@ -63,7 +66,14 @@ class LocationsPage extends ConsumerWidget {
                       inStock: inStockOf(l),
                       expiring: expiringOf(l),
                       onTap: () => showLocationSheet(context, l),
-                      onView: () => context.push('/library', extra: l.id),
+                      // 反查走 tab 切换 + 预设位置筛选；/library 是 ShellRoute
+                      // 分支根，push 会再叠一层带底部导航的 Shell 导致界面异常
+                      onView: () {
+                        ref
+                            .read(selectedLocationProvider.notifier)
+                            .state = l.id;
+                        context.go('/library');
+                      },
                     ),
                   const SizedBox(height: 8),
                 ],
@@ -106,8 +116,8 @@ class _LocationCard extends StatelessWidget {
     final ratio = cap == null || cap <= 0 ? 0.0 : (inStock / cap).clamp(0.0, 1.0);
 
     return InkWell(
+      // 不设长按：真机上长按反查会触发手势异常，反查入口收敛到「查看物品 ›」
       onTap: onTap,
-      onLongPress: onView,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -176,6 +186,87 @@ class _LocationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 删除位置流程（§5.8）：无在库占用直接确认删除；
+/// 有占用时必须先选承接位置，批次随删除一并移入并留移位痕。成功返回 true。
+Future<bool> _deleteLocationFlow(BuildContext context, StorageLocation edit) async {
+  final container = ProviderScope.containerOf(context);
+  final actions = container.read(inventoryActionsProvider);
+  final scheme = Theme.of(context).colorScheme;
+  final batches = await container
+      .read(inventoryRepositoryProvider)
+      .getBatchesAtLocation(edit.id);
+  if (!context.mounted) return false;
+  final occupied = batches.where((b) => b.remainingQuantity > 0).length;
+
+  if (occupied == 0) {
+    final ok = await confirmDialog(
+      context,
+      title: '删除「${edit.name}」？',
+      content: '删除后不可恢复，消耗记录保留。',
+      confirmText: '删除',
+      danger: true,
+    );
+    if (!ok) return false;
+    final result = await actions.deleteLocation(locationId: edit.id);
+    return result is Success;
+  }
+
+  // 有在库批次占用：先选承接位置
+  final others = (container.read(locationsProvider).value ?? const <StorageLocation>[])
+      .where((l) => l.isActive && l.id != edit.id)
+      .toList();
+  if (others.isEmpty) {
+    showToast(context, '该位置还有 $occupied 个批次存放，且没有其他位置可承接');
+    return false;
+  }
+  String? targetId;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        backgroundColor: scheme.surfaceContainerLowest,
+        title: Text('删除「${edit.name}」？',
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('这里还存放着 $occupied 个批次的物品，删除前先移到其他位置：',
+                style: const TextStyle(fontSize: 13, height: 1.5)),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: targetId,
+              decoration: const InputDecoration(labelText: '移到哪个位置'),
+              items: [
+                for (final l in others)
+                  DropdownMenuItem(
+                      value: l.id, child: Text('${l.icon ?? '📍'} ${l.name}')),
+              ],
+              onChanged: (v) => setState(() => targetId = v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError),
+            onPressed: targetId == null ? null : () => Navigator.pop(ctx, true),
+            child: const Text('删除并移动'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (ok != true || targetId == null) return false;
+  final result = await actions.deleteLocation(
+      locationId: edit.id, moveToLocationId: targetId);
+  return result is Success;
 }
 
 /// 新增 / 编辑位置弹层（§4.7 / §5.8）。
@@ -305,7 +396,7 @@ Future<void> showLocationSheet(BuildContext context, StorageLocation? edit) asyn
                 ],
                 if (edit != null) ...[
                   const SizedBox(height: 14),
-                  Text('删除位置即停用，不影响已有物品的历史位置',
+                  Text('删除位置前会先处理存放中的物品；消耗记录保留',
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -326,20 +417,12 @@ Future<void> showLocationSheet(BuildContext context, StorageLocation? edit) asyn
                           foregroundColor: scheme.error,
                           side: BorderSide(color: scheme.error.withValues(alpha: 0.5))),
                       onPressed: () async {
-                        final actions = ProviderScope.containerOf(context)
-                            .read(inventoryActionsProvider);
-                        final ok = await confirmDialog(context,
-                            title: '停用「${edit.name}」？',
-                            content: '停用后不再出现在选择列表，历史记录保留。',
-                            confirmText: '停用',
-                            danger: true);
-                        if (!ok || !context.mounted) return;
-                        await actions.deactivateLocation(edit.id);
-                        if (!context.mounted) return;
+                        final deleted = await _deleteLocationFlow(context, edit);
+                        if (!deleted || !context.mounted) return;
                         Navigator.pop(context);
-                        showToast(context, '已停用');
+                        showToast(context, '已删除「${edit.name}」');
                       },
-                      child: const Text('停用'),
+                      child: const Text('删除'),
                     ),
                   ),
                   const SizedBox(width: 10),

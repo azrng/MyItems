@@ -99,7 +99,6 @@ class ItemDetailPage extends ConsumerWidget {
               for (final b in itemBatches)
                 BatchCard(
                   batch: b,
-                  view: v,
                   locationName: locations
                       .where((l) => l.id == b.locationId)
                       .firstOrNull
@@ -242,13 +241,11 @@ class ItemDetailPage extends ConsumerWidget {
 /// 批次卡（§5.13 核心单元）。
 class BatchCard extends ConsumerWidget {
   final Batch batch;
-  final LibraryItemView view;
   final String? locationName;
 
   const BatchCard({
     super.key,
     required this.batch,
-    required this.view,
     required this.locationName,
   });
 
@@ -348,15 +345,15 @@ class BatchCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // 危险操作「✓完」左置离手；−1 高频给主样式；横向滚动兜底极窄屏防溢出
+          // 危险操作「✓完/删除」左置离手；−1 高频给主样式；横向滚动兜底极窄屏防溢出
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
+                // ✓完只清零本批次；整物用完走过期处置引导的「标记用完」
                 _act(context, '✓完',
                     danger: true,
-                    onTap: () =>
-                        showFinishConfirm(context, view, batchId: batch.id)),
+                    onTap: () => showFinishBatchConfirm(context, ref, batch)),
                 if (!opened)
                   _act(context, '开封',
                       accent: true, onTap: () => showOpenSheet(context, batch)),
@@ -366,6 +363,9 @@ class BatchCard extends ConsumerWidget {
                     onTap: () => showAdjustSheet(context, ref, batch)),
                 _act(context, '移位',
                     onTap: () => showMoveSheet(context, ref, batch)),
+                _act(context, '删除',
+                    danger: true,
+                    onTap: () => showDeleteBatchConfirm(context, ref, batch)),
               ],
             ),
           ),

@@ -24,18 +24,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   final _searchCtrl = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    // 位置反查跳转：从存放位置页携带 locationId 进入（§5.8）
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final extra = GoRouterState.of(context).extra;
-      if (extra is String) {
-        ref.read(selectedLocationProvider.notifier).state = extra;
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();

@@ -208,9 +208,63 @@ Future<void> showMoveSheet(
   }
 }
 
+/// 批次级「✓完」：仅清零该批次；物品全部批次耗尽时自动归档。
+/// 撤销走 undoConsume（undoConsume 会一并回滚带标记的自动归档）。
+Future<void> showFinishBatchConfirm(
+    BuildContext context, WidgetRef ref, Batch batch) async {
+  final ok = await confirmDialog(
+    context,
+    title: '批次 #${batch.batchLabel} 用完了吗？',
+    content:
+        '只清零这个批次（${Fmt.quantity(batch.remainingQuantity)} ${batch.unit}），其他批次不受影响。',
+    confirmText: '批次用完',
+    danger: true,
+  );
+  if (!ok || !context.mounted) return;
+  final actions = ref.read(inventoryActionsProvider);
+  // 清零可能触发自动归档并重建本页，await 前缓存 messenger 保证反馈可见
+  final messenger = ScaffoldMessenger.of(context);
+  final result = await actions.finishBatch(batch.id);
+  final receipt = result.dataOrNull;
+  if (receipt == null) {
+    showToastOn(messenger, '操作失败，请重试');
+    return;
+  }
+  final logId = receipt.logId;
+  if (logId != null) {
+    showUndoBarOn(messenger, '已清零批次 #${batch.batchLabel}', onUndo: () async {
+      final undo = await actions.undoConsume(logId);
+      if (undo.isFailure) {
+        showToastOn(messenger, undo.errorMessage ?? '撤销失败');
+      }
+    });
+  } else {
+    showToastOn(messenger, '批次 #${batch.batchLabel} 已用完');
+  }
+}
+
+/// 删除指定批次：物理删除 + 流水留痕；物品因此耗尽时自动归档。
+Future<void> showDeleteBatchConfirm(
+    BuildContext context, WidgetRef ref, Batch batch) async {
+  final hasStock = batch.remainingQuantity > 0;
+  final ok = await confirmDialog(
+    context,
+    title: '删除批次 #${batch.batchLabel}？',
+    content: hasStock
+        ? '该批次还有 ${Fmt.quantity(batch.remainingQuantity)} ${batch.unit}，删除后不可恢复（消耗记录保留）。'
+        : '删除后不可恢复（消耗记录保留）。',
+    confirmText: '删除批次',
+    danger: true,
+  );
+  if (!ok || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final result = await ref.read(inventoryActionsProvider).deleteBatch(batch.id);
+  showToastOn(messenger, result is Success ? '已删除批次' : '删除失败');
+}
+
 /// 「✓完 / 标记用完」出库二次确认（告别语：入库 → 归档时长）。
-Future<void> showFinishConfirm(BuildContext context, LibraryItemView v,
-    {String? batchId}) async {
+/// 仅用于整物级用完（过期处置引导）；批次卡上的 ✓完 走 showFinishBatchConfirm。
+Future<void> showFinishConfirm(BuildContext context, LibraryItemView v) async {
   final days = DateTime.now().difference(v.item.createdAt).inDays.clamp(0, 99999);
   final ok = await confirmDialog(
     context,

@@ -286,6 +286,64 @@ class InventoryService {
   Future<Result<int>> discardAndArchive({required String itemId}) =>
       finishAndArchive(itemId: itemId);
 
+  /// 批次级「✓完」：仅清零该批次并写消耗流水；
+  /// 物品全部批次耗尽时才自动归档（带标记，undoConsume 可回滚）。
+  /// 返回 (流水 id, 实际清零量)，供撤销条与 toast 文案。
+  Future<Result<({String? logId, double qty})>> finishBatch({
+    required String batchId,
+  }) async {
+    final batch = await repo.getBatch(batchId);
+    if (batch == null) return const Failure('批次不存在');
+    final qty = batch.remainingQuantity;
+    String? logId;
+    if (qty > 0) {
+      logId = newId();
+      await repo.applyDeductions([BatchDeduction(batch, qty)]);
+      await repo.insertLogs([
+        InventoryLogsCompanion.insert(
+          id: logId,
+          itemId: batch.itemId,
+          batchId: Value(batchId),
+          type: LogTypes.consume,
+          quantity: qty,
+          unit: batch.unit,
+          locationText: const Value(null),
+          source: LogSources.quickConsume,
+          note: Value('批次 #${batch.batchLabel} 标记用完'),
+          createdAt: DateTime.now(),
+        ),
+      ]);
+    }
+    await _archiveItemWhenEmptied(batch.itemId, DateTime.now(),
+        consumeAt: DateTime.now());
+    return Success((logId: logId, qty: qty));
+  }
+
+  /// 删除指定批次（§5.13）：物理删除 + 流水留痕；
+  /// 物品因此无任何批次时自动归档，避免物品在库/归档两不沾。
+  Future<Result<void>> deleteBatch({required String batchId}) async {
+    final batch = await repo.getBatch(batchId);
+    if (batch == null) return const Failure('批次不存在');
+    await repo.deleteBatches([batchId]);
+    await repo.insertLogs([
+      InventoryLogsCompanion.insert(
+        id: newId(),
+        itemId: batch.itemId,
+        batchId: const Value(null),
+        type: LogTypes.adjust,
+        quantity: batch.remainingQuantity,
+        unit: batch.unit,
+        locationText: const Value(null),
+        source: LogSources.adjust,
+        note: Value('删除批次 #${batch.batchLabel}（余量 ${Fmt.quantity(batch.remainingQuantity)} ${batch.unit}）'),
+        createdAt: DateTime.now(),
+      ),
+    ]);
+    await _archiveItemWhenEmptied(batch.itemId, DateTime.now(),
+        consumeAt: DateTime.now());
+    return const Success(null);
+  }
+
   // ================= 开封追踪（§4.2） =================
 
   Future<Result<void>> openBatch({
@@ -389,6 +447,32 @@ class InventoryService {
     if (locationId != null) {
       await _writeAdjustLog(batch, locationText!);
     }
+    return const Success(null);
+  }
+
+  /// 删除位置：在库批次须先移入 [moveToLocationId]（逐批留移位痕），
+  /// 其余引用（已耗尽批次 / 物品默认位置）统一置空，最后删除位置行。
+  Future<Result<void>> deleteLocation({
+    required String locationId,
+    String? moveToLocationId,
+  }) async {
+    final location = await repo.getLocation(locationId);
+    if (location == null) return const Failure('位置不存在');
+    final all = await repo.getBatchesAtLocation(locationId);
+    final occupied =
+        all.where((b) => b.remainingQuantity > 0).toList();
+    if (occupied.isNotEmpty && moveToLocationId == null) {
+      return Failure('该位置还有 ${occupied.length} 个批次存放，请先移动到其他位置');
+    }
+    if (moveToLocationId != null && occupied.isNotEmpty) {
+      final target = await repo.getLocation(moveToLocationId);
+      if (target == null) return const Failure('目标位置不存在');
+      for (final b in occupied) {
+        await moveBatch(batchId: b.id, locationId: moveToLocationId);
+      }
+    }
+    await repo.detachLocation(locationId);
+    await repo.deleteLocation(locationId);
     return const Success(null);
   }
 

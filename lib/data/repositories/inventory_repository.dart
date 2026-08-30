@@ -27,6 +27,9 @@ abstract class InventoryRepository {
   Future<void> insertLocation(StorageLocationsCompanion l);
   Future<void> updateLocation(StorageLocationsCompanion l);
   Future<void> deactivateLocation(String id);
+  Future<void> deleteLocation(String id);
+  /// 删除位置前清理悬空引用：批次 locationId 置空 + 物品 lastLocationId 置空。
+  Future<void> detachLocation(String locationId);
 
   // 物品
   Stream<List<Item>> watchItems({bool includeArchived = true});
@@ -42,6 +45,7 @@ abstract class InventoryRepository {
   Stream<List<Batch>> watchBatches();
   Future<List<Batch>> getBatchesOfItems(List<String> itemIds);
   Future<Batch?> getBatch(String id);
+  Future<List<Batch>> getBatchesAtLocation(String locationId);
   Future<void> insertBatch(BatchesCompanion b);
   Future<void> updateBatch(BatchesCompanion b);
   Future<void> deleteBatches(List<String> batchIds);
@@ -157,6 +161,20 @@ class DriftInventoryRepository implements InventoryRepository {
       (db.update(db.storageLocations)..where((t) => t.id.equals(id)))
           .write(StorageLocationsCompanion(isActive: const Value(false)));
 
+  @override
+  Future<void> deleteLocation(String id) =>
+      (db.delete(db.storageLocations)..where((t) => t.id.equals(id))).go();
+
+  @override
+  Future<void> detachLocation(String locationId) {
+    return db.transaction(() async {
+      await (db.update(db.batches)..where((t) => t.locationId.equals(locationId)))
+          .write(const BatchesCompanion(locationId: Value(null)));
+      await (db.update(db.items)..where((t) => t.lastLocationId.equals(locationId)))
+          .write(const ItemsCompanion(lastLocationId: Value(null)));
+    });
+  }
+
   // ---------- 物品 ----------
   @override
   Stream<List<Item>> watchItems({bool includeArchived = true}) {
@@ -222,6 +240,10 @@ class DriftInventoryRepository implements InventoryRepository {
   @override
   Future<Batch?> getBatch(String id) =>
       (db.select(db.batches)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  @override
+  Future<List<Batch>> getBatchesAtLocation(String locationId) =>
+      (db.select(db.batches)..where((t) => t.locationId.equals(locationId))).get();
 
   @override
   Future<void> insertBatch(BatchesCompanion b) =>

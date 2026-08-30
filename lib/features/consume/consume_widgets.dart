@@ -25,10 +25,11 @@ class TodayCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        // 渐变取主题 token：浅色与原硬编码值一致，深色模式自动落深暖底
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF8E4CF), Color(0xFFFFFCF5)],
+          colors: [scheme.primaryContainer, scheme.surfaceContainerLowest],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: scheme.outlineVariant),

@@ -233,6 +233,14 @@ class InventoryActions {
 
   // ============ 批次级操作 ============
 
+  /// 批次级「✓完」：仅清零该批次，全部批次耗尽才自动归档。
+  Future<Result<({String? logId, double qty})>> finishBatch(String batchId) =>
+      _afterChange(_svc.finishBatch(batchId: batchId));
+
+  /// 删除指定批次（流水留痕，物品耗尽自动归档）。
+  Future<Result<void>> deleteBatch(String batchId) =>
+      _afterChange(_svc.deleteBatch(batchId: batchId));
+
   Future<Result<void>> adjustRemaining(
           String batchId, double value, String? reason) =>
       _afterChange(_svc.adjustRemaining(
@@ -418,6 +426,13 @@ class InventoryActions {
     await _ref.read(inventoryRepositoryProvider).deactivateLocation(id);
     _onDataChanged();
   }
+
+  /// 删除位置：在库批次先移入 [moveToLocationId]，其余引用置空。
+  Future<Result<void>> deleteLocation({
+    required String locationId,
+    String? moveToLocationId,
+  }) => _afterChange(_svc.deleteLocation(
+      locationId: locationId, moveToLocationId: moveToLocationId));
 
   // ============ 备份 / 恢复 / 存储 ============
 
