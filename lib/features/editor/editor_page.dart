@@ -663,28 +663,60 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   }
 
   String? _pickedImageTempPath;
+  bool _pickingImage = false; // 选图防重入：并发调用会让 image_picker 挂起、入口失灵
+
+  /// 显式二选一（拍照 / 从相册选择），不做自动 fallback：
+  /// 自动续弹相册会在用户取消相机后意外打开选择器，且链条异常时拍照入口会卡死。
+  Future<void> _pickImage() async {
+    if (_pickingImage) return;
+    if (mounted) setState(() => _pickingImage = true);
+    try {
+      final source = await showAppSheet<ImageSource>(
+        context,
+        child: AppBottomSheet(
+          title: '添加物品照片',
+          body: Column(
+            children: [
+              ListTile(
+                leading: const Text('📷', style: TextStyle(fontSize: 18)),
+                title: const Text('拍照',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Text('🖼️', style: TextStyle(fontSize: 18)),
+                title: const Text('从相册选择',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (source == null) return;
+      final x = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 80,
+      );
+      if (x != null && mounted) {
+        setState(() => _pickedImageTempPath = x.path);
+      }
+    } catch (e) {
+      // 权限被拒等环境失败：明确反馈而不是让入口静默失灵
+      debugPrint('pickImage failed: $e');
+      if (mounted) showToast(context, '打开相机或相册失败，请检查相关权限');
+    } finally {
+      if (mounted) setState(() => _pickingImage = false);
+    }
+  }
 
   Widget _photoPicker(ColorScheme scheme, AppColors c) {
     return InkWell(
-      onTap: () async {
-        final picker = ImagePicker();
-        XFile? x = await picker.pickImage(
-          source: ImageSource.camera,
-          maxWidth: 1280,
-          maxHeight: 1280,
-          imageQuality: 80,
-        );
-        x ??= await picker.pickImage(
-          source: ImageSource.gallery,
-          maxWidth: 1280,
-          maxHeight: 1280,
-          imageQuality: 80,
-        );
-        if (x != null) {
-          final path = x.path;
-          setState(() => _pickedImageTempPath = path);
-        }
-      },
+      onTap: _pickImage,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         height: 96,
